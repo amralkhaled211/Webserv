@@ -27,6 +27,7 @@ Server::~Server()
 {
 	close(serverSocket);
 	close(clientSocket);
+	close(epoll_fd);
 }
 
 void Server::createSocket()
@@ -60,103 +61,9 @@ void Server::listenSocket()
 	}
 }
 
-// int Server::initializeEpoll()
-// {
-//     int epoll_fd = epoll_create1(0);
-//     if (epoll_fd == -1) {
-//         throw std::runtime_error("epoll_create1");
-//     }
-
-//     struct epoll_event event;
-//     event.data.fd = serverSocket;
-//     event.events = EPOLLIN | EPOLLET;
-
-//     if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, serverSocket, &event) == -1)
-// 	{
-//         throw std::runtime_error("epoll_ctl");
-//     }
-//     return epoll_fd;
-// }
-
-// void Server::acceptClientConnections(int epoll_fd)
-// {
-//     while (true)
-// 	{
-//         sockaddr_in client_addr;
-//         socklen_t client_addr_len = sizeof(client_addr);
-//         int client_fd = accept(serverSocket, (struct sockaddr *)&client_addr, &client_addr_len);
-//         if (client_fd == -1) {
-//             if ((errno == EAGAIN) || (errno == EWOULDBLOCK))
-// 			{
-//                 break;
-//             }
-// 			else
-// 			{
-//                 perror("accept");
-//                 break;
-//             }
-//         }
-//         make_socket_non_blocking(client_fd);
-//         struct epoll_event client_event;
-//         client_event.data.fd = client_fd;
-//         client_event.events = EPOLLIN | EPOLLET;
-//         if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, client_fd, &client_event) == -1)
-// 		{
-//             throw std::runtime_error("epoll_ctl");
-//         }
-//         std::cout << "Connection accepted" << std::endl;
-//     }
-// }
-
-// void Server::handleClientData(int client_fd)
-// {
-//     std::cout << "Data received" << std::endl;
-//     clientSocket = client_fd;
-//     receiveData();
-//     parseRequest();
-//     sendResponse();
-// }
-
-// void Server::handleEvents(int epoll_fd, std::vector<struct epoll_event>& events)
-// {
-//     while (true)
-// 	{
-//         int n = epoll_wait(epoll_fd, events.data(), MAX_EVENTS, -1);
-//         if (n == -1)
-// 		{
-//             throw std::runtime_error("epoll_wait");
-//         }
-//         for (int i = 0; i < n; ++i)
-// 		{
-//             if (events[i].events & (EPOLLERR | EPOLLHUP))
-// 			{
-//                 close(events[i].data.fd);
-//                 throw std::runtime_error("epoll error_event");
-//             }
-// 			else if (serverSocket == events[i].data.fd)
-// 			{
-//                 acceptClientConnections(epoll_fd);
-//             }
-// 			else
-// 			{
-//                 handleClientData(events[i].data.fd);
-//             }
-//         }
-//     }
-// }
-
-// void Server::acceptConnection()
-// {
-//     int epoll_fd = initializeEpoll();
-//     std::vector<struct epoll_event> events(MAX_EVENTS);
-//     handleEvents(epoll_fd, events);
-// }
-
-
-
 void Server::acceptConnection()
 {
-	int epoll_fd = epoll_create1(0);
+	epoll_fd = epoll_create1(0);
     if (epoll_fd == -1)
 	{
        throw std::runtime_error("epoll_create1");
@@ -173,23 +80,29 @@ void Server::acceptConnection()
 
 	std::vector<struct epoll_event> events(MAX_EVENTS);
 
-	while (true)
+	while (isServerRunning())
 	{
 		int n = epoll_wait(epoll_fd, events.data(), MAX_EVENTS, -1);
 		if (n == -1)
 		{
+			if (errno == EINTR)
+			{
+				continue;
+			}
 			throw std::runtime_error("epoll_wait");
 		}
-
 		int i = 0;
 		while (i < n)
 		{
-			if (events[i].events & (EPOLLERR | EPOLLHUP))
+			if (events[i].events & (EPOLLERR))
 			{
                // Handle error
                close(events[i].data.fd);
+			   std::cout << "Connection closed" << std::endl;
 			   throw std::runtime_error("epoll error_event");
             }
+			//more details on the error
+		
 			else if (serverSocket == events[i].data.fd)
 			{
 				while (true)

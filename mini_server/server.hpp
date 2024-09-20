@@ -16,10 +16,14 @@
 #include <sys/epoll.h>
 #include <fcntl.h>
 #include <vector>
+#include <csignal>
+#include <cstdlib>
+
 
 #define MAX_EVENTS 10
 
 extern std::map<std::string, std::string> mimeTypesMap_G;
+//extern bool serverRunning;
 
 typedef struct parser
 {
@@ -61,6 +65,7 @@ private:
 	void parse_first_line();
 	int serverSocket;
 	int clientSocket;
+	int epoll_fd;
 	std::string buffer;
 	parser request;
 	Response response;
@@ -75,7 +80,9 @@ std::string get_file_name(const std::string& file_path);
 void initializeMimeTypesMap();
 int make_socket_non_blocking(int sockfd);
 
-
+//signal handler
+void signalHandler(int signal);
+bool isServerRunning();
 
 //debuging and printing
 void print_map(std::map<std::string, std::string> const &m);
