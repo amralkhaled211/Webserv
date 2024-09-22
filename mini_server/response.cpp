@@ -23,8 +23,7 @@ void Server::read_file(std::string const &path)
 		}
 		response.status = "HTTP/1.1 200 OK\r\n";
 		response.contentType = "Content-Type: " + mimeTypesMap_G[file_extension] + ";" + "\r\n";
-		unsigned int content_len;
-		content_len = response.body.size();
+		unsigned int content_len = response.body.size();
 		response.contentLength = "Content-Length: " + intToString(content_len) + "\r\n";
 		file.close();
 	}
@@ -42,6 +41,10 @@ void Server::sendResponse()
 	{
 		// i still need to check if the the user did not pass any path
 		// i have to check with the nginx server how it handles the path
+		if (request.path == "/")
+		{
+			request.path = "/index.html";
+		}
 		read_file(root + request.path);
 	}
 	if (request.method == "POST") // this is not an important step, just checking if the Post wrok

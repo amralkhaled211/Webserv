@@ -1,26 +1,10 @@
-
 #include "server.hpp"
 
-#include "server.hpp"
-#include <csignal>
-#include <pthread.h>
-
-volatile bool serverRunning = true;
-pthread_mutex_t serverRunningMutex = PTHREAD_MUTEX_INITIALIZER;
+bool serverRunning = true;
 
 void signalHandler(int /* signum */)
 {
-    pthread_mutex_lock(&serverRunningMutex);
     serverRunning = false;
-    pthread_mutex_unlock(&serverRunningMutex);
-}
-
-bool isServerRunning()
-{
-    pthread_mutex_lock(&serverRunningMutex);
-    bool running = serverRunning;
-    pthread_mutex_unlock(&serverRunningMutex);
-    return running;
 }
 
 int main()

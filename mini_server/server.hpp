@@ -23,7 +23,7 @@
 #define MAX_EVENTS 10
 
 extern std::map<std::string, std::string> mimeTypesMap_G;
-//extern bool serverRunning;
+extern bool serverRunning ;
 
 typedef struct parser
 {
@@ -82,7 +82,6 @@ int make_socket_non_blocking(int sockfd);
 
 //signal handler
 void signalHandler(int signal);
-bool isServerRunning();
 
 //debuging and printing
 void print_map(std::map<std::string, std::string> const &m);
