@@ -1,5 +1,4 @@
 #pragma once 
-
 #include <sys/socket.h>
 #include <fstream>
 #include <string>
@@ -19,11 +18,7 @@
 #include <csignal>
 #include <cstdlib>
 
-
-#define MAX_EVENTS 10
-
 extern std::map<std::string, std::string> mimeTypesMap_G;
-extern bool serverRunning ;
 
 typedef struct parser
 {
@@ -42,46 +37,31 @@ typedef struct Response
 	std::string body;
 } Response;
 
-class Server
+class RequestHandler
 {
-public:
-	Server();
-	~Server();
-	void createSocket();
-	void bindSocket();
-	void listenSocket();
-	void acceptConnection();
-private:
-	int initializeEpoll();
-	void handleEvents(int epoll_fd, std::vector<struct epoll_event>& events);
-	void acceptClientConnections(int epoll_fd);
-	void handleClientData(int client_fd);
-	void read_file(std::string const &path);
-	void receiveData();
-	void parseRequest();
-	void sendResponse();
-	void notfound();
-	void parseHeaders();
-	void parse_first_line();
-	int serverSocket;
-	int clientSocket;
-	int epoll_fd;
-	std::string buffer;
+	public:
+		//RequestHandler();
+		//~RequestHandler();
+		void read_file(std::string const &path);
+		void receiveData(int clientSocket);
+		void parseRequest();
+		void sendResponse(int clientSocket);
+		void notfound();
+		void parseHeaders();
+		void parse_first_line();
+	private:
 	parser request;
 	Response response;
+	std::string buffer;
 };
 
-
-//utility functions for parsing
+//utility functions
 std::string intToString(int value);
 std::string deleteSpaces(std::string const &str);
 std::string get_file_extension(const std::string& file_path);
 std::string get_file_name(const std::string& file_path);
-void initializeMimeTypesMap();
-int make_socket_non_blocking(int sockfd);
 
-//signal handler
-void signalHandler(int signal);
-
-//debuging and printing
+//debugging functions
 void print_map(std::map<std::string, std::string> const &m);
+
+void initializeMimeTypesMap();

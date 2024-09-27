@@ -1,25 +1,9 @@
-#include "server.hpp"
-
-int make_socket_non_blocking(int sockfd)
-{
-    int flags = fcntl(sockfd, F_GETFL, 0);
-    if (flags == -1) {
-        perror("fcntl");
-        return -1;
-    }
-
-    flags |= O_NONBLOCK;
-    if (fcntl(sockfd, F_SETFL, flags) == -1) {
-        perror("fcntl");
-        return -1;
-    }
-    return 0;
-}
-
+#include "Server.hpp"
 
 Server::Server()
 {
 	serverSocket = 0;
+    //serverSocket2 = 1;
 	clientSocket = 0;
 }
 
@@ -43,6 +27,11 @@ Server::~Server()
         // std::cout << "Closing epoll file descriptor" << std::endl;
 		close(epoll_fd);
 	}
+    // if (serverSocket2 != -1)
+    // {
+    //     // std::cout << "Closing server socket" << std::endl;
+    //     close(serverSocket2);
+    // }
 }
 
 void Server::createSocket()
@@ -83,7 +72,7 @@ void Server::listenSocket()
 	}
 }
 
-void Server::acceptConnection()// with this function I am handling only one socket we might need to change that later to handle multiple sockets
+void Server::acceptConnection()
 {
     epoll_fd = epoll_create1(0);
     if (epoll_fd == -1)
@@ -91,15 +80,24 @@ void Server::acceptConnection()// with this function I am handling only one sock
         throw std::runtime_error("epoll_create1");
     }
 
-    struct epoll_event event;
-    event.data.fd = serverSocket;
-    event.events = EPOLLIN | EPOLLET;
+    std::vector<int> serverSockets;
+    serverSockets.push_back(serverSocket);
+    //serverSockets.push_back(serverSocket2);
 
-    if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, serverSocket, &event) == -1)
+    for (std::vector<int>::iterator it = serverSockets.begin(); it != serverSockets.end(); ++it)
     {
-        close(epoll_fd);
-        throw std::runtime_error("epoll_ctl");
+        int sock = *it;
+        struct epoll_event event;
+        event.data.fd = sock;
+        event.events = EPOLLIN | EPOLLET;
+
+        if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, sock, &event) == -1)
+        {
+            close(epoll_fd);
+            throw std::runtime_error("epoll_ctl");
+        }
     }
+
 
     std::vector<struct epoll_event> events(MAX_EVENTS);
 
@@ -108,7 +106,6 @@ void Server::acceptConnection()// with this function I am handling only one sock
         int n = epoll_wait(epoll_fd, events.data(), MAX_EVENTS, -1);
         if (n == -1)
         {
-            // this is for handling signals it might be unnecessary step 
             if (errno == EINTR)
             {
                 continue;
@@ -120,17 +117,15 @@ void Server::acceptConnection()// with this function I am handling only one sock
         {
             if (events[i].events & (EPOLLERR | EPOLLHUP | EPOLLRDHUP))
             {
-                // Handle error
                 close(events[i].data.fd);
-                std::cout << "Connecion closed" << std::endl;
+                std::cout << "Connection closed" << std::endl;
                 continue;
             }
-            if (serverSocket == events[i].data.fd)
+            if (std::find(serverSockets.begin(), serverSockets.end(), events[i].data.fd) != serverSockets.end())
             {
-                std::cout << "i ; " << i << std::endl;
                 while (true)
                 {
-                    int client_fd = accept(serverSocket, NULL, NULL);
+                    int client_fd = accept(events[i].data.fd, NULL, NULL);
                     if (client_fd == -1)
                     {
                         if ((errno == EAGAIN) || (errno == EWOULDBLOCK))
@@ -160,23 +155,88 @@ void Server::acceptConnection()// with this function I am handling only one sock
             {
                 std::cout << "Data received" << std::endl;
                 clientSocket = events[i].data.fd;
-                receiveData();
-                parseRequest();
-                sendResponse();
+                requestHandle.receiveData(clientSocket);
+                requestHandle.parseRequest();
+                requestHandle.sendResponse(clientSocket);
             }
         }
     }
 }
 
-void Server::receiveData()
+
+int make_socket_non_blocking(int sockfd)
 {
-    char buffer[1024] = {0};
-    int bytesReceived = recv(clientSocket, buffer, sizeof(buffer), 0);
-    if (bytesReceived < 0)
-    {
-        close(clientSocket);
-        throw std::runtime_error("Receiving failed");
+    int flags = fcntl(sockfd, F_GETFL, 0);
+    if (flags == -1) {
+        perror("fcntl");
+        return -1;
     }
-// 	this->buffer = buffer; this would copy the whole buffer this might cause storing carbege data if the buffer is not full
-    this->buffer.assign(buffer, bytesReceived); // this would copy only the data that was received
+
+    flags |= O_NONBLOCK;
+    if (fcntl(sockfd, F_SETFL, flags) == -1) {
+        perror("fcntl");
+        return -1;
+    }
+    return 0;
 }
+
+void Server::run()
+{
+    signal(SIGINT, signalHandler);
+    signal(SIGTERM, signalHandler);
+    try
+    {
+        createSocket();
+        bindSocket();
+        listenSocket();
+        //createSocket2();
+        //bindSocket2();
+        //listenSocket2();
+        acceptConnection();
+    }
+    catch (std::exception &e)
+    {
+        std::cerr << "Exception: " << e.what() << std::endl;
+    }
+}
+
+// creating another socket for testing purposes
+
+// void Server::createSocket2()
+// {
+// 	serverSocket2 = socket(AF_INET, SOCK_STREAM, 0);
+// 	if (serverSocket2 < 0)
+// 	{
+// 		throw std::runtime_error("Socket creation failed"); 
+// 	}
+//     make_socket_non_blocking(serverSocket2);
+// }
+
+// void Server::bindSocket2()
+// {
+//     //this function would prevent the "Address already in use" && "binding failed" error
+//     int opt = 1;
+//     if (setsockopt(serverSocket2, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) < 0)
+//     {
+//         throw std::runtime_error("setsockopt(SO_REUSEADDR) failed");
+//     }
+
+
+// 	sockaddr_in serverAddress;
+// 	serverAddress.sin_family = AF_INET;
+// 	serverAddress.sin_port = htons(8081);
+// 	serverAddress.sin_addr.s_addr = INADDR_ANY;
+// 	if (bind(serverSocket2, (struct sockaddr*)&serverAddress, sizeof(serverAddress)) < 0)
+// 	{
+// 		throw std::runtime_error("Binding failed");
+// 	}
+// }
+
+
+// void Server::listenSocket2()
+// {
+// 	if (listen(serverSocket2, 5) < 0)
+// 	{
+// 		throw std::runtime_error("Listening failed");
+// 	}
+// }
