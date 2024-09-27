@@ -1,0 +1,77 @@
+#include "Parser.hpp"
+
+Parser::Parser(std::string& fileName) {}
+Parser::Parser(const Parser& other) {}
+Parser&	Parser::operator=(const Parser& other) {}
+Parser::~Parser() {}
+
+
+static bool wrongPostfix(std::string& fileName) {
+	size_t	pfLen = std::string(POSTFIX).size();
+	size_t	fnLen = fileName.size();
+
+	if (fnLen <= pfLen)
+		return false;
+	if (fileName.substr(fnLen - pfLen, pfLen) == POSTFIX)
+		return true;
+	return false;
+}
+
+
+static int	checkSemicolon(std::string& line) {
+	if (line.find(';') == std::string::npos)
+		return INVALID;
+	if (line.find_last_of(';') == line.size() - 1)
+		return VALID;
+	return INVALID;
+	// MISSING CASES --> Whitespace or comment after semicolon
+}
+
+static bool	isKeyword(std::string& line) {
+	std::stringstream	ss(line);
+
+	std::vector<std::string>	array;
+	std::string					word;
+
+	while (ss >> word) {
+		array.push_back(word);
+	}
+
+	if (array.size() > 2)
+		return false;
+
+	if (array[0] == "server" || array[0] == "location" || array[0] == "{" || array[0] == "}")
+		return true;
+
+	// possible check for array[1] to be anything other then "{" "}"
+	return false;
+}
+
+int	Parser::_generalErrors(std::string fileName) {
+	if (wrongPostfix(fileName))
+		throw std::runtime_error("Wrong Postfix for Config File");
+
+	std::ifstream	file(fileName.c_str());
+	if (!file.is_open())
+		throw std::runtime_error("Failed to Open File");
+
+	std::string	line;
+	if (std::getline(file, line))
+		throw std::runtime_error("Config File is Empty");
+	
+	while (std::getline(file, line)) {
+		if (line.empty())
+			continue;
+		if (checkSemicolon(line) == INVALID && !isKeyword(line))
+			throw std::runtime_error("Missing ';' in Config File");
+		if (checkSemicolon(line) == VALID && isKeyword(line))
+			throw std::runtime_error("Invalid Positioning of ';'");
+		
+		
+
+
+	}
+	
+	file.close();
+	return VALID;
+}

@@ -1,6 +1,6 @@
-NAME	= server
+NAME	= Server
 
-SRC	= main.cpp server.cpp parser_utils.cpp types.cpp response.cpp request.cpp
+SRC	= main.cpp Server.cpp parser_utils.cpp types.cpp  RequestHandler.cpp 
 
 OBJ_DIR = obj
 OBJ	= $(SRC:%.cpp=$(OBJ_DIR)/%.o)

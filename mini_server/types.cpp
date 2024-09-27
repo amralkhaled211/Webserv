@@ -1,8 +1,9 @@
-#include "server.hpp"
+#include "RequestHandler.hpp"
 
 std::map<std::string, std::string> mimeTypesMap_G;
 
-void initializeMimeTypesMap() {
+void initializeMimeTypesMap()
+{
     mimeTypesMap_G["html"] = "text/html";
     mimeTypesMap_G["htm"] = "text/html";
     mimeTypesMap_G["shtml"] = "text/html";

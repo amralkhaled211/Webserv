@@ -49,6 +49,8 @@
 		"streambuf": "cpp",
 		"typeinfo": "cpp",
 		"*.cpp ": "cpp",
-		"map": "cpp"
+		"map": "cpp",
+		"csignal": "cpp",
+		"ranges": "cpp"
 	}
 }

@@ -1,4 +1,4 @@
 # WEBSERV
-Creating a webserver in pure c++
+Creating a http webserver in c++
 
 # The Project not done yet
