@@ -11,10 +11,14 @@ int main(int ac, char* av[])
 {
     try
     {
-        Server server;
-
-        if (ac != 2 && Parser::_generalErrors(std::string(av[1])) == INVALID)
+		std::string	filename(av[1]);
+        if (ac != 2 && Parser::_generalErrors(filename) == INVALID)
             throw(std::runtime_error("Error: Argument Count Not Two"));
+
+        Parser	httpBlock(filename);
+
+
+        Server	server;
         initializeMimeTypesMap();
         server.run();
     }
