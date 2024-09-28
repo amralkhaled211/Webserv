@@ -9,43 +9,6 @@
 #include <fstream>
 #include <sstream>
 
-/*
-	one config file;
-	multiple server blocks;
-	possible blocks:
-		server
-		location
-		? only these two?
-		CGIBlock?
-
-	
-	possible directives:
-		listen
-		server_name
-		root
-		index
-		error_page
-		allowed_methods
-
-	possible location directives:
-		alias ? unsure
-		autoindex
-		allowed_methods
-		error_page
-		index
-		root
-
-	possible server directives:
-		listen
-		server_name
-		root
-		index
-		error_page
-		allowed_methods
-		location
-	
-*/
-
 #define INVALID		0
 #define	VALID		1
 #define POSTFIX		".conf"
@@ -56,7 +19,7 @@ class Parser
 	private:
 		std::string				_configFile;
 		std::vector<Blocks>		_serverVec;
-	
+
 		Parser();
 
 	public:
@@ -69,27 +32,27 @@ class Parser
 		// static function to check for _generallErrors -> postfix, emtpy file, no server block, 
 			// lines with no semicolon (is it possible to have one broken into two?), ...
 		static int	_generalErrors(std::string fileName);
-		// next we go into the Constructor and start _indepthCheck -> 
+		// next we go into the Constructor and start _indepthCheck, as we do that we fill the _serverVec
 		// _indepthCheck();
 };
 
-class Blocks
+class Blocks // parent
 {
 	private:
-		std::string block_name; // block_type
-		std::map<std::string, std::string> directives;
+		std::string							block_name; // block_type: Server & Location
+		std::map<std::string, std::string>	directives; // 
 	
+
 	public:
+	
 
 };
 
 
-
-class ServerBlock : public Blocks
+// only first idea, we have to see if it really makes sense ...
+class ServerBlock : public Blocks // gotta see what we put in Blocks (parent) and what in ServerBlock / LocationBlock (child)
 {
 };
-
-
 
 class LocationBlock : public Blocks
 {

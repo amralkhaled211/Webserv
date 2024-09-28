@@ -6,7 +6,7 @@ Parser&	Parser::operator=(const Parser& other) {}
 Parser::~Parser() {}
 
 
-static bool wrongPostfix(std::string& fileName) {
+static bool invalidPostfix(std::string& fileName) {
 	size_t	pfLen = std::string(POSTFIX).size();
 	size_t	fnLen = fileName.size();
 
@@ -47,31 +47,44 @@ static bool	isKeyword(std::string& line) {
 	return false;
 }
 
+static bool	httpCheck(std::string& line) {
+	std::stringstream	ss(line);
+	std::string			token;
+
+	ss >> token;
+	if (!token.compare("http") || !token.compare("http{"))
+		return true;
+	return false;
+}
+
 int	Parser::_generalErrors(std::string fileName) {
-	if (wrongPostfix(fileName))
+
+	if (invalidPostfix(fileName))
 		throw std::runtime_error("Wrong Postfix for Config File");
 
 	std::ifstream	file(fileName.c_str());
 	if (!file.is_open())
 		throw std::runtime_error("Failed to Open File");
 
-	std::string	line;
-	if (std::getline(file, line))
-		throw std::runtime_error("Config File is Empty");
-	
-	while (std::getline(file, line)) {
-		if (line.empty())
-			continue;
-		if (checkSemicolon(line) == INVALID && !isKeyword(line))
-			throw std::runtime_error("Missing ';' in Config File");
-		if (checkSemicolon(line) == VALID && isKeyword(line))
-			throw std::runtime_error("Invalid Positioning of ';'");
-		
-		
+	try {
+		std::string	line;
+		if (std::getline(file, line))
+			throw std::runtime_error("Config File is Empty");
 
+		do {
+			if (line.empty())
+				continue;
+			if (!httpCheck(line))
+				throw std::runtime_error("Not Embeded in http Block");
+			else
+				break;
+		} while (std::getline(file, line));
 
+		file.close();
 	}
-	
-	file.close();
+	catch (const std::exception& e) {
+		file.close();
+		throw;
+	}
 	return VALID;
 }
