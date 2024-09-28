@@ -1,10 +1,27 @@
 #include "Parser.hpp"
 
-Parser::Parser(std::string& fileName) {}
-Parser::Parser(const Parser& other) {}
-Parser&	Parser::operator=(const Parser& other) {}
-Parser::~Parser() {}
+Parser::Parser(std::string& fileName) {
+	// fill serverVec
+	this->_configFile = fileName;
+}
 
+Parser::Parser(const Parser& other) {
+	*this = other;
+}
+
+Parser&	Parser::operator=(const Parser& other) {
+	if (this == &other)
+		return *this;
+	this->_configFile = other._configFile;
+	this->_serverVec = other._serverVec;
+	return *this;
+}
+
+Parser::~Parser() {
+	// delete stuff, if needed, hopefully not needed
+}
+
+/* these functions are not used at the moment */
 
 static bool invalidPostfix(std::string& fileName) {
 	size_t	pfLen = std::string(POSTFIX).size();
@@ -16,7 +33,6 @@ static bool invalidPostfix(std::string& fileName) {
 		return true;
 	return false;
 }
-
 
 static int	checkSemicolon(std::string& line) {
 	if (line.find(';') == std::string::npos)
@@ -47,6 +63,8 @@ static bool	isKeyword(std::string& line) {
 	return false;
 }
 
+/* the functions from here onwards are used again */
+
 static bool	httpCheck(std::string& line) {
 	std::stringstream	ss(line);
 	std::string			token;
@@ -57,7 +75,7 @@ static bool	httpCheck(std::string& line) {
 	return false;
 }
 
-int	Parser::_generalErrors(std::string fileName) {
+int		Parser::_generalErrors(std::string& fileName) {
 
 	if (invalidPostfix(fileName))
 		throw std::runtime_error("Wrong Postfix for Config File");
