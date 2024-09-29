@@ -17,8 +17,8 @@
 class Parser // http Block basically
 {
 	private:
-		std::string				_configFile;
-		std::vector<Blocks>		_serverVec; // these will always be ServerBlocks as elements, and those will have a vector with LocationBlocks as elements
+		std::string						_configFile;
+		std::vector<ServerBlock>		_serverVec; // these will always be ServerBlocks as elements, and those will have a vector with LocationBlocks as elements
 
 		Parser();
 
@@ -41,7 +41,7 @@ class Blocks // parent // the purpose of this is just to not have class with the
 	protected:
 		std::string							_block_name; // block_type: Server & Location
 		// all the directives, that are in both Server and Location
-		//	
+		//	root, error_page, index, autoindex, return, error_page
 		// std::map<std::string, std::string>	directives; // I think we need the directives individually
 
 	public:
