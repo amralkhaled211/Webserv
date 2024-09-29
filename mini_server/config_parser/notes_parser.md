@@ -13,46 +13,50 @@
 ## structure of blocks and directives
 
 	one config file:
-		multiple server blocks;
+		multiple server blocks in one http block;
 		possible blocks:
-			http --> how many is valid in one conf file?
-				server --> does it always belong in a http block? is there a minimum of one for server block?
+			http --> how many is valid in one conf file? only one is valid, nginx gives a dublicate error otherwise
+				server --> does it always belong in a http block? is there a minimum of one for server block? yes (server always inside a http block), no (no minimum, also possible w/o any server block)!
 					location --> does it always belong in a server block? is it required for valid conf file?
+						location (nesting possible)
 			? only these three?
 			CGIBlock, too?
-				
+
 
 		possible directives:
 			-listen
 			-server_name
 			--root
-			error_page --> must check whether in both blocks
-			index --> must check whether in both blocks
+			-alias (maybe not mandatory), only location
 			-allowed_methods
 			-client_max_body_size
+			error_page --> must check whether in both blocks
+			--index --> must check whether in both blocks, and purpose
+			--autoindex --> must check whether in both blocks, and purpose
+			--return
+
+
 
 		possible location directives:
 			allowed_methods
 			root
 			alias (maybe not mandatory)
 			error_page
-			index
+			index --> specifies the file(s) to server for current location (overrides definitions from server block)
 			autoindex
 
 		possible server directives:
 			listen port (listening to)
-			host IP-Address (listening to)
-			server_name
+			server_name (host IP-Address)
 			root
-			index --> purpose unclear
+			index --> specifies the file(s) to server for current server block
+			autoindex
 			error_page
 			allowed_methods
 			location
 			client_max_body_size
+			return 304 /
 
-		all directives:
-			listen
-			server
 
 
 # syntax rules overview
@@ -60,16 +64,24 @@
 	There must be a http block to define the protocol in use for the server(s) inside.
 
 	the syntax is not strict:
-	* everything (all directives and blocks) be in just one line.
+	* everything (all directives and blocks) can be in just one line.
 	* whitespace is only required for the directive keys and values to be separated.
 	* the rest (such as {, }, ;) can, BUT doesn’t need any whitespace separation form anything.
-	* newlines are treated similar to whitespaces
+	* newlines are treated similar to whitespaces, directive key and value can be separated by newline(s)
 	* so newlines are allowed before a ';' -> a directive doesn't need to be followed by a ';' on the same line, but can also at the next line
+
 	
+	
+	Dublicates:
+	* multiple http blocks --> duplicate error
 	* no dublicates of location block with the same path allowed (2 times --> location /hello)
 	* in case multiple servers with the same host (server_name) and port (listen), nginx will only give a warning and take the first as default, the others will NOT be used
+	* multiple root in server/location block --> duplicate error
+	* multiple listen in server block --> duplicate error
+
+	Not Existing:
 	* in case of no location in a server block, it takes the root from the server
-		* if no root in server: nginx default page shows up
+		* if also no root in server: nginx default page shows up
 			* how to interpret that?
 	* in case no server_name in server block
 		* it also only shows the nginx default page
@@ -79,8 +91,13 @@
 		* acts a bit weird
 			* sometimes (location /) without '/' at the end, works, sometimes (location /hello) not
 			* with '/' at the end it always works
-	
+		* only allowed in the location block
+
 	* check order
+
+	* what is allowed in http block, except for server block?
+		* allowed: root, index, autoindex
+		* not allowed: location block, server_name, listen, return, 
 
 
 
@@ -98,12 +115,40 @@
 
 # TASKS
 ## TODO
+	[] Figure out meaning/use case of each directive
 	[] Figure out which directives are used in the server block
 	[] Figure out which directives are used in the location block
 	[] Which are used in both
+	[] Do other groups do the syntax like in NGINX?
+	[] Figure out CGI
 	[] _indepthErrors()
 	[] _fillBlocks()
 
 ## DONE
 	[x] Basic Structure for Parsing
 	[x] _generallErrors()
+
+
+
+
+# INDIVIDUAL DIRECTIVES
+## error_page
+### explanation:
+	The first part (404, 500, etc.) indicates the error codes for which the directive applies.
+	The second part (/custom_404.html, /50x.html, /error_handler.php) indicates the URI or file to be served when that error occurs.
+	The = prefix can be used to change the response code when serving the error page. For example, error_page 404 =200 /error_handler.php; will serve /error_handler.php and return an HTTP 200 status instead of 404.
+
+	* can be used globally in server block
+		--> would apply to all location blocks, unless overridden there
+	* if used in a location block, it only applies there 
+
+### Example 1: Serve a custom 404 page
+	error_page 404 /custom_404.html;
+
+### Example 2: Handle multiple error codes
+	error_page 500 502 503 504 /50x.html;
+
+### Example 3: Redirect errors to another location
+	error_page 404 = /error_handler.php;
+
+##
