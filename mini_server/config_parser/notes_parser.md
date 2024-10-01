@@ -28,12 +28,13 @@
 			-server_name
 			--root
 			-alias (maybe not mandatory), only location
-			-allowed_methods
+			-allowed_methods (limit_except in nginx)
 			-client_max_body_size
-			error_page --> must check whether in both blocks
+			--error_page
 			--index --> must check whether in both blocks, and purpose
 			--autoindex --> must check whether in both blocks, and purpose
 			--return
+			--try_files
 
 
 
@@ -44,6 +45,7 @@
 			error_page
 			index --> specifies the file(s) to server for current location (overrides definitions from server block)
 			autoindex
+			try_files
 
 		possible server directives:
 			listen port (listening to)
@@ -55,7 +57,8 @@
 			allowed_methods
 			location
 			client_max_body_size
-			return 304 /
+			return 307 / --> nginx accepts 307 to redirect, other codes would not redirect
+			try_files
 
 
 
@@ -119,9 +122,13 @@
 	[] Figure out which directives are used in the server block
 	[] Figure out which directives are used in the location block
 	[] Which are used in both
-	[] Do other groups do the syntax like in NGINX?
 	[] Figure out CGI
-	[] _indepthErrors()
+	[] Approach to parse
+		[] delete all comments (#)
+		[] put everything in one string
+		[] replace the '\n' with ' '
+		[] tokenize
+			* 
 	[] _fillBlocks()
 
 ## DONE

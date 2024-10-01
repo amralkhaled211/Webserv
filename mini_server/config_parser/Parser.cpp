@@ -21,8 +21,6 @@ Parser::~Parser() {
 	// delete stuff, if needed, hopefully not needed
 }
 
-/* these functions are not used at the moment */
-
 static bool invalidPostfix(std::string& fileName) {
 	size_t	pfLen = std::string(POSTFIX).size();
 	size_t	fnLen = fileName.size();
@@ -33,6 +31,8 @@ static bool invalidPostfix(std::string& fileName) {
 		return true;
 	return false;
 }
+
+/* these functions are not used at the moment */
 
 static int	checkSemicolon(std::string& line) {
 	if (line.find(';') == std::string::npos)
@@ -69,8 +69,11 @@ static bool	httpCheck(std::string& line) {
 	std::stringstream	ss(line);
 	std::string			token;
 
+	std::getline(ss, token, '{'); // '{' is set as delimeter
+	ss.clear();
+	ss << token;
 	ss >> token;
-	if (!token.compare("http") || !token.compare("http{"))
+	if (!token.compare("http") && ss.str().empty())
 		return true;
 	return false;
 }

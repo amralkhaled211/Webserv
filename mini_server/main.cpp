@@ -7,7 +7,7 @@ void signalHandler(int /* signum */)
     serverRunning = false;
 }
 
-int main(int ac, char* av[])
+int main(int ac, char* av[] /*, char* env[] */)
 {
     try
     {

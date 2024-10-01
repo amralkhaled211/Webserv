@@ -9,6 +9,8 @@
 #include <fstream>
 #include <sstream>
 
+#include "ServerBlock.hpp"
+
 #define INVALID		0
 #define	VALID		1
 #define POSTFIX		".conf"
@@ -34,35 +36,4 @@ class Parser // http Block basically
 		static int	_generalErrors(std::string& fileName);
 		// next we go into the Constructor and start _indepthCheck, as we do that we fill the _serverVec
 		// _indepthCheck();
-};
-
-class Blocks // parent // the purpose of this is just to not have class with the same attibutes and methods, we won't do any Polymorphism, just Inheritence
-{
-	protected:
-		std::string							_block_name; // block_type: Server & Location
-		// all the directives, that are in both Server and Location
-		//	root, error_page, index, autoindex, return, error_page
-		// std::map<std::string, std::string>	directives; // I think we need the directives individually
-
-	public:
-
-
-};
-
-
-// only first idea, we have to see if it really makes sense ...
-class ServerBlock : public Blocks // gotta see what we put in Blocks (parent) and what in ServerBlock / LocationBlock (child)
-{
-	private:
-		std::vector<LocationBlock>	_locationVec;
-		// directives, that are only in server
-		unsigned int	_listen;
-		std::string		_serverName;
-};
-
-class LocationBlock : public Blocks
-{
-	private:
-		std::string		_path;
-		// directives, that are inly in location
 };
