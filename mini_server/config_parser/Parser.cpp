@@ -1,5 +1,7 @@
 #include "Parser.hpp"
 
+Parser::Parser() {};
+
 Parser::Parser(std::string& fileName) {
 	// fill serverVec
 	this->_configFile = fileName;
@@ -81,25 +83,32 @@ static bool	httpCheck(std::string& line) {
 int		Parser::_generalErrors(std::string& fileName) {
 
 	if (invalidPostfix(fileName))
-		throw std::runtime_error("Wrong Postfix for Config File");
+		throw std::runtime_error("Invalid Postfix for Config File");
 
 	std::ifstream	file(fileName.c_str());
-	if (!file.is_open())
+	if (!file.fail())
 		throw std::runtime_error("Failed to Open File");
 
 	try {
 		std::string	line;
-		if (std::getline(file, line))
+		if (!std::getline(file, line))
 			throw std::runtime_error("Config File is Empty");
 
 		do {
-			if (line.empty())
-				continue;
+			if (line.empty()) {
+				if (!std::getline(file, line))
+					throw std::runtime_error("Config File is Empty (only empty lines)");
+				else
+					continue;
+			}
 			if (!httpCheck(line))
 				throw std::runtime_error("Not Embeded in http Block");
 			else
 				break;
 		} while (std::getline(file, line));
+
+		if (line.empty())
+			throw std::runtime_error("Config File is Empty (only empty lines)");
 
 		file.close();
 	}
@@ -109,3 +118,60 @@ int		Parser::_generalErrors(std::string& fileName) {
 	}
 	return VALID;
 }
+
+
+
+void		Parser::_parser() {
+	// prep
+	this->_configToContent();
+	this->_removeExcessSpace();
+
+	// parsing
+}
+
+/*			PREP FOR PARSING			*/
+
+void		Parser::_configToContent() {
+	std::ifstream	infileConfig(_configFile.c_str());
+	std::string		line;
+	size_t			beginOfComment;
+
+	try
+	{
+		if (!std::getline(infileConfig, line))
+			throw std::runtime_error("Empty File");
+
+		do {
+			if (line.empty()) {
+				if (std::getline(infileConfig, line))
+					continue;
+				else
+					break;
+			}
+
+			beginOfComment = line.find_first_of('#'); // need to also check whether inside of quote
+
+			if (beginOfComment != std::string::npos) 
+				_content.append(line.substr(0, beginOfComment));
+			else
+				_content.append(line);
+
+			_content.append(" "); // separate lines with Spaces, excess space will be removed later
+		} while (std::getline(infileConfig, line));
+
+		if (_content.size() < 6) // define this minimum later more accurate
+			throw std::runtime_error("Not Enough Content");
+	}
+	catch(const std::exception& e)
+	{
+		throw;
+	}
+}
+
+// excess spaces: before and after 1) block names (http, server, location), 2) semicolon (;), 3) ’{’ & '}'
+void		Parser::_removeExcessSpace() {
+
+
+
+}
+

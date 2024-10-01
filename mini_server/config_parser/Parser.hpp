@@ -21,6 +21,7 @@ class Parser // http Block basically
 	private:
 		std::string						_configFile;
 		std::vector<ServerBlock>		_serverVec; // these will always be ServerBlocks as elements, and those will have a vector with LocationBlocks as elements
+		std::string						_content;
 
 		Parser();
 
@@ -36,4 +37,18 @@ class Parser // http Block basically
 		static int	_generalErrors(std::string& fileName);
 		// next we go into the Constructor and start _indepthCheck, as we do that we fill the _serverVec
 		// _indepthCheck();
+
+		void		_parser(); //
+
+		/*			PREP FOR PARSING			*/
+		void		_configToContent(); // Content is basically everything compressed in one string // other name: _fileContentToOneStr(), _fileToStr()
+										// !!! in case of comments (#), skip rest of line (don't fill it inside _content) and coninue with the next line !!!
+		void		_removeExcessSpace(); // excess spaces: before and after 1) block names (http, server, location), 2) semicolon (;), 3) ’{’ & '}'
+
+
+		/*			ACTUAL PARSING				*/
+		
+
+
+
 };
