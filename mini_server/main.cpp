@@ -15,7 +15,8 @@ int main(int ac, char* av[] /*, char* env[] */)
         if (ac != 2 && Parser::_generalErrors(filename) == INVALID)
             throw(std::runtime_error("Error: Argument Count Not Two"));
 
-        Parser	httpBlock(filename);
+        Parser	httpBlock(filename); // other name: config
+        httpBlock._parser();
 
 
         Server	server;
