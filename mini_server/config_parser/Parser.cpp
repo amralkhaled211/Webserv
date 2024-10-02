@@ -99,13 +99,9 @@ int		Parser::_generalErrors(std::string fileName) {
 			throw std::runtime_error("Config File is Empty");
 
 		do {
-			if (line.empty() || line.find_first_not_of(WHITESPACE) == std::string::npos) {
-				// if (!std::getline(file, line))
-				// 	throw std::runtime_error("Config File is Empty (only empty lines)");
-				// else
-
+			if (line.empty() || line.find_first_not_of(WHITESPACE) == std::string::npos)
 				continue;
-			}
+
 			if (!httpCheck(line))
 				throw std::runtime_error("Not Embeded in http Block");
 			else
@@ -129,7 +125,7 @@ int		Parser::_generalErrors(std::string fileName) {
 void		Parser::_parser() {
 	// prep
 	this->_configToContent();
-	// this->_removeExcessSpace();
+	this->_removeExcessSpace();
 
 	// parsing
 }
@@ -155,15 +151,8 @@ void		Parser::_configToContent() {
 			throw std::runtime_error("Empty File");
 
 		do {
-			if (line.empty() || line.find_first_not_of(WHITESPACE) == std::string::npos) {
-				/* if (std::getline(infileConfig, line)) {
-					std::cerr << "After Empty Line: " << line << std::endl;
-					continue;
-				}
-				else
-					break; */
+			if (line.empty() || line.find_first_not_of(WHITESPACE) == std::string::npos)
 				continue;
-			}
 
 			while (line.find('\t') != std::string::npos)
 				line.replace(line.find('\t'), 1, " ");
@@ -195,24 +184,36 @@ void		Parser::_removeExcessSpace() {
 	std::string			newContent;
 	std::stringstream	ss2; // will change name later
 	std::string			tokenA; // will change name later
-	std::string			token;
+	std::string			tokenZ("");
 	// size_t				httpCounter = 0; // , serverCounter = 0, locationCounter = 0;
+
+	bool				addSpaceBefore = false;
+	bool				addSpaceAfter = false;
+	bool				addedSpaceLast = false;
 
 	// std::getline(ss, tokenA, ' ')
 	while (ss >> tokenA) {
 		// check does it start with '{', '}' or ';'
-			// --> remove excess space before
-		if (std::string("{};").find(tokenA[0])) {
+			// --> remove excess space before --> append tokenA without adding space
+
+		addSpaceBefore = (std::string("{};").find(tokenA[0]) != std::string::npos);
+		addSpaceAfter = (std::string("{};").find(tokenA[tokenA.size() - 1]) != std::string::npos);
+
+		if (addSpaceBefore && addedSpaceLast) {
+			newContent.append(" ");
 			newContent.append(tokenA);
-		}
+		} else
+			newContent.append(tokenA);
+
+		if (addSpaceAfter)
+
+		
+		tokenZ = tokenA;
+		addedSpaceLast = addSpaceAfter;
 
 		// check does it end with '{', '}' or ';'
 			// --> remove excess space after
 			// else --> 
-
-		if (std::string("{};").find(tokenA[tokenA.size() - 1])) { // size() should not output 0 here --> still will test
-			newContent.append(tokenA);
-		}
 
 		/* ss2.clear();
 		ss2 << tokenA;
