@@ -15,7 +15,7 @@ Parser&	Parser::operator=(const Parser& other) {
 	if (this == &other)
 		return *this;
 	this->_configFile = other._configFile;
-	this->_serverVec = other._serverVec;
+	// this->_serverVec = other._serverVec;
 	return *this;
 }
 
@@ -28,10 +28,12 @@ static bool invalidPostfix(std::string& fileName) {
 	size_t	fnLen = fileName.size();
 
 	if (fnLen <= pfLen)
-		return false;
-	if (fileName.substr(fnLen - pfLen, pfLen) == POSTFIX)
 		return true;
-	return false;
+
+	if (fileName.substr(fnLen - pfLen, pfLen) == POSTFIX)
+		return false;
+
+	return true;
 }
 
 /* these functions are not used at the moment */
@@ -73,20 +75,22 @@ static bool	httpCheck(std::string& line) {
 
 	std::getline(ss, token, '{'); // '{' is set as delimeter
 	ss.clear();
+	ss.str("");
 	ss << token;
 	ss >> token;
-	if (!token.compare("http") && ss.str().empty())
+	if (!token.compare("http") && !(ss >> token))
 		return true;
+
 	return false;
 }
 
-int		Parser::_generalErrors(std::string& fileName) {
+int		Parser::_generalErrors(std::string fileName) {
 
 	if (invalidPostfix(fileName))
 		throw std::runtime_error("Invalid Postfix for Config File");
 
 	std::ifstream	file(fileName.c_str());
-	if (!file.fail())
+	if (file.fail())
 		throw std::runtime_error("Failed to Open File");
 
 	try {
@@ -95,11 +99,12 @@ int		Parser::_generalErrors(std::string& fileName) {
 			throw std::runtime_error("Config File is Empty");
 
 		do {
-			if (line.empty()) {
-				if (!std::getline(file, line))
-					throw std::runtime_error("Config File is Empty (only empty lines)");
-				else
-					continue;
+			if (line.empty() || line.find_first_not_of(WHITESPACE) == std::string::npos) {
+				// if (!std::getline(file, line))
+				// 	throw std::runtime_error("Config File is Empty (only empty lines)");
+				// else
+
+				continue;
 			}
 			if (!httpCheck(line))
 				throw std::runtime_error("Not Embeded in http Block");
@@ -124,12 +129,20 @@ int		Parser::_generalErrors(std::string& fileName) {
 void		Parser::_parser() {
 	// prep
 	this->_configToContent();
-	this->_removeExcessSpace();
+	// this->_removeExcessSpace();
 
 	// parsing
 }
 
 /*			PREP FOR PARSING			*/
+
+size_t	amountBegSpaces(std::string& line) { // utils --> returns amount of spaces at the beginning of a line
+	size_t	amount = 0;
+
+	while (line[amount] == ' ')
+		amount++;
+	return amount;
+}
 
 void		Parser::_configToContent() {
 	std::ifstream	infileConfig(_configFile.c_str());
@@ -142,23 +155,25 @@ void		Parser::_configToContent() {
 			throw std::runtime_error("Empty File");
 
 		do {
-			if (line.empty() || line.find_first_not_of(WHITESPACE) == std::string::npos) { // sec condition is for lines with only spaces
-				if (std::getline(infileConfig, line))
+			if (line.empty() || line.find_first_not_of(WHITESPACE) == std::string::npos) {
+				/* if (std::getline(infileConfig, line)) {
+					std::cerr << "After Empty Line: " << line << std::endl;
 					continue;
+				}
 				else
-					break;
+					break; */
+				continue;
 			}
 
-			while (line.find('\t') != std::string::npos) {
+			while (line.find('\t') != std::string::npos)
 				line.replace(line.find('\t'), 1, " ");
-			}				
 
 			beginOfComment = line.find_first_of('#'); // need to also check whether inside of quote
 
-			if (beginOfComment != std::string::npos) 
-				_content.append(line.substr(0, beginOfComment));
+			if (beginOfComment != std::string::npos)
+				_content.append(line.substr(amountBegSpaces(line), beginOfComment - amountBegSpaces(line)));
 			else
-				_content.append(line);
+				_content.append(line.substr(amountBegSpaces(line)));
 
 			_content.append(" "); // separate lines with Spaces, excess space will be removed later
 		} while (std::getline(infileConfig, line));
@@ -181,16 +196,15 @@ void		Parser::_removeExcessSpace() {
 	std::stringstream	ss2; // will change name later
 	std::string			tokenA; // will change name later
 	std::string			token;
-	size_t				httpCounter = 0, serverCounter = 0, locationCounter = 0;
+	// size_t				httpCounter = 0; // , serverCounter = 0, locationCounter = 0;
 
-	while (std::getline(ss, tokenA, ' ')) {
+	// std::getline(ss, tokenA, ' ')
+	while (ss >> tokenA) {
 		// check does it start with '{', '}' or ';'
 			// --> remove excess space before
 		if (std::string("{};").find(tokenA[0])) {
 			newContent.append(tokenA);
 		}
-
-
 
 		// check does it end with '{', '}' or ';'
 			// --> remove excess space after
@@ -223,3 +237,8 @@ void		Parser::_removeExcessSpace() {
 	_content = newContent;
 }
 
+
+
+/*			DEBUG			*/
+
+void	Parser::_printContent() { std::cout << _content << std::endl; }

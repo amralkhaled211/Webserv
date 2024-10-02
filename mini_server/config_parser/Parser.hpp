@@ -9,7 +9,7 @@
 #include <fstream>
 #include <sstream>
 
-#include "ServerBlock.hpp"
+// #include "ServerBlock.hpp"
 
 #define INVALID						0
 #define	VALID						1
@@ -25,7 +25,7 @@ class Parser // http Block basically
 {
 	private:
 		std::string						_configFile;
-		std::vector<ServerBlock>		_serverVec; // these will always be ServerBlocks as elements, and those will have a vector with LocationBlocks as elements
+		// std::vector<ServerBlock>		_serverVec; // these will always be ServerBlocks as elements, and those will have a vector with LocationBlocks as elements
 		std::string						_content;
 
 		Parser();
@@ -39,7 +39,7 @@ class Parser // http Block basically
 
 		// static function to check for _generallErrors -> postfix, emtpy file, no server block, 
 			// lines with no semicolon (is it possible to have one broken into two?), ...
-		static int	_generalErrors(std::string& fileName);
+		static int	_generalErrors(std::string fileName);
 		// next we go into the Constructor and start _indepthCheck, as we do that we fill the _serverVec
 		// _indepthCheck();
 
@@ -54,6 +54,7 @@ class Parser // http Block basically
 		/*			ACTUAL PARSING				*/
 		
 
+		void	_printContent();
 
 
 };
