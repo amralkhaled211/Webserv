@@ -142,12 +142,16 @@ void		Parser::_configToContent() {
 			throw std::runtime_error("Empty File");
 
 		do {
-			if (line.empty()) {
+			if (line.empty() || line.find_first_not_of(WHITESPACE) == std::string::npos) { // sec condition is for lines with only spaces
 				if (std::getline(infileConfig, line))
 					continue;
 				else
 					break;
 			}
+
+			while (line.find('\t') != std::string::npos) {
+				line.replace(line.find('\t'), 1, " ");
+			}				
 
 			beginOfComment = line.find_first_of('#'); // need to also check whether inside of quote
 
@@ -168,10 +172,54 @@ void		Parser::_configToContent() {
 	}
 }
 
-// excess spaces: before and after 1) block names (http, server, location), 2) semicolon (;), 3) ’{’ & '}'
+// excess spaces: before and after 1) block names (http, server, location), 2) semicolon ';', 3) ’{’ & '}'
+// http{server{listen 8090   ;server_name 127.0.0.1;location /hello{alias /home/aismaili/webSite;index index.html;}} }
 void		Parser::_removeExcessSpace() {
 
+	std::stringstream	ss(_content);
+	std::string			newContent;
+	std::stringstream	ss2; // will change name later
+	std::string			tokenA; // will change name later
+	std::string			token;
+	size_t				httpCounter = 0, serverCounter = 0, locationCounter = 0;
+
+	while (std::getline(ss, tokenA, ' ')) {
+		// check does it start with '{', '}' or ';'
+			// --> remove excess space before
+		if (std::string("{};").find(tokenA[0])) {
+			newContent.append(tokenA);
+		}
 
 
+
+		// check does it end with '{', '}' or ';'
+			// --> remove excess space after
+			// else --> 
+
+		if (std::string("{};").find(tokenA[tokenA.size() - 1])) { // size() should not output 0 here --> still will test
+			newContent.append(tokenA);
+		}
+
+		/* ss2.clear();
+		ss2 << tokenA;
+		ss2 >> token;
+		if (IS_BLOCKNAME) {
+			// find start of block name and end of last word --> remove from end of last word + 1 to start of block name - 1
+			// find end of block name and start of next word --> remove from end of block name + 1 to start of next word - 1
+			// issue with block names that are not separated by spaces  --> could solve with added Condition
+			// issue with repeated block names -> server and location --> could solve with counter
+			_content.erase();
+		}
+		else if (IS_SEMICOLON) {
+			// remove excess spaces
+		}
+		else if (IS_BRACE) {
+			// remove excess spaces
+		}
+		else if (!(IS_DIRECTIVE)) {
+			throw std::runtime_error("Invalid Token");
+		} */
+	}
+	_content = newContent;
 }
 

@@ -81,6 +81,7 @@
 	* in case multiple servers with the same host (server_name) and port (listen), nginx will only give a warning and take the first as default, the others will NOT be used
 	* multiple root in server/location block --> duplicate error
 	* multiple listen in server block --> duplicate error
+	* 
 
 	Not Existing:
 	* in case of no location in a server block, it takes the root from the server
@@ -107,17 +108,16 @@
 
 ## this is an example of a valid conf file syntax:
 
-	http{server{listen
-	8090   ;server_name 127.0.0.1;location /hello{alias /home/aismaili/webSite;index index.html;}}
-	}events{
-		worker_connections
-		1024
-		;
-	}
+	http{server{listen 8090   ;server_name 127.0.0.1;location /hello{alias /home/aismaili/webSite;index index.html;}} }
 
 
 # TASKS
 ## TODO
+	[] Test case with return 307 /path; play with the space and newline
+	[] Test with '{', '}' and ';' followed by each other, probably error, if so --> add to _generallErrors
+	[] _generallErrors() --> more stuff to add, but only if it is easier there
+		[] ’;’, '{', '}' in series maybe
+		[] invalid '{' and '}' --> opened but not closed, vice versa
 	[] Figure out meaning/use case of each directive
 	[] Figure out which directives are used in the server block
 	[] Figure out which directives are used in the location block
@@ -133,7 +133,6 @@
 
 ## DONE
 	[x] Basic Structure for Parsing
-	[x] _generallErrors()
 
 
 

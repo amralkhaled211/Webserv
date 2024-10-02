@@ -11,10 +11,15 @@
 
 #include "ServerBlock.hpp"
 
-#define INVALID		0
-#define	VALID		1
-#define POSTFIX		".conf"
-
+#define INVALID						0
+#define	VALID						1
+#define POSTFIX						".conf"
+#define WHITESPACE					" \t\n\v\f\r" /// might only need " \t"
+#define IS_BLOCKNAME				token == "http" || token == "server" || token == "location"
+#define IS_BLOCKNAME_WITH_BRACE		token == "http{" || token == "server{" || token == "location{" // this is obviously overkill, because it needs two more similar variations
+#define IS_BRACE		token == "{" || token == "}"
+#define IS_SEMICOLON	token == ";"
+#define IS_DIRECTIVE	token == "listen" || token == "server_name" || token == "root" || token == "index" || token == "autoindex" || token == "error_page" || token == "client_max_body_size" ||  token == "return" // more to follow // might meed to separate into more MACROS, because to long
 
 class Parser // http Block basically
 {
