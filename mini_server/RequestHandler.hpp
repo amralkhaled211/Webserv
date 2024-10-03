@@ -27,6 +27,7 @@ typedef struct parser
 	std::string version;
 	std::map<std::string, std::string> headers;
 	std::string body;
+	std::string queryString;
 } parser;
 
 typedef struct Response
@@ -48,6 +49,7 @@ class RequestHandler
 		void sendResponse(int clientSocket);
 		void notfound();
 		void parseHeaders();
+		void parseQueryString();
 		void parse_first_line();
 	private:
 	parser request;
