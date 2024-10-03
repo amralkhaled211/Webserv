@@ -184,8 +184,7 @@ void		Parser::_configToContent() {
 void		Parser::_removeExcessSpace() {
 
 	std::stringstream	ss(_content);
-	std::string			newContent;
-	std::string			snippet;
+	std::string			newContent, snippet;
 
 	bool				addSpaceBefore = false;
 	bool				addSpaceAfter = false;
@@ -211,7 +210,8 @@ void		Parser::_removeExcessSpace() {
 
 void		Parser::_syntaxError() {
 
-	if (std::count(_content.begin(), _content.end(), '{') != std::count(_content.begin(), _content.end(), '}'))
+	if (std::count(_content.begin(), _content.end(), '{')
+		!= std::count(_content.begin(), _content.end(), '}'))
 		throw std::runtime_error("Invalid amount of Braces");
 
 	if (_content.find('{') == std::string::npos)
@@ -224,19 +224,47 @@ void		Parser::_syntaxError() {
 		throw std::runtime_error("Missing Semicolon");
 
 	if (_content[_content.find(";") + 1] == ';')
-		throw std::runtime_error("Semicolon in Series");
+		throw std::runtime_error("Semicolons in Series");
 
 	if (_content[_content.find("{") + 1] == '{')
-		throw std::runtime_error("Opening Brace in Series");
+		throw std::runtime_error("Opening Braces in Series");
 }
 
 /*			PARSING			*/
 
 void		Parser::_fillBlocks() {
-	
+	// section based: we will define 3 (for now at least) sections: http, server, location
+	// http has only server
+	// server has a couple directives and any amount of location
+	// location has a couple directives and any amount of location
+
+	// since I use stringstream a lot, maybe I could/should put it inside the class and just clear and reset it before each new usage
+	std::stringstream		ss(_content);
+	std::string				token;
+
+	ss >> token;
+	if (token != "http{")
+		throw std::runtime_error("Missing Valid http Block");
+
+	do {
+		if (token == "server{")
+			_serverBlock();
+		if (token == "location{")
+			_locationBlock();
+
+	} while (ss >> token);
 
 }
 
+void		Parser::_serverBlock() {
+
+
+}
+
+void		Parser::_locationBlock() {
+
+	
+}
 
 /*			DEBUG			*/
 

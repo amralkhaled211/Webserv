@@ -59,7 +59,9 @@ class Parser // http Block basically
 
 		/*			ACTUAL PARSING			*/
 
-		void		_fillBlocks();
+		void		_fillBlocks(); // could also name httpBlock();
+		void		_serverBlock();
+		void		_locationBlock();
 
 
 		/*				DEBUG				*/
