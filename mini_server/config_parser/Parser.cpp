@@ -125,16 +125,17 @@ int		Parser::_generalErrors(std::string fileName) {
 void		Parser::_parser() {
 	// prep
 	this->_configToContent();
-	this->_printContent();
+	// this->_printContent();
 	this->_removeExcessSpace();
-	this->_printContent();
+	// this->_printContent();
+	this->_syntaxError();
 
 	// parsing
 }
 
 /*			PREP FOR PARSING			*/
 
-size_t	amountBegSpaces(std::string& line) { // utils --> returns amount of spaces at the beginning of a line
+size_t	amountBegSpaces(const std::string& line) { // utils --> returns amount of spaces at the beginning of a line
 	size_t	amount = 0;
 
 	while (line[amount] == ' ')
@@ -184,68 +185,57 @@ void		Parser::_removeExcessSpace() {
 
 	std::stringstream	ss(_content);
 	std::string			newContent;
-	std::stringstream	ss2; // will change name later
-	std::string			tokenA; // will change name later
-	// std::string			tokenZ("");
-	// size_t				httpCounter = 0; // , serverCounter = 0, locationCounter = 0;
+	std::string			snippet;
 
 	bool				addSpaceBefore = false;
 	bool				addSpaceAfter = false;
 	bool				addedSpaceAfterLast = false;
 
-	// std::getline(ss, tokenA, ' ')
-	while (ss >> tokenA) {
-		// check does it start with '{', '}' or ';'
-			// --> remove excess space before --> append tokenA without adding space
-
-		addSpaceBefore = ((std::string("{};").find(tokenA[0]) == std::string::npos)
+	while (ss >> snippet) {
+		addSpaceBefore = ((std::string("{};").find(snippet[0]) == std::string::npos)
 								&& addedSpaceAfterLast);
-		addSpaceAfter = (std::string("{};").find(tokenA[tokenA.size() - 1]) == std::string::npos);
+		addSpaceAfter = (std::string("{};").find(snippet[snippet.size() - 1]) == std::string::npos);
 
 		if (addSpaceBefore) {
 			newContent.append(" ");
-			newContent.append(tokenA);
+			newContent.append(snippet);
 		} else
-			newContent.append(tokenA);
+			newContent.append(snippet);
 
-		std::cerr << "tokenA: " << tokenA << std::endl;
-		std::cerr << "addSpaceBefore: " << addSpaceBefore << std::endl;
-		std::cerr << "addSpaceAfter: " << addSpaceAfter << std::endl;
-		std::cerr << "newContent: " << newContent << std::endl << std::endl << std::endl;
-
-		// if (addSpaceAfter)
-
-		
-		// tokenZ = tokenA;
 		addedSpaceAfterLast = addSpaceAfter;
-
-		// check does it end with '{', '}' or ';'
-			// --> remove excess space after
-			// else --> 
-
-		/* ss2.clear();
-		ss2 << tokenA;
-		ss2 >> token;
-		if (IS_BLOCKNAME) {
-			// find start of block name and end of last word --> remove from end of last word + 1 to start of block name - 1
-			// find end of block name and start of next word --> remove from end of block name + 1 to start of next word - 1
-			// issue with block names that are not separated by spaces  --> could solve with added Condition
-			// issue with repeated block names -> server and location --> could solve with counter
-			_content.erase();
-		}
-		else if (IS_SEMICOLON) {
-			// remove excess spaces
-		}
-		else if (IS_BRACE) {
-			// remove excess spaces
-		}
-		else if (!(IS_DIRECTIVE)) {
-			throw std::runtime_error("Invalid Token");
-		} */
 	}
 	_content = newContent;
 }
 
+/*			SYNTAX ERRORS		*/
+
+void		Parser::_syntaxError() {
+
+	if (std::count(_content.begin(), _content.end(), '{') != std::count(_content.begin(), _content.end(), '}'))
+		throw std::runtime_error("Invalid amount of Braces");
+
+	if (_content.find('{') == std::string::npos)
+		throw std::runtime_error("Missing Opening Brace");
+
+	if (_content.find('}') == std::string::npos)
+		throw std::runtime_error("Missing Closing Brace");
+
+	if (_content.find(';') == std::string::npos)
+		throw std::runtime_error("Missing Semicolon");
+
+	if (_content[_content.find(";") + 1] == ';')
+		throw std::runtime_error("Semicolon in Series");
+
+	if (_content[_content.find("{") + 1] == '{')
+		throw std::runtime_error("Opening Brace in Series");
+}
+
+/*			PARSING			*/
+
+void		Parser::_fillBlocks() {
+	
+
+}
 
 
 /*			DEBUG			*/

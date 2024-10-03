@@ -73,8 +73,8 @@
 	* newlines are treated similar to whitespaces, directive key and value can be separated by newline(s)
 	* so newlines are allowed before a ';' -> a directive doesn't need to be followed by a ';' on the same line, but can also at the next line
 
-	
-	
+
+
 	Dublicates:
 	* multiple http blocks --> duplicate error
 	* no dublicates of location block with the same path allowed (2 times --> location /hello)
@@ -98,6 +98,7 @@
 		* only allowed in the location block
 
 	* check order
+		* order of directives doesn't matter
 
 	* what is allowed in http block, except for server block?
 		* allowed: root, index, autoindex
