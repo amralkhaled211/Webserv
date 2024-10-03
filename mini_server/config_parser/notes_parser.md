@@ -109,7 +109,7 @@
 
 ## this is an example of a valid conf file syntax:
 
-	http{server{listen 8090   ;server_name 127.0.0.1;location /hello{alias /home/aismaili/webSite;index index.html;}} }
+	http{server{listen 8090   ;server_name 127.0.0.1;location /hello{alias /home/aismaili/webSite;index index.html;}}}
 
 
 # TASKS

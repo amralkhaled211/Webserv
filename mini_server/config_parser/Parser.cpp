@@ -2,14 +2,9 @@
 
 Parser::Parser() {};
 
-Parser::Parser(std::string& fileName) {
-	// fill serverVec
-	this->_configFile = fileName;
-}
+Parser::Parser(std::string& fileName) { this->_configFile = fileName; }
 
-Parser::Parser(const Parser& other) {
-	*this = other;
-}
+Parser::Parser(const Parser& other) { *this = other; }
 
 Parser&	Parser::operator=(const Parser& other) {
 	if (this == &other)
@@ -19,9 +14,7 @@ Parser&	Parser::operator=(const Parser& other) {
 	return *this;
 }
 
-Parser::~Parser() {
-	// delete stuff, if needed, hopefully not needed
-}
+Parser::~Parser() { /* delete stuff, if needed, hopefully not needed */ }
 
 static bool invalidPostfix(std::string& fileName) {
 	size_t	pfLen = std::string(POSTFIX).size();
@@ -188,12 +181,11 @@ void		Parser::_removeExcessSpace() {
 
 	bool				addSpaceBefore = false;
 	bool				addSpaceAfter = false;
-	bool				addedSpaceAfterLast = false;
+	// bool				addedSpaceAfterLast = false;
 
 	while (ss >> snippet) {
 		addSpaceBefore = ((std::string("{};").find(snippet[0]) == std::string::npos)
-								&& addedSpaceAfterLast);
-		addSpaceAfter = (std::string("{};").find(snippet[snippet.size() - 1]) == std::string::npos);
+								&& addSpaceAfter);
 
 		if (addSpaceBefore) {
 			newContent.append(" ");
@@ -201,7 +193,8 @@ void		Parser::_removeExcessSpace() {
 		} else
 			newContent.append(snippet);
 
-		addedSpaceAfterLast = addSpaceAfter;
+		addSpaceAfter = (std::string("{};").find(snippet[snippet.size() - 1]) == std::string::npos);
+		// addedSpaceAfterLast = addSpaceAfter;
 	}
 	_content = newContent;
 }
@@ -242,29 +235,98 @@ void		Parser::_fillBlocks() {
 	std::stringstream		ss(_content);
 	std::string				token;
 
-	ss >> token;
-	if (token != "http{")
+	std::getline(ss, token, '{');
+	if (token != "http")
 		throw std::runtime_error("Missing Valid http Block");
 
-	do {
-		if (token == "server{")
-			_serverBlock();
-		if (token == "location{")
-			_locationBlock();
+	// size_t	serverCount = std::count(_content.begin(), _content.end(), "server{");
 
-	} while (ss >> token);
+	while (std::getline(ss, token, '{')) { // till the next condition check, I  should handle the server Block, then the next will start
+		if (token == "server")
+			_serverBlock(ss); // this should return/finish only when ss is right before the next server
+		else
+			throw std::runtime_error("Unexpected Block");
+	}
+}
+
+void		Parser::_serverBlock(std::stringstream& ss) {
+	std::string				token;
+	std::string				deliSet(DELIMETERS);
+	char					ch; // trying to go through ss char by char, because we have multiple delimeters to deal with
+
+	while (ss.get(ch)) {
+
+		if (token == "location") {
+			_locationBlock(ss); // this should return/finish only when ss is finished with this specific location
+			continue;
+		}
+
+		// gotta see if it is a delimeter
+		if (deliSet.find(ch) != std::string::npos) {
+			// we must have a token
+				// case where we won't have a token, despite a delimeter:
+					// ;}
+					// }}
+			if (ch == ' ')
+				_handleServerDirective(ss, token); // must go through the whole directive here
+			else if (ch == ';')
+				throw std::runtime_error("Unexpected Semicolon");
+			else if (ch == '{')
+				throw std::runtime_error("Unexpected Opening Brace");
+			else if (ch == '}')
+				throw std::runtime_error("Unexpected Closing Brace");
+		}
+
+		token += ch;
+
+	}
+}
+
+void		Parser::_locationBlock(std::stringstream& ss) {
+	std::string				token;
+	std::string				deliSet(DELIMETERS);
+	char					ch; // trying to go through ss char by char, because we have multiple delimeters to deal with
+
+	while (ss.get(ch)) {
+
+		if (token == "location") {
+			_locationBlock(ss); // this should return/finish only when ss is finished with this specific location
+			continue;
+		}
+
+		// gotta see if it is a delimeter
+		if (deliSet.find(ch) != std::string::npos) {
+			// we must have a token
+				// case where we won't have a token, despite a delimeter:
+					// ;}
+					// }}
+			if (ch == ' ')
+				_handleServerDirective(ss, token); // must go through the whole directive here
+			else if (ch == ';')
+				throw std::runtime_error("Unexpected Semicolon");
+			else if (ch == '{')
+				throw std::runtime_error("Unexpected Opening Brace");
+			else if (ch == '}')
+				throw std::runtime_error("Unexpected Closing Brace");
+		}
+
+		token += ch;
+
+	}
+}
+
+void		Parser::_handleServerDirective(std::stringstream& ss, const std::string& directiveKey) {
+	// access the server block and fill the directive
+	std::string		directiveValue;
+	while (std::getline(ss, directiveValue, ';')) {
+		// fill the directive
+		_serverVec.push_back(ServerBlock());
+		_serverVec.back().setDirective(directiveKey, directiveValue);
+	}
 
 }
 
-void		Parser::_serverBlock() {
 
-
-}
-
-void		Parser::_locationBlock() {
-
-	
-}
 
 /*			DEBUG			*/
 

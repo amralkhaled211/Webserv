@@ -10,7 +10,7 @@
 #include <sstream>
 #include <algorithm>
 
-// #include "ServerBlock.hpp"
+#include "ServerBlock.hpp"
 
 #define INVALID						0
 #define	VALID						1
@@ -18,15 +18,18 @@
 #define WHITESPACE					" \t\n\v\f\r" /// might only need " \t"
 #define IS_BLOCKNAME				token == "http" || token == "server" || token == "location"
 #define IS_BLOCKNAME_WITH_BRACE		token == "http{" || token == "server{" || token == "location{" // this is obviously overkill, because it needs two more similar variations
-#define IS_BRACE		token == "{" || token == "}"
-#define IS_SEMICOLON	token == ";"
-#define IS_DIRECTIVE	token == "listen" || token == "server_name" || token == "root" || token == "index" || token == "autoindex" || token == "error_page" || token == "client_max_body_size" ||  token == "return" // more to follow // might meed to separate into more MACROS, because to long
+#define IS_BRACE_O					ch == '{'
+#define IS_BRACE_C					ch == '}'
+#define IS_SEMICOLON				ch == ';'
+#define IS_SPACE					ch == ' '
+#define	DELIMETERS					"{}; "
+#define IS_DIRECTIVE				token == "listen" || token == "server_name" || token == "root" || token == "index" || token == "autoindex" || token == "error_page" || token == "client_max_body_size" ||  token == "return" // more to follow // might meed to separate into more MACROS, because to long
 
 class Parser // http Block basically
 {
 	private:
 		std::string						_configFile;
-		// std::vector<ServerBlock>		_serverVec; // these will always be ServerBlocks as elements, and those will have a vector with LocationBlocks as elements
+		std::vector<ServerBlock>		_serverVec; // these will always be ServerBlocks as elements, and those will have a vector with LocationBlocks as elements
 		std::string						_content;
 
 		Parser();
@@ -60,10 +63,11 @@ class Parser // http Block basically
 		/*			ACTUAL PARSING			*/
 
 		void		_fillBlocks(); // could also name httpBlock();
-		void		_serverBlock();
-		void		_locationBlock();
+		void		_serverBlock(std::stringstream& ss);
+		void		_locationBlock(std::stringstream& ss);
 
-
+		void		_handleServerDirective(std::stringstream& ss, const std::string& directiveKey);
+		void		_handleLocationDirective(std::stringstream& ss, const std::string& directiveKey);
 		/*				DEBUG				*/
 
 		void	_printContent();

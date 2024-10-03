@@ -6,11 +6,13 @@ class LocationBlock : public Block
 {
 	private:
 		std::vector<LocationBlock>		_locationVec;
-		// directives, that are inly in location
-		// std::string						;
+		std::vector<std::string>		_allowed_methods;
+		// more to follow, regarding cgi
+
+		LocationBlock();
 
 	public:
-		LocationBlock();
+		LocationBlock(std::string& type);
 		LocationBlock(const LocationBlock& other);
 		LocationBlock&	operator=(const LocationBlock& other);
 		~LocationBlock();
