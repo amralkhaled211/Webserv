@@ -125,7 +125,9 @@ int		Parser::_generalErrors(std::string fileName) {
 void		Parser::_parser() {
 	// prep
 	this->_configToContent();
+	this->_printContent();
 	this->_removeExcessSpace();
+	this->_printContent();
 
 	// parsing
 }
@@ -184,32 +186,38 @@ void		Parser::_removeExcessSpace() {
 	std::string			newContent;
 	std::stringstream	ss2; // will change name later
 	std::string			tokenA; // will change name later
-	std::string			tokenZ("");
+	// std::string			tokenZ("");
 	// size_t				httpCounter = 0; // , serverCounter = 0, locationCounter = 0;
 
 	bool				addSpaceBefore = false;
 	bool				addSpaceAfter = false;
-	bool				addedSpaceLast = false;
+	bool				addedSpaceAfterLast = false;
 
 	// std::getline(ss, tokenA, ' ')
 	while (ss >> tokenA) {
 		// check does it start with '{', '}' or ';'
 			// --> remove excess space before --> append tokenA without adding space
 
-		addSpaceBefore = (std::string("{};").find(tokenA[0]) != std::string::npos);
-		addSpaceAfter = (std::string("{};").find(tokenA[tokenA.size() - 1]) != std::string::npos);
+		addSpaceBefore = ((std::string("{};").find(tokenA[0]) == std::string::npos)
+								&& addedSpaceAfterLast);
+		addSpaceAfter = (std::string("{};").find(tokenA[tokenA.size() - 1]) == std::string::npos);
 
-		if (addSpaceBefore && addedSpaceLast) {
+		if (addSpaceBefore) {
 			newContent.append(" ");
 			newContent.append(tokenA);
 		} else
 			newContent.append(tokenA);
 
-		if (addSpaceAfter)
+		std::cerr << "tokenA: " << tokenA << std::endl;
+		std::cerr << "addSpaceBefore: " << addSpaceBefore << std::endl;
+		std::cerr << "addSpaceAfter: " << addSpaceAfter << std::endl;
+		std::cerr << "newContent: " << newContent << std::endl << std::endl << std::endl;
+
+		// if (addSpaceAfter)
 
 		
-		tokenZ = tokenA;
-		addedSpaceLast = addSpaceAfter;
+		// tokenZ = tokenA;
+		addedSpaceAfterLast = addSpaceAfter;
 
 		// check does it end with '{', '}' or ';'
 			// --> remove excess space after

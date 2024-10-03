@@ -21,8 +21,6 @@ int main(int ac, char* av[] /*, char* env[] */)
 
         // std::cout << "BACK IN MAIN\n";
 
-        httpBlock._printContent();
-
         // Server	server;
         // initializeMimeTypesMap();
         // server.run();

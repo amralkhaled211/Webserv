@@ -133,6 +133,7 @@
 
 ## DONE
 	[x] Basic Structure for Parsing
+	[x] _configToContent() & _removeExcessSpace()
 
 
 
