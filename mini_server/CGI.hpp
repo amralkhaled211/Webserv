@@ -6,14 +6,15 @@
 /*   By: aszabo <aszabo@student.42vienna.com>       +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/03 12:05:59 by aszabo            #+#    #+#             */
-/*   Updated: 2024/10/03 15:33:36 by aszabo           ###   ########.fr       */
+/*   Updated: 2024/10/04 12:59:37 by aszabo           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #pragma once
 
-#include "../Server.hpp"
-#include "../RequestHandler.hpp"
+#include "Server.hpp"
+#include "RequestHandler.hpp"
+#include <sys/wait.h>
 
 class CGI
 {
@@ -35,4 +36,6 @@ class CGI
 		void setEnv();
 		void executeScript();
 		void generateResponse();
+
+		std::vector<char*> setUpEnvp();
 };

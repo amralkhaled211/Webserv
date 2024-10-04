@@ -110,19 +110,41 @@ void RequestHandler::sendResponse(int clientSocket)
 
 	if (request.method == "GET")
 	{
+		/* std::cout << "Request path " << request.path << std::endl; */
 		if (request.path == "/")// this if the whole path is not given, so i would give a default path file 
 			request.path = "/index.html";
-		CGI cgi(request.path, request);
-		this->read_file(root + request.path);
+		if (request.path.find(".cgi") != std::string::npos)
+		{
+			/* std::cout << "Executing CGI now" << std::endl;
+			std::cout << "CGI script path " << root + request.path << std::endl; */
+			CGI cgi(root + request.path, request);
+			cgi.setEnv();								//we will need env variables from config file here later
+			cgi.executeScript();
+			cgi.generateResponse();
+			response = cgi.getResponse();
+		}
+		else
+			this->read_file(root + request.path);
 	}
 	if (request.method == "POST") // this is not an important step, just checking if the Post wrok
 	{
-		std::cout << "the body :" << request.body << std::endl;
-		response.status = "HTTP/1.1 200 OK\r\n";
-		response.contentType = "Content-Type: text/html;\r\n";
-		response.contentLength = "Content-Length: 122\r\n";
-		response.body = "<!DOCTYPE html><html><head><title>200 OK</title></head>";
-		response.body += "<body><h1>200 OK</h1><p>Thank You for login info.</p></body></html>";
+		if (request.path.find(".cgi") != std::string::npos)
+		{
+			CGI cgi(root + request.path, request);
+			cgi.setEnv();//we will need env variables from config file here later
+			cgi.executeScript();
+			cgi.generateResponse();
+			response = cgi.getResponse();
+		}
+		else
+		{
+			std::cout << "the body :" << request.body << std::endl;
+			response.status = "HTTP/1.1 200 OK\r\n";
+			response.contentType = "Content-Type: text/html;\r\n";
+			response.contentLength = "Content-Length: 122\r\n";
+			response.body = "<!DOCTYPE html><html><head><title>200 OK</title></head>";
+			response.body += "<body><h1>200 OK</h1><p>Thank You for login info.</p></body></html>";
+		}
 	}
 	std::string resp =  response.status + response.contentType + response.contentLength + "\r\n" + response.body;
 	const char* resp_cstr = resp.c_str();
