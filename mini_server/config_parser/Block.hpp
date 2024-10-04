@@ -1,6 +1,9 @@
 #pragma once
 
-#include "Parser.hpp"
+// #include "Parser.hpp"
+#include <string>
+#include <vector>
+
 
 class Block // parent // the purpose of this is just to not have class with the same attibutes and methods, we won't do any Polymorphism, just Inheritence
 {
@@ -8,7 +11,6 @@ class Block // parent // the purpose of this is just to not have class with the 
 		std::string							_blockType; // Server or Location
 
 		// all the directives, that are in both Server and Location
-		// root, error_page, index, autoindex, return, error_page
 		std::string					_root;
 		std::vector<std::string>	_error_page;
 		std::vector<std::string>	_return;
@@ -34,11 +36,15 @@ class Block // parent // the purpose of this is just to not have class with the 
 		void		setAutoindex(bool autoindex);
 
 		const std::string&				getBlockType() const;
-		std::string&				getRoot() const;
-		std::vector<std::string>&	getErrorPage() const;
-		std::vector<std::string>&	getReturn() const;
-		std::vector<std::string>&	getTryFiles() const;
-		std::vector<std::string>&	getIndex() const;
-		bool						getAutoindex() const;
+		const std::string&				getRoot() const;
+		const std::vector<std::string>&	getErrorPage() const;
+		const std::vector<std::string>&	getReturn() const;
+		const std::vector<std::string>&	getTryFiles() const;
+		const std::vector<std::string>&	getIndex() const;
+		const bool						getAutoindex() const;
+
+
+		virtual void		addLocationBlock() = 0;
+		virtual void		setDirective(const std::string& directiveKey, std::string& directiveValue) = 0;
 
 };

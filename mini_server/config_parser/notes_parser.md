@@ -113,6 +113,11 @@
 
 
 # TASKS
+## WORK IN PROGRES
+	- still figuring out the parsing, issue atm in _locationBlock()
+		- missing logic for the biginning -> "location /{" this should not be an error
+
+
 ## TODO
 	[] Test case with return 307 /path; play with the space and newline
 	[] Test with '{', '}' and ';' followed by each other, probably error, if so --> add to _generallErrors

@@ -118,12 +118,14 @@ int		Parser::_generalErrors(std::string fileName) {
 void		Parser::_parser() {
 	// prep
 	this->_configToContent();
-	// this->_printContent();
+	this->_printContent();
 	this->_removeExcessSpace();
-	// this->_printContent();
+	this->_printContent();
 	this->_syntaxError();
 
 	// parsing
+	this->_fillBlocks();
+	this->_printServerVec();
 }
 
 /*			PREP FOR PARSING			*/
@@ -226,12 +228,7 @@ void		Parser::_syntaxError() {
 /*			PARSING			*/
 
 void		Parser::_fillBlocks() {
-	// section based: we will define 3 (for now at least) sections: http, server, location
-	// http has only server
-	// server has a couple directives and any amount of location
-	// location has a couple directives and any amount of location
 
-	// since I use stringstream a lot, maybe I could/should put it inside the class and just clear and reset it before each new usage
 	std::stringstream		ss(_content);
 	std::string				token;
 
@@ -239,11 +236,10 @@ void		Parser::_fillBlocks() {
 	if (token != "http")
 		throw std::runtime_error("Missing Valid http Block");
 
-	// size_t	serverCount = std::count(_content.begin(), _content.end(), "server{");
 
 	while (std::getline(ss, token, '{')) { // till the next condition check, I  should handle the server Block, then the next will start
 		if (token == "server")
-			_serverBlock(ss); // this should return/finish only when ss is right before the next server
+			_serverBlock(ss); // this should return/finish only when ss is right before the next server, that means after the last Server closes '}'
 		else
 			throw std::runtime_error("Unexpected Block");
 	}
@@ -253,81 +249,131 @@ void		Parser::_serverBlock(std::stringstream& ss) {
 	std::string				token;
 	std::string				deliSet(DELIMETERS);
 	char					ch; // trying to go through ss char by char, because we have multiple delimeters to deal with
+	// size_t					index;
+
+	_serverVec.push_back(ServerBlock());
 
 	while (ss.get(ch)) {
 
 		if (token == "location") {
-			_locationBlock(ss); // this should return/finish only when ss is finished with this specific location
-			continue;
+			_locationBlock(ss); // this should return/finish only when ss is finished with this specific location '}'
+			token.clear();
+			// continue;
 		}
 
 		// gotta see if it is a delimeter
-		if (deliSet.find(ch) != std::string::npos) {
+		else if (deliSet.find(ch) != std::string::npos) {
 			// we must have a token
 				// case where we won't have a token, despite a delimeter:
 					// ;}
 					// }}
 			if (ch == ' ')
 				_handleServerDirective(ss, token); // must go through the whole directive here
-			else if (ch == ';')
+			else if (ch == ';') // wrong syntax, or issue in handleServerDirective() implementation
 				throw std::runtime_error("Unexpected Semicolon");
-			else if (ch == '{')
+			else if (ch == '{') {
+				std::cerr << "Token: " << token << std::endl;
 				throw std::runtime_error("Unexpected Opening Brace");
+			}
 			else if (ch == '}')
-				throw std::runtime_error("Unexpected Closing Brace");
-		}
-
-		token += ch;
-
+				throw std::runtime_error("Unexpected Closing Brace"); // this one needs more review
+			token.clear();
+		} else
+			token += ch;
 	}
 }
 
-void		Parser::_locationBlock(std::stringstream& ss) {
-	std::string				token;
-	std::string				deliSet(DELIMETERS);
-	char					ch; // trying to go through ss char by char, because we have multiple delimeters to deal with
-
-	while (ss.get(ch)) {
-
-		if (token == "location") {
-			_locationBlock(ss); // this should return/finish only when ss is finished with this specific location
-			continue;
-		}
-
-		// gotta see if it is a delimeter
-		if (deliSet.find(ch) != std::string::npos) {
-			// we must have a token
-				// case where we won't have a token, despite a delimeter:
-					// ;}
-					// }}
-			if (ch == ' ')
-				_handleServerDirective(ss, token); // must go through the whole directive here
-			else if (ch == ';')
-				throw std::runtime_error("Unexpected Semicolon");
-			else if (ch == '{')
-				throw std::runtime_error("Unexpected Opening Brace");
-			else if (ch == '}')
-				throw std::runtime_error("Unexpected Closing Brace");
-		}
-
-		token += ch;
-
-	}
-}
 
 void		Parser::_handleServerDirective(std::stringstream& ss, const std::string& directiveKey) {
 	// access the server block and fill the directive
-	std::string		directiveValue;
-	while (std::getline(ss, directiveValue, ';')) {
-		// fill the directive
-		_serverVec.push_back(ServerBlock());
-		_serverVec.back().setDirective(directiveKey, directiveValue);
-	}
+	std::string			directiveValue; // will be splited
+	std::streampos		lastPos(ss.tellg()); // save pos
 
+	if (std::getline(ss, directiveValue, ';')) {
+		size_t	posLocation = directiveValue.find("location");
+		size_t	posOpenedB = directiveValue.find('{');
+		size_t	posClosedB = directiveValue.find('}');
+
+		if (posLocation != std::string::npos && posLocation < posOpenedB) { // gotta work on this check
+			ss.seekg(lastPos); // retract to saved/old pos
+			return ;
+		}
+		// fill the directive
+		_serverVec.back().setDirective(directiveKey, directiveValue); // potential errors must be dedected there
+	}
+	else {
+		std::cerr << "Directive Key  in S: " << directiveKey << std::endl;
+		throw std::runtime_error("Missing Semicolon");
+	}
 }
 
 
+void		Parser::_locationBlock(std::stringstream& ss) { // this is gonna be recurcive --> possibility of nested location
+	std::string				token;
+	std::string				deliSet(DELIMETERS);
+	char					ch;
+
+	_serverVec.back().getLocationVec().push_back(LocationBlock());
+
+	while (ss.get(ch)) {
+		std::cerr << "Char: " << ch << std::endl;
+		if (token == "location") {
+			_locationBlock(ss); // this should return/finish only when ss is finished with this specific location
+			continue;
+		}
+
+		// gotta see if it is a delimeter
+		if (deliSet.find(ch) != std::string::npos) {
+			// we must have a token
+				// case where we won't have a token, despite a delimeter:
+					// ;}
+					// }}
+			if (ch == ' ')
+				_handleLocationDirective(ss, token); // must go through the whole directive here
+			else if (ch == ';')
+				throw std::runtime_error("Unexpected Semicolon");
+			else if (ch == '{') {
+				std::cerr << "Token: " << token << std::endl;
+				throw std::runtime_error("Unexpected Opening Brace");
+			}
+			else if (ch == '}')
+				throw std::runtime_error("Unexpected Closing Brace");
+		}
+		token += ch;
+	}
+}
+
+
+void		Parser::_handleLocationDirective(std::stringstream& ss, const std::string& directiveKey) {
+	// just copied the logic from _handleServerDirective(), maybe needs adjustment
+	std::string			directiveValue; // will be splited
+	std::streampos		lastPos(ss.tellg()); // save pos
+
+	if (std::getline(ss, directiveValue, ';')) {
+		size_t	posLocation = directiveValue.find("location");
+		size_t	posOpenedB = directiveValue.find('{');
+		size_t	posClosedB = directiveValue.find('}');
+
+		if (posLocation != std::string::npos && posLocation < posOpenedB) {
+			ss.seekg(lastPos); // retract to saved/old pos
+			return ;
+		}
+		// fill the directive
+		_serverVec.back().getLocationVec().back().setDirective(directiveKey, directiveValue); // potential errors must be dedected there}
+	}
+	else {
+		std::cerr << "Directive Key in L: " << directiveKey << std::endl;
+		throw std::runtime_error("Missing Semicolon");
+	}
+}
 
 /*			DEBUG			*/
 
 void	Parser::_printContent() { std::cout << _content << std::endl; }
+
+void	Parser::_printServerVec() {
+	for (size_t i = 0; i < _serverVec.size(); i++) {
+		std::cout << "Server " << i << std::endl;
+		_serverVec[i].printServerBlock();
+	}
+}

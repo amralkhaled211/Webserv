@@ -10,6 +10,7 @@
 #include <sstream>
 #include <algorithm>
 
+#include "Block.hpp"
 #include "ServerBlock.hpp"
 
 #define INVALID						0
@@ -71,6 +72,7 @@ class Parser // http Block basically
 		/*				DEBUG				*/
 
 		void	_printContent();
+		void	_printServerVec();
 
 
 };
