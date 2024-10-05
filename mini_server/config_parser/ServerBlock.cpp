@@ -123,6 +123,7 @@ void	ServerBlock::printServerBlock() {
 	std::cout << "Autoindex: " << this->_autoindex << std::endl;
 	std::cout << std::endl;
 
+	std::cout << "Location Vector Size: " << this->_locationVec.size() << std::endl;
 	for (size_t i = 0; i < this->_locationVec.size(); i++) {
 		std::cout << "Location " << i << std::endl;
 		this->_locationVec[i].printLocationBlock();

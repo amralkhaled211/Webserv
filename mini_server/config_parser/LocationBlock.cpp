@@ -18,10 +18,11 @@ LocationBlock&	LocationBlock::operator=(const LocationBlock& other) {
 LocationBlock::~LocationBlock() { }
 
 
-std::vector<LocationBlock>&	LocationBlock::getNestedLocationVec() { return this->_nestedLocationVec; }
+std::vector<LocationBlock>&		LocationBlock::getNestedLocationVec() { return this->_nestedLocationVec; }
 
+std::string&					LocationBlock::getPrefix() { return this->_prefix; }
 
-void	LocationBlock::addLocationBlock() { this->_nestedLocationVec.push_back(LocationBlock()); }
+void							LocationBlock::addLocationBlock() { this->_nestedLocationVec.push_back(LocationBlock()); }
 
 #include "ServerBlock.hpp" // temporary, will create a utils file and remove this
 
@@ -44,23 +45,21 @@ void	LocationBlock::setDirective(const std::string& directiveKey, std::string& d
 		this->_allowed_methods = valueArgs;
 	}
 	else if (directiveKey == "cgi_path") {
-
-		if (amountArgs != 1)
-			throw std::runtime_error("Invalid cgi_path Directive");
-
-		this->_cgi_path.push_back(directiveValue);
+		for (size_t i = 0; i < amountArgs; i++)
+			this->_cgi_path.push_back(valueArgs[i]);
 	}
 	else if (directiveKey == "cgi_ext") {
-
-		if (amountArgs != 1)
-			throw std::runtime_error("Invalid cgi_ext Directive");
-
-		this->_cgi_ext.push_back(directiveValue);
+		for (size_t i = 0; i < amountArgs; i++)
+			this->_cgi_ext.push_back(valueArgs[i]);
 	}
-	else
-		throw std::runtime_error("Invalid Directive");
+	else {
+		std::cerr << "Directive Value: " << directiveValue << "<" << std::endl;
+		std::cerr << "Directive Key: " << directiveKey << "<" << std::endl;
+		throw std::runtime_error("Invalid Location Directive");
+	}
 }
 
+void		LocationBlock::setPrefix(const std::string& prefix) { this->_prefix = prefix; }
 
 /*		DEBUG		*/
 
@@ -96,9 +95,11 @@ void		LocationBlock::printLocationBlock() {
 	for (size_t i = 0; i < this->_cgi_ext.size(); i++)
 		std::cout << this->_cgi_ext[i] << " ";
 	std::cout << std::endl;
+	std::cout << std::endl;
 
 	for (size_t i = 0; i < this->_nestedLocationVec.size(); i++) {
 		std::cout << "Nested Location Block: " << i << std::endl;
 		this->_nestedLocationVec[i].printLocationBlock();
 	}
+
 }
