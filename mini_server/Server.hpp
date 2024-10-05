@@ -20,6 +20,7 @@
 #include <csignal>
 #include <cstdlib>
 #include "RequestHandler.hpp"
+#include "config_parser/Parser.hpp"
 
 #define MAX_EVENTS 10
 
@@ -28,7 +29,7 @@ extern bool serverRunning ;
 class Server
 {
 public:
-	Server();
+	Server(std::vector<ServerBlock>& _serverVec);
 	~Server();
 	void run();
 private:
@@ -40,8 +41,7 @@ private:
 
 	// objects
 	RequestHandler requestHandle;
-	// ConfigHandler config; // here Where we would expect the whole configuration to be loaded
-	// CGIHandler cgi;	// later on we would need to implement CGI
+	std::vector<ServerBlock>& _servers;
 
 	// functions
 	void createSocket();

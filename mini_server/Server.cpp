@@ -1,7 +1,8 @@
 #include "Server.hpp"
 
-Server::Server()
+Server::Server(std::vector<ServerBlock>& _serverVec) : _servers(_serverVec)
 {
+    printServerVec(_servers);
 	serverSocket = 0;
     //serverSocket2 = 1;
 	clientSocket = 0;

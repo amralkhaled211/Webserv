@@ -38,3 +38,13 @@ void print_map(const std::map<std::string, std::string>& m)
         std::cout << it->first << ": " << it->second << std::endl;
     }
 }
+
+void	printServerVec(std::vector<ServerBlock>& _serverVec) {
+	std::cout << "Server Vector Size: " << _serverVec.size() << std::endl;
+	for (size_t i = 0; i < _serverVec.size(); i++) {
+		std::cout << "Server " << i << std::endl;
+		std::cout << "Adrress: " << &_serverVec[i] << std::endl;
+		_serverVec[i].printServerBlock();
+		std::cout << std::endl;
+	}
+}

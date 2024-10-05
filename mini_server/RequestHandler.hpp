@@ -17,6 +17,7 @@
 #include <vector>
 #include <csignal>
 #include <cstdlib>
+#include "config_parser/Parser.hpp"
 
 extern std::map<std::string, std::string> mimeTypesMap_G;
 
@@ -65,3 +66,5 @@ std::string get_file_name(const std::string& file_path);
 void print_map(std::map<std::string, std::string> const &m);
 
 void initializeMimeTypesMap();
+
+void	printServerVec(std::vector<ServerBlock>& _serverVec);
