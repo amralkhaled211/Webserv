@@ -17,14 +17,11 @@
 #define	VALID						1
 #define POSTFIX						".conf"
 #define WHITESPACE					" \t\n\v\f\r" /// might only need " \t"
-#define IS_BLOCKNAME				token == "http" || token == "server" || token == "location"
-#define IS_BLOCKNAME_WITH_BRACE		token == "http{" || token == "server{" || token == "location{" // this is obviously overkill, because it needs two more similar variations
 #define IS_BRACE_O					ch == '{'
 #define IS_BRACE_C					ch == '}'
 #define IS_SEMICOLON				ch == ';'
 #define IS_SPACE					ch == ' '
 #define	DELIMETERS					"{}; "
-#define IS_DIRECTIVE				token == "listen" || token == "server_name" || token == "root" || token == "index" || token == "autoindex" || token == "error_page" || token == "client_max_body_size" ||  token == "return" // more to follow // might meed to separate into more MACROS, because to long
 
 class Parser // http Block basically
 {
@@ -69,6 +66,8 @@ class Parser // http Block basically
 
 		void		_handleServerDirective(std::stringstream& ss, const std::string& directiveKey);
 		void		_handleLocationDirective(std::stringstream& ss, const std::string& directiveKey);
+
+
 		/*				DEBUG				*/
 
 		void	_printContent();

@@ -14,6 +14,7 @@ ServerBlock&	ServerBlock::operator=(const ServerBlock& other) {
 
 	this->_listen = other._listen;
 	this->_server_name = other._server_name;
+	this->_locationVec = other._locationVec;
 
 	return *this;
 }

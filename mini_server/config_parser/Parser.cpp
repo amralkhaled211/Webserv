@@ -125,7 +125,7 @@ void		Parser::_parser() {
 
 	// parsing
 	this->_fillBlocks();
-	// this->_printServerVec();
+	this->_printServerVec();
 }
 
 /*			PREP FOR PARSING			*/
@@ -174,8 +174,6 @@ void		Parser::_configToContent() {
 	}
 }
 
-// excess spaces: before and after 1) block names (http, server, location), 2) semicolon ';', 3) ’{’ & '}'
-// http{server{listen 8090   ;server_name 127.0.0.1;location /hello{alias /home/aismaili/webSite;index index.html;}} }
 void		Parser::_removeExcessSpace() {
 
 	std::stringstream	ss(_content);
@@ -183,7 +181,6 @@ void		Parser::_removeExcessSpace() {
 
 	bool				addSpaceBefore = false;
 	bool				addSpaceAfter = false;
-	// bool				addedSpaceAfterLast = false;
 
 	while (ss >> snippet) {
 		addSpaceBefore = ((std::string("{};").find(snippet[0]) == std::string::npos)
@@ -196,7 +193,6 @@ void		Parser::_removeExcessSpace() {
 			newContent.append(snippet);
 
 		addSpaceAfter = (std::string("{};").find(snippet[snippet.size() - 1]) == std::string::npos);
-		// addedSpaceAfterLast = addSpaceAfter;
 	}
 	_content = newContent;
 }
@@ -252,7 +248,7 @@ void		Parser::_fillBlocks() {
 			ss.clear();
 		std::cerr << "H Token: >" << token << "<" << std::endl;
 		std::cerr << "Done with One/Another Server Block\n" << std::endl;
-		this->_printServerVec();
+		// this->_printServerVec();
 
 	}
 }
