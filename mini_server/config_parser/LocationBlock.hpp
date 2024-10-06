@@ -1,6 +1,5 @@
 #pragma once
 
-// #include "Parser.hpp"
 #include "Block.hpp"
 
 class LocationBlock : public Block
@@ -21,12 +20,12 @@ class LocationBlock : public Block
 		~LocationBlock();
 
 		std::vector<LocationBlock>&		getNestedLocationVec();
-		std::string&	getPrefix();
+		std::string&					getPrefix();
 
 		void		addLocationBlock();
 		void		setDirective(const std::string& directiveKey, std::string& directiveValue);
 		void		setPrefix(const std::string& prefix);
 
 		/*		DEBUG		*/
-		void	printLocationBlock();
+		void		printLocationBlock();
 };

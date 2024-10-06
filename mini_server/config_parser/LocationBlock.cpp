@@ -24,14 +24,14 @@ std::string&					LocationBlock::getPrefix() { return this->_prefix; }
 
 void							LocationBlock::addLocationBlock() { this->_nestedLocationVec.push_back(LocationBlock()); }
 
-#include "ServerBlock.hpp" // temporary, will create a utils file and remove this
 
 void	LocationBlock::setDirective(const std::string& directiveKey, std::string& directiveValue) {
+
+	if (_addCommonDirective(directiveKey, directiveValue))
+		return;
+
 	std::vector<std::string>	valueArgs(splitString(directiveValue));
 	size_t						amountArgs(valueArgs.size());
-
-	// here I will call a functon from the Block class, I will do the same for the ServerBlock
-		// this way they both have the same function for their common directives
 
 	if (directiveKey == "allowed_methods") {
 

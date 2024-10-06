@@ -17,11 +17,13 @@
 #define	VALID						1
 #define POSTFIX						".conf"
 #define WHITESPACE					" \t\n\v\f\r" /// might only need " \t"
+#define	DELIMETERS					"{}; "
+
+// not in use
 #define IS_BRACE_O					ch == '{'
 #define IS_BRACE_C					ch == '}'
 #define IS_SEMICOLON				ch == ';'
 #define IS_SPACE					ch == ' '
-#define	DELIMETERS					"{}; "
 
 class Parser // http Block basically
 {
@@ -38,12 +40,7 @@ class Parser // http Block basically
 		Parser&	operator=(const Parser& other);
 		~Parser();
 
-
-		// static function to check for _generallErrors -> postfix, emtpy file, no server block, 
-			// lines with no semicolon (is it possible to have one broken into two?), ...
 		static int	_generalErrors(std::string fileName);
-		// next we go into the Constructor and start _indepthCheck, as we do that we fill the _serverVec
-		// _indepthCheck();
 
 		void		_parser(); // other name: _callParserFunctions()
 

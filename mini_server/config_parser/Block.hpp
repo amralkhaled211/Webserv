@@ -3,7 +3,13 @@
 // #include "Parser.hpp"
 #include <string>
 #include <vector>
+#include <stdexcept>
+#include <sstream>
+#include <iostream>
 
+#define OFF						0
+#define ON						1
+#define NOT_SET					2
 
 class Block // parent // the purpose of this is just to not have class with the same attibutes and methods, we won't do any Polymorphism, just Inheritence
 {
@@ -16,7 +22,7 @@ class Block // parent // the purpose of this is just to not have class with the 
 		std::vector<std::string>	_return;
 		std::vector<std::string>	_try_files;
 		std::vector<std::string>	_index;
-		bool						_autoindex;
+		char						_autoindex;
 
 		// std::map<std::string, std::string>	directives; // I think we need the directives individually
 
@@ -41,10 +47,13 @@ class Block // parent // the purpose of this is just to not have class with the 
 		const std::vector<std::string>&	getReturn() const;
 		const std::vector<std::string>&	getTryFiles() const;
 		const std::vector<std::string>&	getIndex() const;
-		const bool						getAutoindex() const;
+		const char						getAutoindex() const;
 
+		bool				_addCommonDirective(const std::string& directiveKey, std::string& directiveValue);
 
 		virtual void		addLocationBlock() = 0;
 		virtual void		setDirective(const std::string& directiveKey, std::string& directiveValue) = 0;
 
 };
+
+std::vector<std::string>	splitString(const std::string& input); // will put this in a diff file
