@@ -94,6 +94,8 @@ std::vector<LocationBlock>&		ServerBlock::getLocationVec() { return this->_locat
 
 void							ServerBlock::addLocationBlock() { this->_locationVec.push_back(LocationBlock()); }
 
+int								ServerBlock::getListen(){ return this->_listen;}
+
 
 /*			DEBUG			*/
 
