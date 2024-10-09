@@ -52,5 +52,6 @@
 		"map": "cpp",
 		"csignal": "cpp",
 		"ranges": "cpp"
-	}
+	},
+	"C_Cpp.default.compilerPath": "/usr/bin/clang"
 }

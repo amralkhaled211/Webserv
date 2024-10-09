@@ -6,7 +6,7 @@
 /*   By: aszabo <aszabo@student.42vienna.com>       +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/03 12:34:27 by aszabo            #+#    #+#             */
-/*   Updated: 2024/10/04 13:01:07 by aszabo           ###   ########.fr       */
+/*   Updated: 2024/10/07 18:19:27 by aszabo           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -43,8 +43,8 @@ void CGI::setEnv()
 {
 	_env["REQUEST_METHOD"] = _request.method;
 	_env["QUERY_STRING"] = _request.queryString;
-	_env["CONTENT_TYPE"] = _request.headers["Content-Type"];
-	_env["CONTENT_LENGTH"] = _request.headers["Content-Length"];
+	/* _env["CONTENT_TYPE"] = _request.headers["Content-Type"];
+	_env["CONTENT_LENGTH"] = _request.headers["Content-Length"]; */
 	_env["SCRIPT_NAME"] = _scriptPath;
 	_env["PATH_INFO"] = _request.path;
 	_env["PATH_TRANSLATED"] = "/translated/path" + _request.path;
@@ -63,6 +63,10 @@ void CGI::setEnv()
 		std::transform(envName.begin(), envName.end(), envName.begin(), ::toupper);
 		_env[envName] = it->second;
 	}
+	if (!_env.empty())
+	{
+		_env.erase(_env.begin());
+	}
 }
 
 
@@ -72,6 +76,22 @@ void freeEnvp(std::vector<char*> &envp)
 	{
 		delete[] envp[i];
 	}
+}
+
+void CGI::printEnvp(std::vector<char*>envp)
+{
+	for(std::vector<char*>::iterator it = envp.begin(); it < envp.end(); ++it)
+	{
+		std::cout << *it << std::endl;
+	}	
+}
+
+void CGI::printEnv()
+{
+	for(std::map<std::string, std::string>::iterator it = _env.begin(); it != _env.end(); ++it)
+	{
+		std::cout << it->first << ": " << it->second << std::endl;
+	}	
 }
 
 void CGI::executeScript()

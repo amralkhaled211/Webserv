@@ -6,7 +6,7 @@
 /*   By: aszabo <aszabo@student.42vienna.com>       +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/03 12:05:59 by aszabo            #+#    #+#             */
-/*   Updated: 2024/10/04 12:59:37 by aszabo           ###   ########.fr       */
+/*   Updated: 2024/10/04 16:23:46 by aszabo           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -38,4 +38,7 @@ class CGI
 		void generateResponse();
 
 		std::vector<char*> setUpEnvp();
+
+		void printEnv();
+		void printEnvp(std::vector<char*> envp);
 };

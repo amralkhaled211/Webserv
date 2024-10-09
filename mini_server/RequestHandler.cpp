@@ -115,10 +115,12 @@ void RequestHandler::sendResponse(int clientSocket)
 			request.path = "/index.html";
 		if (request.path.find(".cgi") != std::string::npos)
 		{
+			//print_map(request.headers);
 			/* std::cout << "Executing CGI now" << std::endl;
 			std::cout << "CGI script path " << root + request.path << std::endl; */
 			CGI cgi(root + request.path, request);
 			cgi.setEnv();								//we will need env variables from config file here later
+			cgi.printEnv();
 			cgi.executeScript();
 			cgi.generateResponse();
 			response = cgi.getResponse();
