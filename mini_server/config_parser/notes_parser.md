@@ -113,33 +113,29 @@
 
 
 # TASKS
-## WORK IN PROGRES
-	- still figuring out the parsing, issue atm in _locationBlock()
-		- missing logic for the biginning -> "location /{" this should not be an error
-
 
 ## TODO
-	[] Test case with return 307 /path; play with the space and newline
-	[] Test with '{', '}' and ';' followed by each other, probably error, if so --> add to _generallErrors
-	[] _generallErrors() --> more stuff to add, but only if it is easier there
-		[] ’;’, '{', '}' in series maybe
-		[] invalid '{' and '}' --> opened but not closed, vice versa
-	[] Figure out meaning/use case of each directive
-	[] Figure out which directives are used in the server block
-	[] Figure out which directives are used in the location block
-	[] Which are used in both
-	[] Figure out CGI
-	[] Approach to parse
-		[] delete all comments (#)
-		[] put everything in one string
-		[] replace the '\n' with ' '
-		[] tokenize
-			* 
-	[] _fillBlocks()
+- [] Test case with return 307 /path; play with the space and newline
+- [] Test with '{', '}' and ';' followed by each other, probably error, if so --> add to _generallErrors
+	[] ’;’, '{', '}' in series maybe
+	[] invalid '{' and '}' --> opened but not closed, vice versa
+- [] Figure out meaning/use case of each directive
+- [] Figure out which directives are used in the server block
+- [] Figure out which directives are used in the location block
+- [] Which are used in both
+- [] Figure out CGI
+- [] Approach to parse
+-	[x] delete all comments (#)
+-	[x] put everything in one string
+-	[x] replace the '\n' with ' '
+-	[x] tokenize
+-	[] Figure out valid and invalid cases
+- [] _fillBlocks()
 
 ## DONE
-	[x] Basic Structure for Parsing
-	[x] _configToContent() & _removeExcessSpace()
+- [x] Basic Structure for Parsing
+- [x] _configToContent() & _removeExcessSpace()
+- [x] _generallErrors() --> more stuff to add, but only if it is easier there
 
 
 

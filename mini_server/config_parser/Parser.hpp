@@ -9,6 +9,7 @@
 #include <fstream>
 #include <sstream>
 #include <algorithm>
+#include <iomanip>
 
 #include "Block.hpp"
 #include "ServerBlock.hpp"
@@ -18,6 +19,15 @@
 #define POSTFIX						".conf"
 #define WHITESPACE					" \t\n\v\f\r" /// might only need " \t"
 #define	DELIMETERS					"{}; "
+
+// colors for debugging
+#define RED							"\033[1;31m"
+#define GREEN						"\033[1;32m"
+#define YELLOW						"\033[1;33m"
+#define BOLD_RED					"\033[1;91m"
+#define BOLD_GREEN					"\033[1;92m"
+#define BOLD_YELLOW					"\033[1;93m"
+#define RESET						"\033[0m"
 
 // not in use
 #define IS_BRACE_O					ch == '{'
