@@ -225,10 +225,14 @@ void		Parser::_fillBlocks() {
 		std::cerr << BOLD_GREEN << "Done with One/Another Server Block\n" << RESET << std::endl;
 
 		if (pos != -1 && pos == _content.size() -1 && _content[pos] == '}') // this is the end of the http block
-			break;
+			goto end;
 
 		// this->_printServerVec();
 	}
+	throw std::runtime_error("Missing Closing Brace");
+
+	end:
+		;
 }
 
 /*			SERVER BLOCK HANDLING			*/
