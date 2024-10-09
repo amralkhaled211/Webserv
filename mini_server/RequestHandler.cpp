@@ -120,7 +120,7 @@ void RequestHandler::sendResponse(int clientSocket)
 			std::cout << "CGI script path " << root + request.path << std::endl; */
 			CGI cgi(root + request.path, request);
 			cgi.setEnv();								//we will need env variables from config file here later
-			cgi.printEnv();
+			//cgi.printEnv();
 			cgi.executeScript();
 			cgi.generateResponse();
 			response = cgi.getResponse();

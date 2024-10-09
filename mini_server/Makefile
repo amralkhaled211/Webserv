@@ -5,18 +5,18 @@ SRC	= main.cpp Server.cpp parser_utils.cpp types.cpp  RequestHandler.cpp CGI.cpp
 OBJ_DIR = obj
 OBJ	= $(SRC:%.cpp=$(OBJ_DIR)/%.o)
 
-CC	= c++
+CXX	= c++
 
-CFLAGS	= -Wall -Wextra -Werror -std=c++98 -g
+CXXFLAGS	= -Wall -Wextra -Werror -std=c++98 -g
 
 all: $(NAME)
 
 $(NAME): $(OBJ) 
-	$(CC) $(CFLAGS) $(OBJ) -o $(NAME)
+	$(CXX) $(CXXFLAGS) $(OBJ) -o $(NAME)
 
 $(OBJ_DIR)/%.o: %.cpp
 	@mkdir -p $(OBJ_DIR)
-	$(CC) $(CFLAGS) -c $< -o $@
+	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 clean:
 	rm -f $(OBJ_DIR)/*.o

@@ -101,6 +101,8 @@ void CGI::executeScript()
 
 	if (pipe(inPipe) == -1 || pipe(outPipe) == -1)
 		throw std::runtime_error("Failed to create pipes in CGI");
+
+
 	pid_t pid = fork();
 	if (pid == -1)
 		throw std::runtime_error("Failed to fork in CGI");
@@ -112,7 +114,30 @@ void CGI::executeScript()
 		close(inPipe[1]);
 		close(outPipe[0]);
 
+		std::ofstream child_out("cgi_child_debug.txt");
+        if (!child_out.is_open())
+        {
+            std::cerr << "Failed to open debug log file" << std::endl;
+            exit(1);
+        }
+
+		child_out << "Child process started" << std::endl;
+
 		std::vector<char*> envp = setUpEnvp();
+
+
+		child_out << "Printing envp..." << std::endl;
+		for (std::vector<char*>::iterator  it = envp.begin(); it != envp.end(); it++)
+		{
+			char* var = *it;
+			for (size_t i = 0; i <= strlen(var) - 1; i++)
+			{
+				child_out << var[i];
+			}
+			child_out << std::endl;
+		}
+
+		child_out << "Env is set up going into execve" << std::endl;
 		
 		char *arg[] = {const_cast<char*>(_scriptPath.c_str()), NULL};
 		execve(_scriptPath.c_str(), arg, &envp[0]);
@@ -139,7 +164,7 @@ void CGI::executeScript()
 
 		int status;
 		waitpid(pid, &status, 0);
-
+		std::cout << "Exited child process, returning response.." << std::endl;
 		_response.body = output.str();
 	}
 }
@@ -148,7 +173,7 @@ void CGI::generateResponse()
 {
 	std::istringstream ss(_response.body);
 	std::string line;
-	bool headersParsed = false;
+	/* bool headersParsed = false; */
 
 	_response.status = "HTPP/1.1 200 OK\r\n"; //Default status
 
@@ -156,7 +181,7 @@ void CGI::generateResponse()
 	{
 		if (line == "\r" || line.empty())
 		{
-			headersParsed = true;
+			/* headersParsed = true; */
 			break;
 		}
 
