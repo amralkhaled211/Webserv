@@ -16,13 +16,8 @@ private:
 	// variables
 	int serverSocket;
 	int clientSocket;
-	int epoll_fd;
-
-	// objects
 	std::vector<ServerBlock>& _servers;
 	std::vector<int> _serverSockets;
-
-	// functions
 	void createSocket();
 	void accept();
 

@@ -2,7 +2,7 @@
 
 Server::Server(std::vector<ServerBlock>& _serverVec) : _servers(_serverVec)
 {
-    printServerVec(_servers);
+    //printServerVec(_servers);
 	clientSocket = 0;
 }
 
@@ -13,8 +13,7 @@ Server::~Server()
         close(_serverSockets[i]);
     if (clientSocket != -1)
         close(clientSocket);
-	if (epoll_fd != -1)
-		close(epoll_fd);
+    Epoll::close_epoll();
 }
 
 void Server::createSocket()
@@ -31,6 +30,7 @@ void Server::createSocket()
         if (setsockopt(serverSocket, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) < 0 ||
                 setsockopt(serverSocket, SOL_SOCKET, SO_REUSEPORT, &opt, sizeof(opt)) < 0)
         {
+            close(serverSocket);
             throw std::runtime_error("setsockopt(SO_REUSEADDR) failed");
         }
 
@@ -52,7 +52,7 @@ void Server::createSocket()
 }
 void Server::accept()
 {
-    Epoll epoll(_serverSockets); 
+    Epoll::acceptConnection(_serverSockets); 
 }
 
 

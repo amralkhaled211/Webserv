@@ -27,23 +27,15 @@ extern bool serverRunning ;
 
 class Epoll
 {
-	public :
-	Epoll( const std::vector<int>& serverSockets);
-	~Epoll();
-
 	private :
-	int _epollFD;
-	const std::vector<int>& serverSockets;
-	RequestHandler requestHandle;
-	// std::vector<struct epoll_event>  _events(MAX_EVENTS);
-	void init_epoll();
-	void handleEpollEvents( std::vector<struct epoll_event>& _events);
-	void handleConnection(int server_fd);
-	void acceptConnection();
-	void handleData(int client_fd);
-
-
-
+		static int _epollFD;
+		static RequestHandler requestHandle;
+	public :
+		static void acceptConnection(const std::vector<int>& serverSockets);
+		static void init_epoll(const std::vector<int>& serverSockets);
+		static void handleEpollEvents(const std::vector<int>& serverSockets);
+		static void handleConnection(int server_fd);
+		static void handleData(int client_fd);
+		static void close_epoll();
 };
-
 int make_socket_non_blocking(int sockfd);
