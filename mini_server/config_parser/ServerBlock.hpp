@@ -7,8 +7,9 @@ class ServerBlock : public Block
 {
 	private:
 		std::vector<LocationBlock>		_locationVec;
-		int								_listen;
+		std::vector<int>				_listen;
 		std::vector<std::string>		_server_name;
+		
 
 	public:
 		ServerBlock();

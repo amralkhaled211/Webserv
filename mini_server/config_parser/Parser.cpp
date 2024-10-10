@@ -88,9 +88,9 @@ int		Parser::_generalErrors(std::string fileName) {
 void		Parser::_parser() {
 	// prep
 	this->_configToContent();
-	this->_printContent();
+	// this->_printContent();
 	this->_removeExcessSpace();
-	this->_printContent();
+	// this->_printContent();
 	this->_syntaxError();
 
 	// parsing
@@ -249,7 +249,7 @@ void		Parser::_serverBlock(std::stringstream& ss) {
 
 		size_t	pos = ss.tellg();
 		std::cerr << "Char at " << pos - 1 << ": '" << ch << "'" << std::endl;
-		
+
 		if (token == "location") {
 			_locationBlock(ss); // must return right after '}' of the location block
 			token.clear();

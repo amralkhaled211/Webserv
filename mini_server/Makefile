@@ -18,7 +18,7 @@ all: $(NAME)
 $(NAME): $(OBJ) # $(HEADERS)
 	@$(CC) $(CFLAGS) $(OBJ) -o $(NAME)
 
-$(OBJ_DIR)/%.o: %.cpp
+$(OBJ_DIR)/%.o: %.cpp # $(HEADERS)
 	@mkdir -p $(dir $@)
 	@$(CC) $(CFLAGS) -c $< -o $@
 

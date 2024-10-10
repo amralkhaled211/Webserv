@@ -111,38 +111,14 @@
 
 	http{server{listen 8090   ;server_name 127.0.0.1;location /hello{alias /home/aismaili/webSite;index index.html;}}}
 
-
-# TASKS
-
-## TODO
-- [] Test case with return 307 /path; play with the space and newline
-- [] Test with '{', '}' and ';' followed by each other, probably error, if so --> add to _generallErrors
-	[] ’;’, '{', '}' in series maybe
-	[] invalid '{' and '}' --> opened but not closed, vice versa
-- [] Figure out meaning/use case of each directive
-- [] Figure out which directives are used in the server block
-- [] Figure out which directives are used in the location block
-- [] Which are used in both
-- [] Figure out CGI
-- [] Approach to parse
--	[x] delete all comments (#)
--	[x] put everything in one string
--	[x] replace the '\n' with ' '
--	[x] tokenize
--	[] Figure out valid and invalid cases
-- [] _fillBlocks()
-
-## DONE
-- [x] Basic Structure for Parsing
-- [x] _configToContent() & _removeExcessSpace()
-- [x] _generallErrors() --> more stuff to add, but only if it is easier there
-
-
-
+## subject
+### default server
+	The first server for a host:port will be the default for this host:port (that means
+	it will answer to all the requests that don’t belong to an other server).
 
 # INDIVIDUAL DIRECTIVES
 ## error_page
-### explanation:
+### Explanation:
 	The first part (404, 500, etc.) indicates the error codes for which the directive applies.
 	The second part (/custom_404.html, /50x.html, /error_handler.php) indicates the URI or file to be served when that error occurs.
 	The = prefix can be used to change the response code when serving the error page. For example, error_page 404 =200 /error_handler.php; will serve /error_handler.php and return an HTTP 200 status instead of 404.
@@ -160,4 +136,44 @@
 ### Example 3: Redirect errors to another location
 	error_page 404 = /error_handler.php;
 
-##
+
+## client-max-body-size
+### Explanation
+	Syntax:	client_max_body_size size;
+	Default:	
+	client_max_body_size 1m;
+	Context:	http, server, location
+	Sets the maximum allowed size of the client request body. If the size in a request exceeds the configured value, the 413 (Request Entity Too Large) error is returned to the client. Please be aware that browsers cannot correctly display this error. Setting size to 0 disables checking of client request body size.
+
+
+## location
+### Explanation
+**Attributes**
+
+	Syntax:	location [ = | ~ | ~* | ^~ ] uri { ... }
+	location @name { ... }
+	Default:	—
+	Context:	server, location
+
+	Sets configuration depending on a request URI.
+
+**Matching**
+
+	The matching is performed against a normalized URI, after decoding the text encoded in the “%XX” form, resolving references to relative path components “.” and “..”, and possible compression of two or more adjacent slashes into a single slash.
+
+
+
+
+### Example with ~* 
+**location ~* /.(gif|jpg|png)$ { ... }**
+
+	The ~* indicates a case-insensitive regular expression.
+	This location block handles requests for image files with .gif, .jpg, or .png extensions.
+	expires 30d; sets an expiration header, telling the browser to cache these files for 30 days.
+
+### Example with ~
+**location ~ /.php$ { ... } (CGI Part)**
+
+	The ~ indicates a case-sensitive regular expression. This block matches any URL ending with .php.
+	This block is where the CGI (or more specifically, FastCGI) process comes into play.
+

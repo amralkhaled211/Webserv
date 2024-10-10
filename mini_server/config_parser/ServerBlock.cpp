@@ -2,8 +2,9 @@
 
 
 ServerBlock::ServerBlock() : Block("serverBlock") {
-	this->_listen = -1;
+	this->_listen = std::vector<int>();
 	this->_server_name = std::vector<std::string>();
+	this->_locationVec = std::vector<LocationBlock>();
 }
 
 ServerBlock::ServerBlock(const ServerBlock& other) : Block(other) { *this = other; }
@@ -32,14 +33,21 @@ void		ServerBlock::setDirective(const std::string& directiveKey, std::string& di
 	size_t						amountArgs(valueArgs.size());
 
 	if (directiveKey == "listen") {
-		if (this->_listen != -1)
+		if (this->_listen.size() > 0)
 			throw std::runtime_error("Duplicate listen Directive");
 
 		if (amountArgs != 1 || directiveValue.find_first_not_of("0123456789") != std::string::npos) // to add: check for port range
 			throw std::runtime_error("Invalid listen Directive");
 
 		std::istringstream	ss(directiveValue);
-		ss >> this->_listen;
+		while (!ss.eof()) {
+			int		port;
+			ss >> port;
+			if (ss.fail())
+				throw std::runtime_error("Invalid listen Directive");
+			this->_listen.push_back(port);
+			std::cerr << "Port: " << port << std::endl;
+		}
 		if (ss.fail())
 			throw std::runtime_error("Invalid listen Directive");
 	}
@@ -71,7 +79,8 @@ void							ServerBlock::addLocationBlock() { this->_locationVec.push_back(Locati
 /*			DEBUG			*/
 
 void	ServerBlock::printServerBlock() {
-	std::cout << "Listen: " << this->_listen << std::endl;
+	for (size_t i = 0; i < this->_listen.size(); i++)
+		std::cout << "Listen[" << i << "]: " << this->_listen[i] << std::endl;
 	std::cout << "Server Name: ";
 	for (size_t i = 0; i < this->_server_name.size(); i++)
 		std::cout << this->_server_name[i] << " ";

@@ -1,6 +1,11 @@
 #include "LocationBlock.hpp"
 
-LocationBlock::LocationBlock() : Block("locationBlock") { }
+LocationBlock::LocationBlock() : Block("locationBlock") {
+	this->_allowed_methods = std::vector<std::string>();
+	this->_cgi_path = std::vector<std::string>();
+	this->_cgi_ext = std::vector<std::string>();
+	this->_nestedLocationVec = std::vector<LocationBlock>();
+}
 
 
 LocationBlock::LocationBlock(const LocationBlock& other) : Block(other) { *this = other; }
@@ -9,8 +14,13 @@ LocationBlock&	LocationBlock::operator=(const LocationBlock& other) {
 	if (this == &other)
 		return *this;
 
+	Block::operator=(other);
+
 	this->_nestedLocationVec = other._nestedLocationVec;
 	this->_allowed_methods = other._allowed_methods;
+	this->_cgi_path = other._cgi_path;
+	this->_cgi_ext = other._cgi_ext;
+	this->_prefix = other._prefix;
 
 	return *this;
 }
