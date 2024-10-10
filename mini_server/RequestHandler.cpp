@@ -119,11 +119,16 @@ void RequestHandler::sendResponse(int clientSocket)
 			/* std::cout << "Executing CGI now" << std::endl;
 			std::cout << "CGI script path " << root + request.path << std::endl; */
 			CGI cgi(root + request.path, request);
-			cgi.setEnv();								//we will need env variables from config file here later
+			//print_map(request.headers);
+			cgi.setEnv();		//we will need env variables from config file here later
 			//cgi.printEnv();
 			cgi.executeScript();
 			cgi.generateResponse();
 			response = cgi.getResponse();
+			/* std::cout << "Response status: " << response.status << std::endl;
+			std::cout << "Response content type: " << response.contentType << std::endl;
+			std::cout << "Response content length: " << response.contentLength << std::endl;
+			std::cout << "Response body: " << response.body << std::endl; */
 		}
 		else
 			this->read_file(root + request.path);
@@ -149,7 +154,13 @@ void RequestHandler::sendResponse(int clientSocket)
 		}
 	}
 	std::string resp =  response.status + response.contentType + response.contentLength + "\r\n" + response.body;
+	/* std::cout << "Response: " << resp << std::endl; */
+
 	const char* resp_cstr = resp.c_str();
+	/* std::cout << "Response c_str: " << resp.c_str() << std::endl; */
+
     size_t resp_length = resp.size();
+	/* std::cout << "Response length: " << resp_length << std::endl; */
+
     send(clientSocket, resp_cstr, resp_length, 0);
 }
