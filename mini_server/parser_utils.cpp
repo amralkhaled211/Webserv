@@ -29,6 +29,14 @@ std::string intToString(int value)
 	return ss.str();
 }
 
+int stringToInt(const std::string& str)
+{
+    std::stringstream ss(str);
+    int value;
+    ss >> value;
+    return value;
+}
+
 
 ///debugging function
 void print_map(const std::map<std::string, std::string>& m)

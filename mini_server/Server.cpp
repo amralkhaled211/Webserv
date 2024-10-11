@@ -13,7 +13,6 @@ Server::~Server()
         close(_serverSockets[i]);
     if (clientSocket != -1)
         close(clientSocket);
-    Epoll::close_epoll();
 }
 
 void Server::createSocket()
@@ -52,7 +51,7 @@ void Server::createSocket()
 }
 void Server::accept()
 {
-    Epoll::acceptConnection(_serverSockets); 
+    Epoll epoll(_serverSockets, _servers);
 }
 
 

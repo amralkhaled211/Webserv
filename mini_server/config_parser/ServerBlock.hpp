@@ -24,6 +24,8 @@ class ServerBlock : public Block // gotta see what we put in Blocks (parent) and
 
 		std::vector<LocationBlock>&		getLocationVec();
 		int getListen();
+		std::vector<std::string> getName();
+
 
 		void		setDirective(const std::string& directiveKey, std::string& directiveValue); // might need to be virtual
 		void		addLocationBlock();

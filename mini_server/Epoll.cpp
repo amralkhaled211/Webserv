@@ -1,7 +1,16 @@
 #include "Epoll.hpp"
 
-int Epoll::_epollFD = -1;
-RequestHandler Epoll::requestHandle;
+Epoll::Epoll(const std::vector<int>& serverSockets, std::vector<ServerBlock>& servers) : _servers(servers)
+{
+    _epollFD = -1;
+    //printServerVec(_servers);
+    acceptConnection(serverSockets);
+}
+
+Epoll::~Epoll()
+{
+    close(_epollFD);
+}
 
 void Epoll::init_epoll(const std::vector<int>& serverSockets)
 {
@@ -31,7 +40,7 @@ void Epoll::handleEpollEvents(const std::vector<int>& serverSockets)
             return;
         throw std::runtime_error("epoll_wait");
     }
-    std::cout << "Number of events (fds) returned: " << n << std::endl;
+    // std::cout << "Number of events (fds) returned: " << n << std::endl;
     for (int i = 0; i < n; ++i)
 	{
         if (_events[i].events & (EPOLLERR | EPOLLHUP | EPOLLRDHUP))
@@ -47,13 +56,14 @@ void Epoll::handleEpollEvents(const std::vector<int>& serverSockets)
         }
 		else
 		{
+            std::cout << "_events[i].data.fd: " << _events[i].data.fd << std::endl;
            handleData(_events[i].data.fd);
         }
     }
 }
 void Epoll::handleConnection(int server_fd)
 {
-   // std::cout << "server_fd: " << server_fd << std::endl;
+   std::cout << "server_fd: " << server_fd << std::endl;
 	while (true)
 	{
         int client_fd = accept(server_fd, NULL, NULL);
@@ -76,31 +86,30 @@ void Epoll::handleConnection(int server_fd)
             throw std::runtime_error("epoll_ctl");
         }
         std::cout << "Connection accepted" << std::endl;
+        // Client client(client_fd, _servers[0]);
+        // _clients.push_back(client);
     }
 }
 
+void Epoll::handleData(int client_fd)
+{
+    std::cout << "Data received" << std::endl;
+    //std::cout << "client_fd in handle date " << client_fd << std::endl; 
+    //std::cout << "_clients size :" << _clients.size() << std::endl;
+    //std::cout << "value of cfd :" << _clients[0].getClientFD() << std::endl;
+    requestHandle.receiveData(client_fd);
+    requestHandle.parseRequest();
+    requestHandle.sendResponse(client_fd, _servers);
+}
 
 void Epoll::acceptConnection(const std::vector<int>& serverSockets)
 {
 	init_epoll(serverSockets);
     while (serverRunning)
 	{
-        //std::cout << "Handling epoll events" << std::endl;
         handleEpollEvents(serverSockets);
     }
 }
-
-
-void Epoll::handleData(int client_fd)
-{
-    std::cout << "Data received" << std::endl;
-    requestHandle.receiveData(client_fd);
-    requestHandle.parseRequest();
-    requestHandle.sendResponse(client_fd);
-}
-
-
-
 
 
 
@@ -124,14 +133,4 @@ int make_socket_non_blocking(int sockfd)
         return -1;
     }
     return 0;
-}
-
-void Epoll::close_epoll()
-{
-    if (_epollFD != -1)
-    {
-        close(_epollFD);
-        _epollFD = -1;
-        std::cout << "Epoll closed" << std::endl;
-    }
 }

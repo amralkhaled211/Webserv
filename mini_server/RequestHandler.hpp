@@ -46,10 +46,17 @@ class RequestHandler
 		void read_file(std::string const &path);
 		void receiveData(int clientSocket);
 		void parseRequest();
-		void sendResponse(int clientSocket);
+		void sendResponse(int clientSocket, std::vector<ServerBlock>& servers);
+		ServerBlock findServerBlock(std::vector<ServerBlock>& servers);
 		void notfound();
 		void parseHeaders();
 		void parse_first_line();
+		
+		template <typename T>
+        bool findInVector(const std::vector<T>& vec, const T& target)
+		{
+            return std::find(vec.begin(), vec.end(), target) != vec.end();
+        }
 	private:
 	parser request;
 	Response response;
@@ -58,6 +65,7 @@ class RequestHandler
 
 //utility functions
 std::string intToString(int value);
+int stringToInt(const std::string& str);
 std::string deleteSpaces(std::string const &str);
 std::string get_file_extension(const std::string& file_path);
 std::string get_file_name(const std::string& file_path);

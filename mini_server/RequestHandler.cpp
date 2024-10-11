@@ -45,7 +45,7 @@ void RequestHandler::parseHeaders()
 		request.body = line;
 		//std::cout << "the body :" << request.body << std::endl;
 	}
-	// std::cout << "this buffer" << this->buffer << std::endl;
+	std::cout << "this buffer" << this->buffer << std::endl;
 }
 void RequestHandler::parseRequest()
 {
@@ -92,12 +92,41 @@ void RequestHandler::read_file(std::string const &path)
 	}
 }
 
-void RequestHandler::sendResponse(int clientSocket)
+
+ServerBlock RequestHandler::findServerBlock(std::vector<ServerBlock>& servers)
 {
+    std::string host = request.headers["Host"];
+    size_t colon_pos = host.find(':');
+    std::string server_name = (colon_pos != std::string::npos) ? host.substr(0, colon_pos) : host;
+    std::string port = (colon_pos != std::string::npos) ? host.substr(colon_pos + 1) : "";
+
+	for (std::vector<ServerBlock>::iterator it = servers.begin(); it !=  servers.end(); ++it)
+	{
+		ServerBlock& server = *it;
+		if (server.getListen() == stringToInt(port) && findInVector(server.getName(), server_name))
+		{
+			return server;
+		}
+	}
+	// this would be fixed later 
+	std::cout << "returning the first server " << std::endl; 
+	return servers[0];// return default
+}
+
+void RequestHandler::sendResponse(int clientSocket, std::vector<ServerBlock>& servers)
+{
+
+	ServerBlock current_server = findServerBlock(servers);
+
+	std::cout << "current_server port : " << current_server.getListen() << std::endl;
+
+
+
 	std::string root = "/home/amalkhal/Webserv/website";// this would be changed 
 
 	if (request.method == "GET")
 	{
+		std::cout << "path :"  << request.path << std::endl; 
 		if (request.path == "/")// this if the whole path is not given, so i would give a default path file 
 			request.path = "/index.html";
 		this->read_file(root + request.path);
