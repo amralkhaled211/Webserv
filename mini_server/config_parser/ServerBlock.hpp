@@ -9,7 +9,6 @@ class ServerBlock : public Block
 		std::vector<LocationBlock>		_locationVec;
 		std::vector<int>				_listen;
 		std::vector<std::string>		_server_name;
-		
 
 	public:
 		ServerBlock();
@@ -19,6 +18,8 @@ class ServerBlock : public Block
 
 		std::vector<LocationBlock>&		getLocationVec();
 		LocationBlock&					getLocationVecBack();
+		std::vector<int>&				getListen();
+		std::vector<std::string>&		getServerName();
 
 		void		setDirective(const std::string& directiveKey, std::string& directiveValue);
 		void		addLocationBlock();

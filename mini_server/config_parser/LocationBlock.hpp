@@ -21,6 +21,10 @@ class LocationBlock : public Block
 
 		std::vector<LocationBlock>&		getNestedLocationVec();
 		std::string&					getPrefix();
+		std::vector<std::string>&		getAllowedMethods();
+		std::vector<std::string>&		getCgiPath();
+		std::vector<std::string>&		getCgiExt();
+
 
 		void		addLocationBlock();
 		void		setDirective(const std::string& directiveKey, std::string& directiveValue);

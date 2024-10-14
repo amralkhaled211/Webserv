@@ -32,6 +32,13 @@ std::vector<LocationBlock>&		LocationBlock::getNestedLocationVec() { return this
 
 std::string&					LocationBlock::getPrefix() { return this->_prefix; }
 
+std::vector<std::string>&		LocationBlock::getAllowedMethods() { return this->_allowed_methods; }
+
+std::vector<std::string>&		LocationBlock::getCgiPath() { return this->_cgi_path; }
+
+std::vector<std::string>&		LocationBlock::getCgiExt() { return this->_cgi_ext; }
+
+
 void							LocationBlock::addLocationBlock() { this->_nestedLocationVec.push_back(LocationBlock()); }
 
 

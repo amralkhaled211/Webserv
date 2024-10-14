@@ -72,6 +72,11 @@ LocationBlock&					ServerBlock::getLocationVecBack() {
 	return this->_locationVec.back();
 }
 
+std::vector<int>&				ServerBlock::getListen() { return this->_listen; }
+
+std::vector<std::string>&		ServerBlock::getServerName() { return this->_server_name; }
+
+
 
 void							ServerBlock::addLocationBlock() { this->_locationVec.push_back(LocationBlock()); }
 
