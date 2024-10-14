@@ -46,7 +46,6 @@ void		ServerBlock::setDirective(const std::string& directiveKey, std::string& di
 			if (ss.fail())
 				throw std::runtime_error("Invalid listen Directive");
 			this->_listen.push_back(port);
-			std::cerr << "Port: " << port << std::endl;
 		}
 		if (ss.fail())
 			throw std::runtime_error("Invalid listen Directive");

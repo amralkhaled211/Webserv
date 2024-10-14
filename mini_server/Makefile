@@ -1,8 +1,10 @@
 NAME	= Server
 
-SRC	= main.cpp Server.cpp parser_utils.cpp types.cpp  RequestHandler.cpp config_parser/Parser.cpp config_parser/Block.cpp config_parser/ServerBlock.cpp config_parser/LocationBlock.cpp
+SRC_DIR = .
+CONFIG_PARSER_DIR = config_parser
 
-HEADERS = Server.hpp RequestHandler.hpp config_parser/Parser.hpp config_parser/Block.hpp config_parser/ServerBlock.hpp config_parser/LocationBlock.hpp
+SRC = $(wildcard $(SRC_DIR)/*.cpp) $(wildcard $(CONFIG_PARSER_DIR)/*.cpp)
+HEADERS = $(wildcard $(SRC_DIR)/*.hpp) $(wildcard $(CONFIG_PARSER_DIR)/*.hpp)
 
 OBJ_DIR = obj
 OBJ	= $(SRC:%.cpp=$(OBJ_DIR)/%.o)

@@ -20,6 +20,8 @@
 #define WHITESPACE					" \t\n\v\f\r" /// might only need " \t"
 #define	DELIMETERS					"{}; "
 
+#define DEBUG						0
+
 // colors for debugging
 #define RED							"\033[1;31m"
 #define GREEN						"\033[1;32m"
@@ -79,6 +81,4 @@ class Parser // http Block basically
 
 		void	_printContent();
 		void	_printServerVec();
-
-
 };

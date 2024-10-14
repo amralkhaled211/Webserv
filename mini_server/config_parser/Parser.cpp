@@ -95,7 +95,7 @@ void		Parser::_parser() {
 
 	// parsing
 	this->_fillBlocks();
-	this->_printServerVec();
+	// this->_printServerVec();
 }
 
 /*			PREP FOR PARSING			*/
@@ -206,7 +206,8 @@ void		Parser::_fillBlocks() {
 
 	while (std::getline(ss, token, '{')) { // till the next condition check, I  should handle the server Block, then the next will start
 		
-		std::cerr << "H Token before: >" << token << "<" << std::endl;
+		if (DEBUG)
+			std::cerr << "H Token before: >" << token << "<" << std::endl;
 
 		if (token == "server")
 			_serverBlock(ss); // this should return/finish only when ss is right before the next server, that means after the last Server closes '}'
@@ -216,13 +217,15 @@ void		Parser::_fillBlocks() {
 		if (ss.fail())
 			ss.clear();
 		// need to handle the end properly
-		std::cerr << "H Token after: >" << token << "<" << std::endl;
 		size_t	pos = ss.tellg();
-		std::cerr << BOLD_RED << "- Loop last line in _fillBlocks: Stream position: " << pos - 1 << " out of " << _content.size() << RESET << std::endl;
-		std::cerr << BOLD_RED << "= Loop last line in _fillBlocks: Stream position: " << pos 	<< " out of " << _content.size() << RESET << std::endl;
-		std::cerr << BOLD_RED << "+ Loop last line in _fillBlocks: Stream position: " << pos + 1 << " out of " << _content.size() << RESET << std::endl;
-		std::cerr << "_content at pos: '" << _content[pos - 1] << "' and '" << _content[pos] << "' and '" << _content[pos + 1] << "'" << std::endl;
-		std::cerr << BOLD_GREEN << "Done with One/Another Server Block\n" << RESET << std::endl;
+		if (DEBUG) {
+			std::cerr << "H Token after: >" << token << "<" << std::endl;
+			std::cerr << BOLD_RED << "- Loop last line in _fillBlocks: Stream position: " << pos - 1 << " out of " << _content.size() << RESET << std::endl;
+			std::cerr << BOLD_RED << "= Loop last line in _fillBlocks: Stream position: " << pos 	<< " out of " << _content.size() << RESET << std::endl;
+			std::cerr << BOLD_RED << "+ Loop last line in _fillBlocks: Stream position: " << pos + 1 << " out of " << _content.size() << RESET << std::endl;
+			std::cerr << "_content at pos: '" << _content[pos - 1] << "' and '" << _content[pos] << "' and '" << _content[pos + 1] << "'" << std::endl;
+			std::cerr << BOLD_GREEN << "Done with One/Another Server Block\n" << RESET << std::endl;
+		}
 
 		if (pos != -1 && pos == _content.size() -1 && _content[pos] == '}') // this is the end of the http block
 			goto end;
@@ -242,13 +245,15 @@ void		Parser::_serverBlock(std::stringstream& ss) {
 	std::string				deliSet(DELIMETERS);
 	char					ch; // trying to go through ss char by char, because we have multiple delimeters to deal with
 
-	std::cerr << BOLD_YELLOW << "new Server Block" << RESET << std::endl;
+	if (DEBUG) std::cerr << BOLD_YELLOW << "new Server Block" << RESET << std::endl;
 	_serverVec.push_back(ServerBlock());
 
 	while (ss.get(ch)) {
 
-		size_t	pos = ss.tellg();
-		std::cerr << "Char at " << pos - 1 << ": '" << ch << "'" << std::endl;
+		if (DEBUG) {
+			size_t	pos = ss.tellg();
+			std::cerr << "Char at " << pos - 1 << ": '" << ch << "'" << std::endl;
+		}
 
 		if (token == "location") {
 			_locationBlock(ss); // must return right after '}' of the location block
@@ -260,14 +265,14 @@ void		Parser::_serverBlock(std::stringstream& ss) {
 			else if (ch == ';') // wrong syntax, or issue in handleServerDirective() implementation
 				throw std::runtime_error("Unexpected Semicolon");
 			else if (ch == '{') {
-				std::cerr << "Token: " << token << std::endl;
 				throw std::runtime_error("S Unexpected Opening Brace");
 			}
 			else if (ch == '}') { // I need to handle here only the server block closing brace
 				if (!token.empty())
 					throw std::runtime_error("S Unexpected Closing Brace");
 				
-				std::cerr << BOLD_RED << "Exiting _serverBlock: Stream position: " << ss.tellg() << " out of " << _content.size() << RESET << std::endl;
+				if (DEBUG)
+					std::cerr << BOLD_RED << "Exiting _serverBlock: Stream position: " << ss.tellg() << " out of " << _content.size() << RESET << std::endl;
 				break;
 			}
 			token.clear();
@@ -283,8 +288,10 @@ void		Parser::_handleServerDirective(std::stringstream& ss, const std::string& d
 	// std::streampos		lastPos(ss.tellg()); // save pos
 
 	if (std::getline(ss, directiveValue, ';')) {
-		std::cerr << std::setw(20) << "S Dir Key: " << directiveKey << "		";
-		std::cerr << std::setw(20) << "S Dir Value: " << directiveValue << std::endl;
+		if (DEBUG) {
+			std::cerr << std::setw(20) << "S Dir Key: " << directiveKey << "		";
+			std::cerr << std::setw(20) << "S Dir Value: " << directiveValue << std::endl;
+		}
 
 		_serverVec.back().setDirective(directiveKey, directiveValue); // potential errors must be dedected there
 	}
@@ -302,7 +309,7 @@ void		Parser::_locationBlock(std::stringstream& ss) { // this is gonna be recurc
 	std::string				deliSet(DELIMETERS);
 	char					ch;
 
-	std::cerr << BOLD_YELLOW <<  "new Location Block" <<  RESET << std::endl;
+	if (DEBUG) std::cerr << BOLD_YELLOW <<  "new Location Block" <<  RESET << std::endl;
 
 	_serverVec.back().addLocationBlock();
 
@@ -332,18 +339,20 @@ void		Parser::_locationBlock(std::stringstream& ss) { // this is gonna be recurc
 				}
 			}
 			else if (ch == '{'/*  && !_serverVec.back().getLocationVec().back().getPrefix().empty() */) { // redundant
-				std::cerr << "Token: " << token << std::endl;
 				throw std::runtime_error("L Unexpected Opening Brace");
 			}
 			else if (ch == '}') {
 				// later: cases where token wouldn't be empty --> should be an error at this point
 				if (!_serverVec.back().getLocationVec().back().getPrefix().empty() && token.empty()) {
-					std::cerr << BOLD_RED << "Exiting _locationBlock: Stream position: " << ss.tellg() << " out of " << _content.size() << RESET << std::endl;
-					size_t	pos = ss.tellg();
-					std::cerr << "- _content[" << pos - 1 << "]: " << _content[pos - 1] << std::endl;
-					std::cerr << "=_content[" << pos << "]: " << _content[pos] << std::endl;
-					std::cerr << "+ _content[" << pos + 1 << "]: " << _content[pos + 1] << std::endl;
-					std::cerr << "Done with One/Another Location Block\n" << std::endl;
+					
+					if (DEBUG) {
+						std::cerr << BOLD_RED << "Exiting _locationBlock: Stream position: " << ss.tellg() << " out of " << _content.size() << RESET << std::endl;
+						size_t	pos = ss.tellg();
+						std::cerr << "- _content[" << pos - 1 << "]: " << _content[pos - 1] << std::endl;
+						std::cerr << "=_content[" << pos << "]: " << _content[pos] << std::endl;
+						std::cerr << "+ _content[" << pos + 1 << "]: " << _content[pos + 1] << std::endl;
+						std::cerr << "Done with One/Another Location Block\n" << std::endl;
+					}
 					break;
 				}
 				else
@@ -363,9 +372,10 @@ void		Parser::_handleLocationDirective(std::stringstream& ss, const std::string&
 	// std::streampos		lastPos(ss.tellg()); // save pos
 
 	if (std::getline(ss, directiveValue, ';')) {
-		std::cerr << std::setw(20) << "L Dir Key: " << directiveKey << "		";
-		std::cerr << std::setw(20) << "L Dir Value: " << directiveValue << std::endl;
-
+		if (DEBUG) {
+			std::cerr << std::setw(20) << "L Dir Key: " << directiveKey << "		";
+			std::cerr << std::setw(20) << "L Dir Value: " << directiveValue << std::endl;
+		}
 		_serverVec.back().getLocationVec().back().setDirective(directiveKey, directiveValue); // potential errors must be dedected there
 	}
 	else {
