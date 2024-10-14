@@ -9,6 +9,7 @@
 #include <fstream>
 #include <sstream>
 #include <algorithm>
+#include <iomanip>
 
 #include "Block.hpp"
 #include "ServerBlock.hpp"
@@ -17,14 +18,24 @@
 #define	VALID						1
 #define POSTFIX						".conf"
 #define WHITESPACE					" \t\n\v\f\r" /// might only need " \t"
-#define IS_BLOCKNAME				token == "http" || token == "server" || token == "location"
-#define IS_BLOCKNAME_WITH_BRACE		token == "http{" || token == "server{" || token == "location{" // this is obviously overkill, because it needs two more similar variations
+#define	DELIMETERS					"{}; "
+
+#define DEBUG						0
+
+// colors for debugging
+#define RED							"\033[1;31m"
+#define GREEN						"\033[1;32m"
+#define YELLOW						"\033[1;33m"
+#define BOLD_RED					"\033[1;91m"
+#define BOLD_GREEN					"\033[1;92m"
+#define BOLD_YELLOW					"\033[1;93m"
+#define RESET						"\033[0m"
+
+// not in use
 #define IS_BRACE_O					ch == '{'
 #define IS_BRACE_C					ch == '}'
 #define IS_SEMICOLON				ch == ';'
 #define IS_SPACE					ch == ' '
-#define	DELIMETERS					"{}; "
-#define IS_DIRECTIVE				token == "listen" || token == "server_name" || token == "root" || token == "index" || token == "autoindex" || token == "error_page" || token == "client_max_body_size" ||  token == "return" // more to follow // might meed to separate into more MACROS, because to long
 
 class Parser // http Block basically
 {
@@ -41,12 +52,7 @@ class Parser // http Block basically
 		Parser&	operator=(const Parser& other);
 		~Parser();
 
-
-		// static function to check for _generallErrors -> postfix, emtpy file, no server block, 
-			// lines with no semicolon (is it possible to have one broken into two?), ...
 		static int	_generalErrors(std::string fileName);
-		// next we go into the Constructor and start _indepthCheck, as we do that we fill the _serverVec
-		// _indepthCheck();
 
 		std::vector<ServerBlock>& getServerVec();
 
@@ -71,10 +77,10 @@ class Parser // http Block basically
 
 		void		_handleServerDirective(std::stringstream& ss, const std::string& directiveKey);
 		void		_handleLocationDirective(std::stringstream& ss, const std::string& directiveKey);
+
+
 		/*				DEBUG				*/
 
 		void	_printContent();
 		void	_printServerVec();
-
-
 };

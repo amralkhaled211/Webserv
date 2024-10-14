@@ -3,7 +3,6 @@
 Server::Server(std::vector<ServerBlock>& _serverVec) : _servers(_serverVec)
 {
     //printServerVec(_servers);
-	clientSocket = 0;
 }
 
 Server::~Server()
@@ -11,9 +10,32 @@ Server::~Server()
     std::cout << "Server shutting down" << std::endl;
 	for (int i = 0; i < _serverSockets.size(); i++)
         close(_serverSockets[i]);
-    if (clientSocket != -1)
-        close(clientSocket);
 }
+
+void Server::bindNamesWithPorts(std::vector<std::string>& serverName, std::vector<int> serverPort, int serverSocket)
+{
+    for (std::vector<std::string>::iterator it_name = serverName.begin(); it_name != serverName.end(); ++it_name)
+    {
+        std::string name = *it_name;
+        for (std::vector<int>::iterator it_port = serverPort.begin(); it_port != serverPort.end(); ++it_port)
+        {
+            sockaddr_in serverAddress;
+	        serverAddress.sin_family = AF_INET;
+	        serverAddress.sin_port = htons(*it_port);
+	        serverAddress.sin_addr.s_addr = INADDR_ANY;
+	        if (bind(serverSocket, (struct sockaddr*)&serverAddress, sizeof(serverAddress)) < 0)
+	        {
+	        	throw std::runtime_error("Binding failed");
+	        }
+	        if (listen(serverSocket, 5) < 0)
+	        {
+	        	throw std::runtime_error("Listening failed");
+	        }
+            _serverSockets.push_back(serverSocket);
+        }
+    }
+}
+
 
 void Server::createSocket()
 {
@@ -33,20 +55,7 @@ void Server::createSocket()
             throw std::runtime_error("setsockopt(SO_REUSEADDR) failed");
         }
 
-	    sockaddr_in serverAddress;
-	    serverAddress.sin_family = AF_INET;
-	    serverAddress.sin_port = htons(_servers[i].getListen());
-	    serverAddress.sin_addr.s_addr = INADDR_ANY;
-	    if (bind(serverSocket, (struct sockaddr*)&serverAddress, sizeof(serverAddress)) < 0)
-	    {
-	    	throw std::runtime_error("Binding failed");
-	    }
-
-	    if (listen(serverSocket, 5) < 0)
-	    {
-	    	throw std::runtime_error("Listening failed");
-	    }
-        _serverSockets.push_back(serverSocket);
+        bindNamesWithPorts(_servers[i].getServerName(), _servers[i].getListen(), serverSocket);
     }
 }
 void Server::accept()

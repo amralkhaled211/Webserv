@@ -2,8 +2,9 @@
 
 
 ServerBlock::ServerBlock() : Block("serverBlock") {
-	this->_listen = 0;
+	this->_listen = std::vector<int>();
 	this->_server_name = std::vector<std::string>();
+	this->_locationVec = std::vector<LocationBlock>();
 }
 
 ServerBlock::ServerBlock(const ServerBlock& other) : Block(other) { *this = other; }
@@ -14,6 +15,7 @@ ServerBlock&	ServerBlock::operator=(const ServerBlock& other) {
 
 	this->_listen = other._listen;
 	this->_server_name = other._server_name;
+	this->_locationVec = other._locationVec;
 
 	return *this;
 }
@@ -21,69 +23,40 @@ ServerBlock&	ServerBlock::operator=(const ServerBlock& other) {
 ServerBlock::~ServerBlock() { }
 
 
-std::vector<std::string>	splitString(const std::string& input) { // utils  --> c++ version of ft_split
-	std::istringstream			iss(input);
-	std::vector<std::string>	splitedInput;
-	std::string					word;
-
-	while (iss >> word) {
-		splitedInput.push_back(word);
-	}
-	return splitedInput;
-}
-
 // will rewrite this one later to be more compact
 void		ServerBlock::setDirective(const std::string& directiveKey, std::string& directiveValue) {
+
+	if (_addCommonDirective(directiveKey, directiveValue))
+		return;
 
 	std::vector<std::string>	valueArgs(splitString(directiveValue));
 	size_t						amountArgs(valueArgs.size());
 
 	if (directiveKey == "listen") {
-		if (this->_listen != 0)
+		if (this->_listen.size() > 0)
 			throw std::runtime_error("Duplicate listen Directive");
 
-		if (amountArgs != 1)
-			throw std::runtime_error("Invalid listen Directive");
-
-		if (directiveValue.find_first_not_of("0123456789") != std::string::npos)
+		if (amountArgs != 1 || directiveValue.find_first_not_of("0123456789") != std::string::npos) // to add: check for port range
 			throw std::runtime_error("Invalid listen Directive");
 
 		std::istringstream	ss(directiveValue);
-		ss >> this->_listen;
+		while (!ss.eof()) {
+			int		port;
+			ss >> port;
+			if (ss.fail())
+				throw std::runtime_error("Invalid listen Directive");
+			this->_listen.push_back(port);
+		}
 		if (ss.fail())
 			throw std::runtime_error("Invalid listen Directive");
 	}
 	else if (directiveKey == "server_name") {
+		if (!_server_name.empty())
+			throw std::runtime_error("Duplicate server_name Directive");
 		if (amountArgs != 1)
 			throw std::runtime_error("Invalid root Directive");
 
 		this->_server_name.push_back(directiveValue);
-	}
-	else if (directiveKey == "root") {
-		if (amountArgs != 1)
-			throw std::runtime_error("Invalid root Directive");
-
-		this->_root = directiveValue;
-	}
-	else if (directiveKey == "error_page") {
-		this->_error_page = valueArgs;
-	}
-	else if (directiveKey == "return") {
-		this->_return = valueArgs;
-	}
-	else if (directiveKey == "try_files") {
-		this->_try_files = valueArgs;
-	}
-	else if (directiveKey == "index") {
-		this->_index = valueArgs;
-	}
-	else if (directiveKey == "autoindex") {
-		if (directiveValue == "on")
-			this->_autoindex = true;
-		else if (directiveValue == "off")
-			this->_autoindex = false;
-		else
-			throw std::runtime_error("Invalid autoindex Directive");
 	}
 	else
 		throw std::runtime_error("Invalid Directive");
@@ -92,16 +65,27 @@ void		ServerBlock::setDirective(const std::string& directiveKey, std::string& di
 
 std::vector<LocationBlock>&		ServerBlock::getLocationVec() { return this->_locationVec; }
 
+LocationBlock&					ServerBlock::getLocationVecBack() {
+	if (this->_locationVec.empty())
+		throw std::runtime_error("No Location Blocks");
+	return this->_locationVec.back();
+}
+
+std::vector<int>&				ServerBlock::getListen() { return this->_listen; }
+
+std::vector<std::string>&		ServerBlock::getServerName() { return this->_server_name; }
+
+
+
 void							ServerBlock::addLocationBlock() { this->_locationVec.push_back(LocationBlock()); }
 
-int								ServerBlock::getListen(){ return this->_listen;}
-std::vector<std::string>		ServerBlock::getName(){ return this->_server_name;}
 
 
 /*			DEBUG			*/
 
 void	ServerBlock::printServerBlock() {
-	std::cout << "Listen: " << this->_listen << std::endl;
+	for (size_t i = 0; i < this->_listen.size(); i++)
+		std::cout << "Listen[" << i << "]: " << this->_listen[i] << std::endl;
 	std::cout << "Server Name: ";
 	for (size_t i = 0; i < this->_server_name.size(); i++)
 		std::cout << this->_server_name[i] << " ";

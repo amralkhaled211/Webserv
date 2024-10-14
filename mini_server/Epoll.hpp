@@ -21,7 +21,6 @@
 #include <cstdlib>
 #include "RequestHandler.hpp"
 #include "config_parser/Parser.hpp"
-#include "Client.hpp"
 
 #define MAX_EVENTS 10
 extern bool serverRunning ;

@@ -8,7 +8,7 @@ Block::Block(std::string type) : _blockType(type) {
 	this->_return = std::vector<std::string>();
 	this->_try_files = std::vector<std::string>();
 	this->_index = std::vector<std::string>();
-	this->_autoindex = false;
+	this->_autoindex = NOT_SET;
 }
 
 Block::Block( const Block& other ) { *this = other; }
@@ -60,7 +60,60 @@ const std::vector<std::string>&	Block::getTryFiles() const { return this->_try_f
 
 const std::vector<std::string>&	Block::getIndex() const { return this->_index; }
 
-const bool	Block::getAutoindex() const { return this->_autoindex; }
+const char	Block::getAutoindex() const { return this->_autoindex; }
+
+
+
+bool		Block::_addCommonDirective(const std::string& directiveKey, std::string& directiveValue) { // to add: invalid values
+	std::vector<std::string>	valueArgs(splitString(directiveValue));
+	size_t						amountArgs(valueArgs.size());
+
+	if (directiveKey == "root") {
+		if (!this->_root.empty())
+			throw std::runtime_error("Duplicate root Directive");
+		if (amountArgs != 1)
+			throw std::runtime_error("Invalid root Directive");
+		this->_root = directiveValue;
+		return true;
+	}
+	else if (directiveKey == "error_page") {
+		if (!this->_error_page.empty())
+			throw std::runtime_error("Duplicate error_page Directive");
+		this->_error_page = valueArgs;
+		return true;
+	}
+	else if (directiveKey == "return") {
+		if (!this->_return.empty())
+			throw std::runtime_error("Duplicate return Directive");
+		this->_return = valueArgs;
+		return true;
+	}
+	else if (directiveKey == "try_files") {
+		if (!this->_try_files.empty())
+			throw std::runtime_error("Duplicate try_files Directive");
+		this->_try_files = valueArgs;
+		return true;
+	}
+	else if (directiveKey == "index") {
+		if (!this->_index.empty())
+			throw std::runtime_error("Duplicate index Directive");
+		this->_index = valueArgs;
+		return true;
+	}
+	else if (directiveKey == "autoindex") {
+		if (this->_autoindex != NOT_SET)
+			throw std::runtime_error("Duplicate autoindex Directive");
+		if (directiveValue == "on")
+			this->_autoindex = ON;
+		else if (directiveValue == "off")
+			this->_autoindex = OFF;
+		else
+			throw std::runtime_error("Invalid autoindex Directive");
+		return true;
+	}
+	else
+		return false;
+}
 
 
 /*			PURE VIRTUAL METHODS			*/
@@ -69,3 +122,16 @@ void	Block::addLocationBlock() { /* this must be implemented by Server and Locat
 
 void	Block::setDirective(const std::string& directiveKey, std::string& directiveValue) { /* this must be implemented by Server and Location Block */ }
 
+
+/*			UTILS			*/
+
+std::vector<std::string>	splitString(const std::string& input) { // utils  --> c++ version of ft_split
+	std::istringstream			iss(input);
+	std::vector<std::string>	splitedInput;
+	std::string					word;
+
+	while (iss >> word) {
+		splitedInput.push_back(word);
+	}
+	return splitedInput;
+}

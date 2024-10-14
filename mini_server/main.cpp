@@ -27,7 +27,7 @@ int main(int ac, char* av[] /*, char* env[] */)
     }
     catch (const std::exception& e)
     {
-        std::cerr << e.what() << std::endl;
+        std::cerr << BOLD_RED << e.what() << RESET << std::endl;
     }
     return 0;
 }

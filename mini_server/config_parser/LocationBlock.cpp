@@ -1,6 +1,11 @@
 #include "LocationBlock.hpp"
 
-LocationBlock::LocationBlock() : Block("locationBlock") { }
+LocationBlock::LocationBlock() : Block("locationBlock") {
+	this->_allowed_methods = std::vector<std::string>();
+	this->_cgi_path = std::vector<std::string>();
+	this->_cgi_ext = std::vector<std::string>();
+	this->_nestedLocationVec = std::vector<LocationBlock>();
+}
 
 
 LocationBlock::LocationBlock(const LocationBlock& other) : Block(other) { *this = other; }
@@ -9,8 +14,13 @@ LocationBlock&	LocationBlock::operator=(const LocationBlock& other) {
 	if (this == &other)
 		return *this;
 
+	Block::operator=(other);
+
 	this->_nestedLocationVec = other._nestedLocationVec;
 	this->_allowed_methods = other._allowed_methods;
+	this->_cgi_path = other._cgi_path;
+	this->_cgi_ext = other._cgi_ext;
+	this->_prefix = other._prefix;
 
 	return *this;
 }
@@ -22,16 +32,23 @@ std::vector<LocationBlock>&		LocationBlock::getNestedLocationVec() { return this
 
 std::string&					LocationBlock::getPrefix() { return this->_prefix; }
 
+std::vector<std::string>&		LocationBlock::getAllowedMethods() { return this->_allowed_methods; }
+
+std::vector<std::string>&		LocationBlock::getCgiPath() { return this->_cgi_path; }
+
+std::vector<std::string>&		LocationBlock::getCgiExt() { return this->_cgi_ext; }
+
+
 void							LocationBlock::addLocationBlock() { this->_nestedLocationVec.push_back(LocationBlock()); }
 
-#include "ServerBlock.hpp" // temporary, will create a utils file and remove this
 
 void	LocationBlock::setDirective(const std::string& directiveKey, std::string& directiveValue) {
+
+	if (_addCommonDirective(directiveKey, directiveValue))
+		return;
+
 	std::vector<std::string>	valueArgs(splitString(directiveValue));
 	size_t						amountArgs(valueArgs.size());
-
-	// here I will call a functon from the Block class, I will do the same for the ServerBlock
-		// this way they both have the same function for their common directives
 
 	if (directiveKey == "allowed_methods") {
 

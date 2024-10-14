@@ -2,10 +2,6 @@
 
 #include "Epoll.hpp"
 #define MAX_EVENTS 10
-
-
-
-
 class Server
 {
 public:
@@ -14,11 +10,10 @@ public:
 	void run();
 private:
 	// variables
-	int serverSocket;
-	int clientSocket;
 	std::vector<ServerBlock>& _servers;
 	std::vector<int> _serverSockets;
 	void createSocket();
+	void bindNamesWithPorts(std::vector<std::string>& serverName, std::vector<int> serverPort, int serverSocket);
 	void accept();
 
 };

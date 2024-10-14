@@ -103,7 +103,7 @@ ServerBlock RequestHandler::findServerBlock(std::vector<ServerBlock>& servers)
 	for (std::vector<ServerBlock>::iterator it = servers.begin(); it !=  servers.end(); ++it)
 	{
 		ServerBlock& server = *it;
-		if (server.getListen() == stringToInt(port) && findInVector(server.getName(), server_name))
+		if (findInVector(server.getListen(), stringToInt(port)) && findInVector(server.getServerName(), server_name))
 		{
 			return server;
 		}
@@ -118,7 +118,7 @@ void RequestHandler::sendResponse(int clientSocket, std::vector<ServerBlock>& se
 
 	ServerBlock current_server = findServerBlock(servers);
 
-	std::cout << "current_server port : " << current_server.getListen() << std::endl;
+	//std::cout << "current_server port : " << current_server.getListen() << std::endl;
 
 
 
