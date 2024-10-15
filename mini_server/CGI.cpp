@@ -242,3 +242,15 @@ void CGI::generateResponse()
 		_response.contentLength = "Content-Length: " + intToString(content_len) + "\r\n";
 	}
 }
+
+void CGI::createhtml()
+{
+	std::ofstream html("cgi_output.html");
+	if (!html.is_open())
+	{
+		std::cerr << "Failed to open html file" << std::endl;
+		exit(1);
+	}
+	html << _response.body;
+	html.close();
+}
