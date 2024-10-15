@@ -1,3 +1,0 @@
-Child process started
-Env is set up going into execve
-Executing script: /home/aszabo/Docs/webserv/website/cgi-bin/hello.cgi

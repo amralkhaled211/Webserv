@@ -203,6 +203,7 @@ std::string trimNewline(const std::string &str)
 void CGI::generateResponse()
 {
 	std::istringstream ss(_response.body);
+	_response.body.clear();
 	std::string file_extension = get_file_extension(_request.path);
 	std::string line;
 
@@ -228,6 +229,7 @@ void CGI::generateResponse()
 			break;
 		body << line << "\n";
 	}
+	_response.body = body.str();
 	if (typeSet == false){
 		_response.contentType = "Content-Type: text/html;\r\n";
 	}
@@ -239,5 +241,4 @@ void CGI::generateResponse()
 	unsigned int content_len = _response.body.size();
 		_response.contentLength = "Content-Length: " + intToString(content_len) + "\r\n";
 	}
-	_response.body = body.str();
 }
