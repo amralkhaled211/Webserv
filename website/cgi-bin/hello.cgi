@@ -1,8 +1,7 @@
 #!/usr/bin/env python3
 
-print("Content-Type: text/html")
-print()
 print("<!DOCTYPE html>")
+print("<html lang=en>")
 print("<html>")
 print("<head><title>Hello, World!</title></head>")
 print("<body>")

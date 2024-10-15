@@ -72,6 +72,16 @@ void Server::listenSocket()
 	}
 }
 
+bool is_non_blocking(int fd)
+{
+    int flags = fcntl(fd, F_GETFL, 0);
+    if (flags == -1) {
+        perror("fcntl");
+        return false; // Assume blocking if we can't get the flags
+    }
+    return (flags & O_NONBLOCK) != 0;
+}
+
 void Server::acceptConnection()
 {
     epoll_fd = epoll_create1(0);
@@ -103,6 +113,11 @@ void Server::acceptConnection()
 
     while (serverRunning)
     {
+        /* if (is_non_blocking(epoll_fd)){
+            std::cout << "Epoll file descriptor is non-blocking" << std::endl;
+        } else {
+            std::cout << "Epoll file descriptor is blocking" << std::endl;
+        } */
         int n = epoll_wait(epoll_fd, events.data(), MAX_EVENTS, -1);
         if (n == -1)
         {
@@ -143,6 +158,7 @@ void Server::acceptConnection()
                     struct epoll_event client_event;
                     client_event.data.fd = client_fd;
                     client_event.events = EPOLLIN | EPOLLET;
+
                     if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, client_fd, &client_event) == -1)
                     {
                         close(client_fd);
@@ -158,6 +174,7 @@ void Server::acceptConnection()
                 requestHandle.receiveData(clientSocket);
                 requestHandle.parseRequest();
                 requestHandle.sendResponse(clientSocket);
+                close(clientSocket);
             }
         }
     }

@@ -104,6 +104,16 @@ void RequestHandler::read_file(std::string const &path)
 	}
 }
 
+/* bool is_non_blocking(int fd)
+{
+    int flags = fcntl(fd, F_GETFL, 0);
+    if (flags == -1) {
+        perror("fcntl");
+        return false; // Assume blocking if we can't get the flags
+    }
+    return (flags & O_NONBLOCK) != 0;
+} */
+
 void RequestHandler::sendResponse(int clientSocket)
 {
 	std::string root = "/home/aszabo/Docs/webserv/website";// this would be changed 
@@ -113,11 +123,11 @@ void RequestHandler::sendResponse(int clientSocket)
 		/* std::cout << "Request path " << request.path << std::endl; */
 		if (request.path == "/")// this if the whole path is not given, so i would give a default path file 
 			request.path = "/index.html";
-		if (request.path.find(".cgi") != std::string::npos)
+		if (request.path.find("cgi") != std::string::npos)
 		{
 			//print_map(request.headers);
-			/* std::cout << "Executing CGI now" << std::endl;
-			std::cout << "CGI script path " << root + request.path << std::endl; */
+			std::cout << "Executing CGI now" << std::endl;
+			std::cout << "CGI script path " << root + request.path << std::endl;
 			CGI cgi(root + request.path, request);
 			//print_map(request.headers);
 			cgi.setEnv();		//we will need env variables from config file here later
@@ -154,7 +164,7 @@ void RequestHandler::sendResponse(int clientSocket)
 		}
 	}
 	std::string resp =  response.status + response.contentType + response.contentLength + "\r\n" + response.body;
-	/* std::cout << "Response: " << resp << std::endl; */
+	std::cout << "Response: " << resp << std::endl;
 
 	const char* resp_cstr = resp.c_str();
 	/* std::cout << "Response c_str: " << resp.c_str() << std::endl; */
@@ -162,5 +172,29 @@ void RequestHandler::sendResponse(int clientSocket)
     size_t resp_length = resp.size();
 	/* std::cout << "Response length: " << resp_length << std::endl; */
 
-    send(clientSocket, resp_cstr, resp_length, 0);
+	//make_socket_non_blocking(clientSocket);
+    //send(clientSocket, resp_cstr, resp_length, 0);
+	size_t totalBytesSent = 0;
+
+    while (totalBytesSent < resp_length)
+    {
+        ssize_t bytesSent = send(clientSocket, resp_cstr + totalBytesSent, resp_length - totalBytesSent, 0);
+        if (bytesSent == -1)
+        {
+            if (errno == EAGAIN || errno == EWOULDBLOCK)
+            {
+                // If the socket is non-blocking and the send would block, continue
+                continue;
+            }
+            else
+            {
+                perror("send");
+                close(clientSocket);
+                return;
+            }
+        }
+        totalBytesSent += bytesSent;
+    }
+
+	std::cout << "Sent response" << std::endl;
 }
