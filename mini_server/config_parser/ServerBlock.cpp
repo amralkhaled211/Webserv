@@ -51,8 +51,9 @@ void		ServerBlock::setDirective(const std::string& directiveKey, std::string& di
 	else if (directiveKey == "server_name") {
 		if (!_server_name.empty())
 			throw std::runtime_error("Duplicate server_name Directive");
-
-		this->_server_name.push_back(directiveValue);
+		for (size_t i = 0; i < amountArgs; i++) {
+			this->_server_name.push_back(valueArgs[i]);
+		}
 	}
 	else
 		throw std::runtime_error("Invalid Directive");
