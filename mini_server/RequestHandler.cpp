@@ -104,9 +104,7 @@ ServerBlock RequestHandler::findServerBlock(std::vector<ServerBlock>& servers)
 	{
 		ServerBlock& server = *it;
 		if (findInVector(server.getListen(), stringToInt(port)) && findInVector(server.getServerName(), server_name))
-		{
 			return server;
-		}
 	}
 	// this would be fixed later 
 	std::cout << "returning the first server " << std::endl; 

@@ -1,5 +1,4 @@
 #pragma once 
-
 #include "Epoll.hpp"
 #define MAX_EVENTS 10
 class Server
@@ -14,8 +13,6 @@ private:
 	std::vector<int> _serverSockets;
 	void createSocket();
 	void bindNamesWithPorts(std::vector<std::string>& serverName, std::vector<int> serverPort, int serverSocket);
-	void accept();
-
 };
 
 

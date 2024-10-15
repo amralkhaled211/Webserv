@@ -29,10 +29,9 @@ class Epoll
 {
 	private :
 		int _epollFD;
+		std::vector<int> _clientFDs;
 		RequestHandler requestHandle;
 		std::vector<ServerBlock>& _servers;
-		// std::vector<Client> _clients;
-
 	public :
 		Epoll(const std::vector<int>& serverSockets, std::vector<ServerBlock>& servers);
 		~Epoll();
@@ -41,7 +40,5 @@ class Epoll
 		void handleEpollEvents(const std::vector<int>& serverSockets);
 		void handleConnection(int server_fd);
 		void handleData(int client_fd);
-		// void close_epoll();
-		// ServerBlock find_server_from_sockt(int servrsockt);
 };
 int make_socket_non_blocking(int sockfd);
