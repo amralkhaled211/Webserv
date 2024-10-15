@@ -116,6 +116,9 @@
 	The first server for a host:port will be the default for this host:port (that means
 	it will answer to all the requests that don’t belong to an other server).
 
+# Defaults of all implemented directives
+
+
 # INDIVIDUAL DIRECTIVES
 ## error_page
 ### Explanation:

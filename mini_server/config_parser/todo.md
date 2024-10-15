@@ -17,6 +17,10 @@
 
 
 ### CODING
+- [ ] throw error in case of duplicate location _prefix
+- [ ] give dafaults to all the directives
+  - [ ] if a Location Block's directive does not have any Value, it must take the global one
+    - [ ] need to know about all the directive defaults
 - [ ] Edge Cases Parsing
   	[ ] Test and Handle nested locations
 - [ ] Figure out valid and invalid cases
