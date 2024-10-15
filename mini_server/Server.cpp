@@ -55,12 +55,14 @@ void Server::bindNamesWithPorts(std::vector<std::string>& serverName, std::vecto
         std::string name = *it_name;
         for (std::vector<int>::iterator it_port = serverPort.begin(); it_port != serverPort.end(); ++it_port)
         {
+            int port = *it_port;
+            std::cout << "name : " << name << " port : " << port << std::endl; 
             sockaddr_in serverAddress;
 	        serverAddress.sin_family = AF_INET;
-	        serverAddress.sin_port = htons(*it_port);
+	        serverAddress.sin_port = htons(port);
             if (!isValidIPAddress(name))
             {
-                std::cout << "name : " << name << std::endl;
+                // std::cout << "name : " << name << std::endl;
                 serverAddress.sin_addr.s_addr = INADDR_ANY;
             }
             else

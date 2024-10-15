@@ -36,15 +36,13 @@ void		ServerBlock::setDirective(const std::string& directiveKey, std::string& di
 		if (this->_listen.size() > 0)
 			throw std::runtime_error("Duplicate listen Directive");
 
-		if (amountArgs != 1 || directiveValue.find_first_not_of("0123456789") != std::string::npos) // to add: check for port range
-			throw std::runtime_error("Invalid listen Directive");
-
 		std::istringstream	ss(directiveValue);
 		while (!ss.eof()) {
 			int		port;
 			ss >> port;
 			if (ss.fail())
 				throw std::runtime_error("Invalid listen Directive");
+			std::cout << "Port: " << port << std::endl;
 			this->_listen.push_back(port);
 		}
 		if (ss.fail())
@@ -53,8 +51,6 @@ void		ServerBlock::setDirective(const std::string& directiveKey, std::string& di
 	else if (directiveKey == "server_name") {
 		if (!_server_name.empty())
 			throw std::runtime_error("Duplicate server_name Directive");
-		if (amountArgs != 1)
-			throw std::runtime_error("Invalid root Directive");
 
 		this->_server_name.push_back(directiveValue);
 	}
