@@ -6,10 +6,7 @@ void RequestHandler::receiveData(int clientSocket)
     char buffer[1024] = {0};
     int bytesReceived = recv(clientSocket, buffer, sizeof(buffer), 0);
     if (bytesReceived < 0)
-    {
-        close(clientSocket);
         throw std::runtime_error("Receiving failed");
-    }
 // 	this->buffer = buffer; this would copy the whole buffer this might cause storing carbege data if the buffer is not full
     this->buffer.assign(buffer, bytesReceived); // this would copy only the data that was received
 }
@@ -52,10 +49,6 @@ void RequestHandler::parseRequest()
 	parse_first_line();
 	parseHeaders();
 }
-
-
-
-
 
 ////// this is response part
 
@@ -115,19 +108,14 @@ void RequestHandler::sendResponse(int clientSocket, std::vector<ServerBlock>& se
 {
 
 	ServerBlock current_server = findServerBlock(servers);
-
-	//std::cout << "current_server port : " << current_server.getListen() << std::endl;
-
-
-
-	std::string root = "/home/amalkhal/Webserv/website";// this would be changed 
+	std::cout << "current_server.root : " << current_server.getRoot() << std::endl;	
 
 	if (request.method == "GET")
 	{
 		std::cout << "path :"  << request.path << std::endl; 
-		if (request.path == "/")// this if the whole path is not given, so i would give a default path file 
+		if (request.path == "/")
 			request.path = "/index.html";
-		this->read_file(root + request.path);
+		this->read_file(current_server.getRoot() + request.path);
 	}
 	if (request.method == "POST") // this is not an important step, just checking if the Post wrok
 	{
