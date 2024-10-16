@@ -45,7 +45,24 @@ bool isValidIPAddress(const std::string& ipAddress)
     return dots == 3;
 }
 
-void Server::bindNamesWithPorts(std::vector<std::string>& serverName, std::vector<int> serverPort, int serverSocket)
+
+int Server::create_and_configure_socket()
+{
+    int serverSocket = socket(AF_INET, SOCK_STREAM, 0);
+    if (serverSocket < 0)
+        throw std::runtime_error("Socket creation failed");
+
+    make_socket_non_blocking(serverSocket);
+
+    int opt = 1;
+    if (setsockopt(serverSocket, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) < 0 ||
+        setsockopt(serverSocket, SOL_SOCKET, SO_REUSEPORT, &opt, sizeof(opt)) < 0)
+        throw std::runtime_error("setsockopt(SO_REUSEADDR) failed");
+
+    return serverSocket;
+}
+
+void Server::bindNamesWithPorts(std::vector<std::string>& serverName, std::vector<int> serverPort)
 {
     if (serverName.size() == 0)
         serverName.push_back("localhost");
@@ -56,15 +73,12 @@ void Server::bindNamesWithPorts(std::vector<std::string>& serverName, std::vecto
         for (std::vector<int>::iterator it_port = serverPort.begin(); it_port != serverPort.end(); ++it_port)
         {
             int port = *it_port;
-            std::cout << "name : " << name << " port : " << port << std::endl; 
+            int serverSocket = create_and_configure_socket();
             sockaddr_in serverAddress;
 	        serverAddress.sin_family = AF_INET;
 	        serverAddress.sin_port = htons(port);
             if (!isValidIPAddress(name))
-            {
-                // std::cout << "name : " << name << std::endl;
                 serverAddress.sin_addr.s_addr = INADDR_ANY;
-            }
             else
                 serverAddress.sin_addr.s_addr = inet_addr(name.c_str());
 
@@ -84,21 +98,7 @@ void Server::createSocket()
     std::cout << "size of serverBlock :" << _servers.size() << std::endl;
     for(int i = 0; i < _servers.size(); i++)
     {
-        int serverSocket = socket(AF_INET, SOCK_STREAM, 0);
-        if (serverSocket < 0)
-	    	throw std::runtime_error("Socket creation failed");
-            
-	    make_socket_non_blocking(serverSocket);
-
-        int opt = 1;
-        if (setsockopt(serverSocket, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) < 0 ||
-                setsockopt(serverSocket, SOL_SOCKET, SO_REUSEPORT, &opt, sizeof(opt)) < 0)
-        {
-            close(serverSocket);
-            throw std::runtime_error("setsockopt(SO_REUSEADDR) failed");
-        }
-
-        bindNamesWithPorts(_servers[i].getServerName(), _servers[i].getListen(), serverSocket);
+        bindNamesWithPorts(_servers[i].getServerName(), _servers[i].getListen());
     }
     Epoll epoll(_serverSockets, _servers);
 }

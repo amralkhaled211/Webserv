@@ -62,7 +62,6 @@ void Epoll::handleEpollEvents(const std::vector<int>& serverSockets)
 
 void Epoll::handleConnection(int server_fd)
 {
-   std::cout << "server_fd: " << server_fd << std::endl;
 	while (true)
 	{
         int client_fd = accept(server_fd, NULL, NULL);
@@ -74,7 +73,6 @@ void Epoll::handleConnection(int server_fd)
                 perror("accept");
                 break;
         }
-        std::cout << "client_fd: " << client_fd << std::endl;
         make_socket_non_blocking(client_fd);
         struct epoll_event client_event;
         client_event.data.fd = client_fd;

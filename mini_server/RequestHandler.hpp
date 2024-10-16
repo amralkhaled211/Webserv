@@ -48,10 +48,11 @@ class RequestHandler
 		void parseRequest();
 		void sendResponse(int clientSocket, std::vector<ServerBlock>& servers);
 		ServerBlock findServerBlock(std::vector<ServerBlock>& servers);
+		LocationBlock findLocationBlock(std::vector<LocationBlock>& locations);
 		void notfound();
 		void parseHeaders();
 		void parse_first_line();
-		
+		//void configResponse(ServerBlock &server);
 		template <typename T>
         bool findInVector(const std::vector<T>& vec, const T& target)
 		{

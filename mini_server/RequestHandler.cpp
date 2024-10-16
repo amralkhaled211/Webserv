@@ -42,7 +42,7 @@ void RequestHandler::parseHeaders()
 		request.body = line;
 		//std::cout << "the body :" << request.body << std::endl;
 	}
-	std::cout << "this buffer" << this->buffer << std::endl;
+	//std::cout << "this buffer" << this->buffer << std::endl;
 }
 void RequestHandler::parseRequest()
 {
@@ -104,18 +104,41 @@ ServerBlock RequestHandler::findServerBlock(std::vector<ServerBlock>& servers)
 	return servers[0];// return default
 }
 
+// void RequestHandler::configResponse(LocationBlock& location)
+// {
+
+// }
+
+LocationBlock RequestHandler::findLocationBlock(std::vector<LocationBlock>& locations)
+{
+	std::cout << "locations size :" <<  locations.size() << std::endl;
+	std::cout << "request_path : " << request.path << std::endl; 
+	for (std::vector<LocationBlock>::iterator it =  locations.begin(); it != locations.end(); ++it)
+	{
+		LocationBlock location = *it;
+		std::cout << "location perfix : " << location.getPrefix() << std::endl;
+		if (location.getPrefix() == request.path)
+			return location;
+		
+	}
+
+	// this would be fixed later
+	return locations[0];
+}
+
+
+
 void RequestHandler::sendResponse(int clientSocket, std::vector<ServerBlock>& servers)
 {
 
 	ServerBlock current_server = findServerBlock(servers);
-	std::cout << "current_server.root : " << current_server.getRoot() << std::endl;	
 
 	if (request.method == "GET")
 	{
-		std::cout << "path :"  << request.path << std::endl; 
-		if (request.path == "/")
-			request.path = "/index.html";
-		this->read_file(current_server.getRoot() + request.path);
+		LocationBlock location = findLocationBlock(current_server.getLocationVec());
+		std::string root = location.getRoot() + request.path;
+		std::cout << "root : " << root << std::endl;
+		this->read_file(location.getRoot() + request.path);
 	}
 	if (request.method == "POST") // this is not an important step, just checking if the Post wrok
 	{

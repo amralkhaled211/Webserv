@@ -12,7 +12,8 @@ private:
 	std::vector<ServerBlock>& _servers;
 	std::vector<int> _serverSockets;
 	void createSocket();
-	void bindNamesWithPorts(std::vector<std::string>& serverName, std::vector<int> serverPort, int serverSocket);
+	int create_and_configure_socket();
+	void bindNamesWithPorts(std::vector<std::string>& serverName, std::vector<int> serverPort);
 };
 
 
