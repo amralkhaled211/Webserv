@@ -117,6 +117,30 @@
 	it will answer to all the requests that don’t belong to an other server).
 
 # Defaults of all implemented directives
+## those with no default
+* error_page
+* 
+
+## those with defaults
+* listen
+Default: listen *:80 | *:8000;
+
+* server_name
+Default: server_name "";
+
+
+
+
+
+root
+index --> specifies the file(s) to server for current server block
+autoindex
+error_page
+allowed_methods
+location
+client_max_body_size
+return 307 / --> nginx accepts 307 to redirect, other codes would not redirect
+try_files
 
 
 # INDIVIDUAL DIRECTIVES
@@ -164,7 +188,16 @@
 
 	The matching is performed against a normalized URI, after decoding the text encoded in the “%XX” form, resolving references to relative path components “.” and “..”, and possible compression of two or more adjacent slashes into a single slash.
 
+## listen
+https://nginx.org/en/docs/http/ngx_http_core_module.html#listen
 
+## server_name
+https://nginx.org/en/docs/http/ngx_http_core_module.html#server_name
+
+## root
+https://nginx.org/en/docs/http/ngx_http_core_module.html#root
+
+## 
 
 
 ### Example with ~* 
