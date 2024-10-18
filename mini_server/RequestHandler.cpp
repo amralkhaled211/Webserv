@@ -124,6 +124,18 @@ void RequestHandler::sendResponse(int clientSocket, std::vector<ServerBlock>& se
 
 	if (request.method == "GET")
 	{
+		/* if (request.path.find("cgi") != std::string::npos)
+		{
+			std::cout << "Executing CGI now" << std::endl;
+			std::cout << "CGI script path " << root + request.path << std::endl;
+			CGI cgi(root + request.path, request);
+			cgi.setEnv();
+			cgi.executeScript();
+			cgi.generateResponse();
+			cgi.createhtml();
+			this->read_file("cgi_output.html");
+			//response = cgi.getResponse();
+		} */
 		std::cout << "path :"  << request.path << std::endl; 
 		if (request.path == "/")// this if the whole path is not given, so i would give a default path file 
 			request.path = "/index.html";

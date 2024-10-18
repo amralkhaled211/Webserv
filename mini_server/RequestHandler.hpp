@@ -26,6 +26,7 @@ typedef struct parser
 	std::string method;
 	std::string path;
 	std::string version;
+	std::string queryString;
 	std::map<std::string, std::string> headers;
 	std::string body;
 } parser;
