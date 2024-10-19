@@ -11,8 +11,7 @@ form = cgi.FieldStorage()
 name = form.getvalue('name', 'Guest')
 age = form.getvalue('age', 'Unknown')
 
-print("Content-Type: text/html")
-print()
+
 print("<!DOCTYPE html>")
 print("<html>")
 print("<head><title>Query String Response</title></head>")

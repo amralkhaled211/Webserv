@@ -51,6 +51,7 @@ class RequestHandler
 		ServerBlock findServerBlock(std::vector<ServerBlock>& servers);
 		void notfound();
 		void parseHeaders();
+		void parseQueryString();
 		void parse_first_line();
 		
 		template <typename T>

@@ -1,4 +1,5 @@
 #include "RequestHandler.hpp"
+#include "CGI.hpp"
 
 // this is handling the request part
 void RequestHandler::receiveData(int clientSocket)
@@ -47,11 +48,25 @@ void RequestHandler::parseHeaders()
 	}
 	std::cout << "this buffer" << this->buffer << std::endl;
 }
+void RequestHandler::parseQueryString()
+{
+	size_t pos = request.path.find('?');
+	if (pos != std::string::npos)
+	{
+		request.queryString = request.path.substr(pos + 1);
+		request.path = request.path.substr(0, pos);
+	}
+	else
+		request.queryString = "";
+}
+
 void RequestHandler::parseRequest()
 {
 	parse_first_line();
+	parseQueryString();
 	parseHeaders();
 }
+
 
 
 
@@ -120,11 +135,11 @@ void RequestHandler::sendResponse(int clientSocket, std::vector<ServerBlock>& se
 
 
 
-	std::string root = "/home/amalkhal/Webserv/website";// this would be changed 
+	std::string root = "/home/aszabo/Docs/webserv/website";// this would be changed 
 
 	if (request.method == "GET")
 	{
-		/* if (request.path.find("cgi") != std::string::npos)
+		if (request.path.find("cgi") != std::string::npos)
 		{
 			std::cout << "Executing CGI now" << std::endl;
 			std::cout << "CGI script path " << root + request.path << std::endl;
@@ -135,11 +150,14 @@ void RequestHandler::sendResponse(int clientSocket, std::vector<ServerBlock>& se
 			cgi.createhtml();
 			this->read_file("cgi_output.html");
 			//response = cgi.getResponse();
-		} */
+		}
+		else{
 		std::cout << "path :"  << request.path << std::endl; 
 		if (request.path == "/")// this if the whole path is not given, so i would give a default path file 
 			request.path = "/index.html";
 		this->read_file(root + request.path);
+
+		}
 	}
 	if (request.method == "POST") // this is not an important step, just checking if the Post wrok
 	{
