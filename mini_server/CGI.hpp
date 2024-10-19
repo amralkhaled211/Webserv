@@ -35,7 +35,7 @@ class CGI
 
 		void setEnv();
 		void executeScript();
-		void generateResponse();
+		std::string generateResponse();
 
 		std::vector<char*> setUpEnvp();
 

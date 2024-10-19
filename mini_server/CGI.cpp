@@ -200,22 +200,22 @@ std::string trimNewline(const std::string &str)
 	return str.substr(0, end);
 }
 
-void CGI::generateResponse()
+std::string CGI::generateResponse()
 {
 	std::istringstream ss(_response.body);
 	_response.body.clear();
 	std::string file_extension = get_file_extension(_request.path);
 	std::string line;
 
-	_response.status = "HTPP/1.1 200 OK\r\n"; //Default status
+	/* _response.status = "HTPP/1.1 200 OK\r\n"; */ //Default status
 	//_response.contentType = "Content-Type: " + mimeTypesMap_G[file_extension] + ";" + "\r\n";
 
 	std::ostringstream body;
-	bool lengthSet = false;
-	bool typeSet = false;
+	/* bool lengthSet = false;
+	bool typeSet = false; */
 	while (std::getline(ss, line))
 	{
-		if (line.find("Content-Type:") != std::string::npos){
+		/* if (line.find("Content-Type:") != std::string::npos){
 			typeSet = true;
 			_response.contentType = trimNewline(line);
 			continue;
@@ -224,13 +224,13 @@ void CGI::generateResponse()
 			lengthSet = true;
 			_response.contentLength = "Content-Length:" + line.substr(15);
 			continue;
-		}
+		} */
 		if (ss.eof())
 			break;
 		body << line << "\n";
 	}
 	_response.body = body.str();
-	if (typeSet == false){
+	/* if (typeSet == false){
 		_response.contentType = "Content-Type: text/html;\r\n";
 	}
 	else{
@@ -240,5 +240,6 @@ void CGI::generateResponse()
 	if (lengthSet == false){
 	unsigned int content_len = _response.body.size();
 		_response.contentLength = "Content-Length: " + intToString(content_len) + "\r\n";
-	}
+	} */
+	return _response.body;
 }

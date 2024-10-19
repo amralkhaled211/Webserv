@@ -125,20 +125,15 @@ void RequestHandler::sendResponse(int clientSocket)
 			request.path = "/index.html";
 		if (request.path.find("cgi") != std::string::npos)
 		{
-			//print_map(request.headers);
-			std::cout << "Executing CGI now" << std::endl;
-			std::cout << "CGI script path " << root + request.path << std::endl;
+			std::string file_extension = get_file_extension(request.path);
 			CGI cgi(root + request.path, request);
-			//print_map(request.headers);
-			cgi.setEnv();		//we will need env variables from config file here later
-			//cgi.printEnv();
+			cgi.setEnv();
 			cgi.executeScript();
-			cgi.generateResponse();
-			response = cgi.getResponse();
-			/* std::cout << "Response status: " << response.status << std::endl;
-			std::cout << "Response content type: " << response.contentType << std::endl;
-			std::cout << "Response content length: " << response.contentLength << std::endl;
-			std::cout << "Response body: " << response.body << std::endl; */
+			response.body = cgi.generateResponse();
+			response.status = "HTTP/1.1 200 OK\r\n";
+			response.contentType = "Content-Type: " + mimeTypesMap_G[file_extension] + ";" + "\r\n";
+			unsigned int content_len = response.body.size();
+			response.contentLength = "Content-Length: " + intToString(content_len) + "\r\n";
 		}
 		else
 			this->read_file(root + request.path);
