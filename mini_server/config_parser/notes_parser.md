@@ -128,19 +128,43 @@ Default: listen *:80 | *:8000;
 * server_name
 Default: server_name "";
 
+* root
+Default: root html; that is a relative path from the nginx excecutable file -> Q: what if someone deletes it or it doesn't exist? A: server just give the error 404 Not Found
+
+* index
+Default: index index.html;
+
+* autoindex
+Default: autoindex off;
+
+* error_page
+Syntax:	error_page code ... [=[response]] uri;
+Default:	—
+Context:	http, server, location, if in location
+
+* allowed_methods
+Default: 
 
 
+* location
+Default: 
 
 
-root
-index --> specifies the file(s) to server for current server block
-autoindex
-error_page
-allowed_methods
-location
-client_max_body_size
-return 307 / --> nginx accepts 307 to redirect, other codes would not redirect
-try_files
+* client_max_body_size
+Syntax:		client_max_body_size size;  note: Setting size to 0 disables checking of client request body size.
+Default:	client_max_body_size 1m; If the size in a request exceeds the configured value, the 413 (Request Entity Too Large) error is returned to the client.
+Context:	http, server, location
+
+* return
+Default: 
+
+
+* try_files
+Syntax:	try_files file ... uri;
+		try_files file ... =code;
+Default:	—
+Context:	server, location
+
 
 
 # INDIVIDUAL DIRECTIVES
@@ -197,7 +221,23 @@ https://nginx.org/en/docs/http/ngx_http_core_module.html#server_name
 ## root
 https://nginx.org/en/docs/http/ngx_http_core_module.html#root
 
-## 
+## index
+https://nginx.org/en/docs/http/ngx_http_index_module.html#index
+
+(only) last one can be specified via an absolute path!
+
+## autoindex
+https://nginx.org/en/docs/http/ngx_http_autoindex_module.html#autoindex
+
+## error_page
+https://nginx.org/en/docs/http/ngx_http_core_module.html#error_page
+
+## try_files
+https://nginx.org/en/docs/http/ngx_http_core_module.html#try_files
+
+## client_max_body_size
+https://nginx.org/en/docs/http/ngx_http_core_module.html#client_max_body_size
+
 
 
 ### Example with ~* 
