@@ -61,7 +61,7 @@ void RequestHandler::notfound()
 	response.body += "<body><h1>404 Not Found</h1><p>The page you are looking for does not exist.</p></body></html>";
 }
 
-void RequestHandler::read_file(std::string const &path)
+bool RequestHandler::read_file(std::string const &path)
 {
 	std::string file_extension = get_file_extension(request.path);
 	std::ifstream file(path.c_str());
@@ -78,11 +78,9 @@ void RequestHandler::read_file(std::string const &path)
 		unsigned int content_len = response.body.size();
 		response.contentLength = "Content-Length: " + intToString(content_len) + "\r\n";
 		file.close();
+		return true;
 	}
-	else
-	{
-		notfound();
-	}
+	return false;
 }
 
 
@@ -109,24 +107,87 @@ ServerBlock RequestHandler::findServerBlock(std::vector<ServerBlock>& servers)
 
 // }
 
+bool endsWithHtml(const std::string& str)
+{
+    const std::string extension = ".html";
+    if (str.size() >= extension.size() && 
+        str.compare(str.size() - extension.size(), extension.size(), extension) == 0)
+	{
+        return true;
+    }
+    return false;
+}
+
+bool isFile(const std::string& path) {
+    struct stat path_stat;
+    stat(path.c_str(), &path_stat);
+    return S_ISREG(path_stat.st_mode);
+}
+
+bool isDirectory(const std::string& path) {
+    struct stat path_stat;
+    stat(path.c_str(), &path_stat);
+    return S_ISDIR(path_stat.st_mode);
+}
+
 LocationBlock RequestHandler::findLocationBlock(std::vector<LocationBlock>& locations)
 {
-	std::cout << "locations size :" <<  locations.size() << std::endl;
-	std::cout << "request_path : " << request.path << std::endl; 
-	for (std::vector<LocationBlock>::iterator it =  locations.begin(); it != locations.end(); ++it)
+	//std::cout << "locations size :" <<  locations.size() << std::endl;
+	//std::cout << "request_path : " << request.path << std::endl;
+
+	std::string directory = request.path;
+	std::string file;
+
+	if (endsWithHtml(request.path))
 	{
-		LocationBlock location = *it;
-		std::cout << "location perfix : " << location.getPrefix() << std::endl;
-		if (location.getPrefix() == request.path)
-			return location;
-		
+		size_t pos = request.path.find_last_of('/');
+		directory = request.path.substr(0, pos);
+		file = request.path.substr(pos + 1);
 	}
 
-	// this would be fixed later
-	return locations[0];
+
+
+	LocationBlock location;
+	for (std::vector<LocationBlock>::iterator it =  locations.begin(); it != locations.end(); ++it)
+	{
+		location = *it;
+		//std::cout << "location perfix : " << location.getPrefix() << std::endl;
+		if (location.getPrefix() == directory)
+		{
+			// check if the html file or dir
+			std::string fullPath = location.getRoot() + request.path;
+			std::cout << "full path: " << fullPath << std::endl; 
+			if (isDirectory(fullPath))
+			{
+				// std::cout << "its a dir "<< std::endl;
+				_isDir = true;
+			}
+			else
+			{
+				_isDir = false;
+				// std::cout << "its a file "<< std::endl;
+			}
+			return location;
+		}
+	}
+	throw std::exception();
 }
 
 
+bool RequestHandler::findIndexFile(const std::vector<std::string>& files, std::string& root)
+{
+	size_t i = 0;
+
+	while (i < files.size())
+	{
+		std::string file = root + '/' + files[i];
+		std::cout << "file : " << file << std::endl;
+		if (read_file(file))
+			return true;
+		i++;
+	}
+	return false;
+}
 
 void RequestHandler::sendResponse(int clientSocket, std::vector<ServerBlock>& servers)
 {
@@ -135,10 +196,27 @@ void RequestHandler::sendResponse(int clientSocket, std::vector<ServerBlock>& se
 
 	if (request.method == "GET")
 	{
-		LocationBlock location = findLocationBlock(current_server.getLocationVec());
-		std::string root = location.getRoot() + request.path;
-		std::cout << "root : " << root << std::endl;
-		this->read_file(location.getRoot() + request.path);
+		try
+		{
+			LocationBlock location = findLocationBlock(current_server.getLocationVec());
+			std::string root = location.getRoot() + request.path;
+			std::cout << "root : " << root << std::endl;
+			if (_isDir)
+			{
+				if (!findIndexFile(location.getIndex(), root))
+					notfound();
+
+			}
+			else
+				if(!this->read_file(root))
+					notfound();
+
+		}
+		catch (const std::exception& e)
+		{
+			// i should here send the right error for invalid locations 
+			notfound();
+		}
 	}
 	if (request.method == "POST") // this is not an important step, just checking if the Post wrok
 	{

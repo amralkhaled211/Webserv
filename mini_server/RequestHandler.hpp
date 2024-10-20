@@ -16,6 +16,7 @@
 #include <fcntl.h>
 #include <vector>
 #include <csignal>
+#include <sys/stat.h>
 #include <cstdlib>
 #include "config_parser/Parser.hpp"
 
@@ -43,7 +44,8 @@ class RequestHandler
 	public:
 		//RequestHandler();
 		//~RequestHandler();
-		void read_file(std::string const &path);
+		bool read_file(std::string const &path);
+		bool findIndexFile(const std::vector<std::string>& files, std::string& root);
 		void receiveData(int clientSocket);
 		void parseRequest();
 		void sendResponse(int clientSocket, std::vector<ServerBlock>& servers);
@@ -59,6 +61,7 @@ class RequestHandler
             return std::find(vec.begin(), vec.end(), target) != vec.end();
         }
 	private:
+	bool _isDir;
 	parser request;
 	Response response;
 	std::string buffer;
