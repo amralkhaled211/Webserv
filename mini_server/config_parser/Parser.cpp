@@ -91,11 +91,17 @@ void		Parser::_parser() {
 	// this->_printContent();
 	this->_removeExcessSpace();
 	// this->_printContent();
-	this->_syntaxError();
+	// this->_syntaxError();
 
 	// parsing
 	this->_fillBlocks();
+	// std::cout << BOLD_GREEN<< "BEFORE SETUP DEFAULT\n" << RESET;
 	// this->_printServerVec();
+
+	// setup defaults
+	this->_setupDefaults();
+	std::cout << BOLD_GREEN << "AFTER SETUP DEFAULT\n" << RESET;
+	this->_printServerVec();
 }
 
 /*			PREP FOR PARSING			*/
@@ -198,8 +204,6 @@ void		Parser::_fillBlocks() {
 	std::stringstream		ss(_content);
 	std::string				token;
 
-	char					ch;
-
 	std::getline(ss, token, '{');
 	if (token != "http")
 		throw std::runtime_error("Missing Valid http Block");
@@ -217,7 +221,7 @@ void		Parser::_fillBlocks() {
 		if (ss.fail())
 			ss.clear();
 		// need to handle the end properly
-		size_t	pos = ss.tellg();
+		int	pos = ss.tellg();
 		if (DEBUG) {
 			std::cerr << "H Token after: >" << token << "<" << std::endl;
 			std::cerr << BOLD_RED << "- Loop last line in _fillBlocks: Stream position: " << pos - 1 << " out of " << _content.size() << RESET << std::endl;
@@ -227,7 +231,7 @@ void		Parser::_fillBlocks() {
 			std::cerr << BOLD_GREEN << "Done with One/Another Server Block\n" << RESET << std::endl;
 		}
 
-		if (pos != -1 && pos == _content.size() -1 && _content[pos] == '}') // this is the end of the http block
+		if (pos != -1 && pos == static_cast<int>(_content.size()) -1 && _content[pos] == '}') // this is the end of the http block
 			goto end;
 
 		// this->_printServerVec();
@@ -339,7 +343,7 @@ void		Parser::_locationBlock(std::stringstream& ss) { // this is gonna be recurc
 				}
 			}
 			else if (ch == '{'/*  && !_serverVec.back().getLocationVec().back().getPrefix().empty() */) { // redundant
-				throw std::runtime_error("L Unexpected Opening Brace");
+				throw std::runtime_error("Unexpected Opening Brace");
 			}
 			else if (ch == '}') {
 				// later: cases where token wouldn't be empty --> should be an error at this point
@@ -356,7 +360,7 @@ void		Parser::_locationBlock(std::stringstream& ss) { // this is gonna be recurc
 					break;
 				}
 				else
-					throw std::runtime_error("L Unexpected Closing Brace");
+					throw std::runtime_error("Unexpected Closing Brace");
 			}
 			token.clear();
 		}
@@ -383,6 +387,16 @@ void		Parser::_handleLocationDirective(std::stringstream& ss, const std::string&
 		throw std::runtime_error("Missing Semicolon");
 	}
 }
+
+/*		SETUP DEFAULTS		*/
+
+void		Parser::_setupDefaults() {
+	for (size_t i = 0; i < _serverVec.size(); i++) {
+		_serverVec[i].setupDefaults();
+		_serverVec[i].contextError();
+	}
+}
+
 
 /*			DEBUG			*/
 

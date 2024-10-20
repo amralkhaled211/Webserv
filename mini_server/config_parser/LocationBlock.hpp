@@ -30,6 +30,8 @@ class LocationBlock : public Block
 		void		setDirective(const std::string& directiveKey, std::string& directiveValue);
 		void		setPrefix(const std::string& prefix);
 
+		void		setupDefaults(Block& parentServer);
+
 		/*		DEBUG		*/
 		void		printLocationBlock();
 };

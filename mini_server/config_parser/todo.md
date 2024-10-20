@@ -2,7 +2,6 @@
 
 ## TODO
 ### QUESTIONS
-- [ ] regarding location, should we handle also the modifiers [ = | ~ | ~* | ^~ ]
 
 
 ### TESTING
@@ -18,9 +17,9 @@
 
 ### CODING
 - [ ] throw error in case of duplicate location _prefix
-- [ ] give dafaults to all the directives
-  - [ ] if a Location Block's directive does not have any Value, it must take the global one
-    - [ ] need to know about all the directive defaults
+- [x] give dafaults to all the directives
+  - [x] if a Location Block's directive does not have any Value, it must take the global one
+    - [x] need to know about all the directive defaults
 - [ ] Edge Cases Parsing
   	[ ] Test and Handle nested locations
 - [ ] Figure out valid and invalid cases
@@ -43,3 +42,4 @@
 -	[X] _fillBlocks()
     - [X] _serverBlock()
     - [X] _locationBlock()
+- [x] regarding location, should we handle also the modifiers [ = | ~ | ~* | ^~ ] A: No, according to subject

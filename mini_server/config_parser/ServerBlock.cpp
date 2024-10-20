@@ -23,7 +23,6 @@ ServerBlock&	ServerBlock::operator=(const ServerBlock& other) {
 ServerBlock::~ServerBlock() { }
 
 
-// will rewrite this one later to be more compact
 void		ServerBlock::setDirective(const std::string& directiveKey, std::string& directiveValue) {
 
 	if (_addCommonDirective(directiveKey, directiveValue))
@@ -42,7 +41,7 @@ void		ServerBlock::setDirective(const std::string& directiveKey, std::string& di
 			ss >> port;
 			if (ss.fail())
 				throw std::runtime_error("Invalid listen Directive");
-				
+
 			this->_listen.push_back(port);
 		}
 		if (ss.fail())
@@ -72,9 +71,47 @@ std::vector<int>&				ServerBlock::getListen() { return this->_listen; }
 
 std::vector<std::string>&		ServerBlock::getServerName() { return this->_server_name; }
 
-
-
 void							ServerBlock::addLocationBlock() { this->_locationVec.push_back(LocationBlock()); }
+
+
+void							ServerBlock::setupDefaults() {
+	if (this->_listen.empty())
+		this->_listen.push_back(8000);
+
+	if (this->_server_name.empty())
+		this->_server_name.push_back(""); // nginx
+
+	if (this->_root.empty())
+		this->_root = "html"; // nginx, relative path
+
+	if (this->_index.empty())
+		this->_index.push_back("index.html"); // note: only matters if a directory was requested
+
+	if (this->_autoindex == NOT_SET)
+		this->_autoindex = ON;
+
+	for (size_t i = 0; i < this->_locationVec.size(); ++i)
+		this->_locationVec[i].setupDefaults(static_cast<Block&>(*this));
+}
+
+
+void			ServerBlock::contextError() {
+
+	std::string		tmpPrefix;
+
+	if (_locationVec.size() < 1)
+		return ;
+
+	for (size_t i = 0; i < _locationVec.size(); ++i) {
+		tmpPrefix = _locationVec[i].getPrefix();
+		for (size_t j = i + 1; j < _locationVec.size(); ++j) {
+			if (tmpPrefix == _locationVec[j].getPrefix())
+				throw std::runtime_error("Duplicate location Defintion");
+		}
+	}
+
+	// more checks to follow
+}
 
 
 /*			DEBUG			*/

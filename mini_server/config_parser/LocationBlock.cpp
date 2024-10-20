@@ -78,6 +78,29 @@ void	LocationBlock::setDirective(const std::string& directiveKey, std::string& d
 
 void		LocationBlock::setPrefix(const std::string& prefix) { this->_prefix = prefix; }
 
+void		LocationBlock::setupDefaults(Block& parentServer) {
+	if (this->_root.empty())
+		this->_root = parentServer.getRoot(); // nginx, relative path
+
+	if (this->_index.empty())
+		this->_index = parentServer.getIndex(); // note: only matters if a directory was requested
+
+	if (this->_autoindex == NOT_SET)
+		this->_autoindex = parentServer.getAutoindex();
+
+	if (this->_error_page.empty())
+		this->_error_page = parentServer.getErrorPage();
+
+	if (this->_return.empty())
+		this->_return = parentServer.getReturn();
+
+	if (this->_autoindex == NOT_SET)
+		this->_autoindex = parentServer.getAutoindex();
+
+	// for (size_t i = 0; i < this->_locationVec.size(); i++)
+	// 	this->_locationVec[i].setupDefaults();
+}
+
 /*		DEBUG		*/
 
 void		LocationBlock::printLocationBlock() {

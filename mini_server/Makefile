@@ -25,14 +25,10 @@ $(OBJ_DIR)/%.o: %.cpp  $(HEADERS)
 	@$(CC) $(CFLAGS) -c $< -o $@
 
 clean:
-#	rm -f $(OBJ)
-#	-if [ -d $(OBJ_DIR) ]; then rmdir $(OBJ_DIR); fi
 	@if [ -d $(OBJ_DIR) ]; then \
 		find $(OBJ_DIR) -type f -name '*.o' -delete; \
 		find $(OBJ_DIR) -type d -empty -delete; \
 	fi
-# this part needs more testing
-
 
 fclean: clean
 	@rm -f $(NAME)

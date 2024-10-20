@@ -62,7 +62,7 @@ class Parser // http Block basically
 										// !!! in case of comments (#), skip rest of line (don't fill it inside _content) and coninue with the next line !!!
 		void		_removeExcessSpace(); // excess spaces: before and after 1) block names (http, server, location), 2) semicolon (;), 3) ’{’ & '}'
 
-		/*			SYNTAX ERROR			*/
+		/*			ERROR			*/
 
 		void		_syntaxError(); // check for syntax errors --> missing semicolon (directive specific mostly), missing brace (using booleans like in minishell with quotes),
 									// missing block name (before a opening brace there should be a block name), missing directive (see notes), ...
@@ -75,6 +75,10 @@ class Parser // http Block basically
 
 		void		_handleServerDirective(std::stringstream& ss, const std::string& directiveKey);
 		void		_handleLocationDirective(std::stringstream& ss, const std::string& directiveKey);
+
+
+		/*			SETUP DEFAULTS			*/
+		void		_setupDefaults(); // other name: _setDefaults()
 
 
 		/*				DEBUG				*/

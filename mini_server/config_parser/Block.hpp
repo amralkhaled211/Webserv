@@ -20,15 +20,16 @@ class Block // parent // the purpose of this is just to not have class with the 
 		std::string					_root;
 		std::vector<std::string>	_error_page;
 		std::vector<std::string>	_return;
-		std::vector<std::string>	_try_files;
+		std::vector<std::string>	_try_files; // won't handle as of now
 		std::vector<std::string>	_index;
 		char						_autoindex;
+		std::string					_client_max_body_size;
 
 		// std::map<std::string, std::string>	directives; // I think we need the directives individually
 
-		Block();
 
 	public:
+		Block();
 		Block(std::string type);
 		Block( const Block& other );
 		Block& operator=( const Block& other );
@@ -47,7 +48,7 @@ class Block // parent // the purpose of this is just to not have class with the 
 		const std::vector<std::string>&	getReturn() const;
 		const std::vector<std::string>&	getTryFiles() const;
 		const std::vector<std::string>&	getIndex() const;
-		const char						getAutoindex() const;
+		const char&						getAutoindex() const;
 
 		bool				_addCommonDirective(const std::string& directiveKey, std::string& directiveValue);
 

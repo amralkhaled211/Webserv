@@ -9,6 +9,7 @@ Block::Block(std::string type) : _blockType(type) {
 	this->_try_files = std::vector<std::string>();
 	this->_index = std::vector<std::string>();
 	this->_autoindex = NOT_SET;
+	this->_client_max_body_size = "";
 }
 
 Block::Block( const Block& other ) { *this = other; }
@@ -60,7 +61,7 @@ const std::vector<std::string>&	Block::getTryFiles() const { return this->_try_f
 
 const std::vector<std::string>&	Block::getIndex() const { return this->_index; }
 
-const char	Block::getAutoindex() const { return this->_autoindex; }
+const char&	Block::getAutoindex() const { return this->_autoindex; }
 
 
 
@@ -94,7 +95,7 @@ bool		Block::_addCommonDirective(const std::string& directiveKey, std::string& d
 		this->_try_files = valueArgs;
 		return true;
 	}
-	else if (directiveKey == "index") {
+	else if (directiveKey == "index") { // requires new implementation, not handling some cases
 		if (!this->_index.empty())
 			throw std::runtime_error("Duplicate index Directive");
 		this->_index = valueArgs;
@@ -111,16 +112,17 @@ bool		Block::_addCommonDirective(const std::string& directiveKey, std::string& d
 			throw std::runtime_error("Invalid autoindex Directive");
 		return true;
 	}
-	else
-		return false;
+	else if (directiveKey == "client_max_body_size") {
+		if (!this->_client_max_body_size.empty())
+			throw std::runtime_error("Duplicate client_max_body_size Directive");
+		else if (amountArgs != 1)
+			throw std::runtime_error("Invalid client_max_body_size Directive");
+		else
+			this->_client_max_body_size = directiveValue;
+		return true;
+	}
+	return false;
 }
-
-
-/*			PURE VIRTUAL METHODS			*/
-
-void	Block::addLocationBlock() { /* this must be implemented by Server and Location Block */ }
-
-void	Block::setDirective(const std::string& directiveKey, std::string& directiveValue) { /* this must be implemented by Server and Location Block */ }
 
 
 /*			UTILS			*/

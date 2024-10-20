@@ -24,6 +24,10 @@ class ServerBlock : public Block
 		void		setDirective(const std::string& directiveKey, std::string& directiveValue);
 		void		addLocationBlock();
 
+		void		setupDefaults();
+		void		contextError();
+
+
 		/*		DEBUG		*/
 		void	printServerBlock();
 };
