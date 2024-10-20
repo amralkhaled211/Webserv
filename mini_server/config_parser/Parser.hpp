@@ -54,6 +54,8 @@ class Parser // http Block basically
 
 		static int	_generalErrors(std::string fileName);
 
+		std::vector<ServerBlock>& getServerVec();
+
 		void		_parser(); // other name: _callParserFunctions()
 
 		/*			PREP FOR PARSING		*/

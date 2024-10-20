@@ -289,7 +289,6 @@ void		Parser::_serverBlock(std::stringstream& ss) {
 void		Parser::_handleServerDirective(std::stringstream& ss, const std::string& directiveKey) {
 
 	std::string			directiveValue; // will be splited
-	// std::streampos		lastPos(ss.tellg()); // save pos
 
 	if (std::getline(ss, directiveValue, ';')) {
 		if (DEBUG) {
@@ -318,7 +317,6 @@ void		Parser::_locationBlock(std::stringstream& ss) { // this is gonna be recurc
 	_serverVec.back().addLocationBlock();
 
 	while (ss.get(ch)) {
-		// std::cerr << "Char: '" << ch << "'" << std::endl;
 		if (token == "location") {
 			_locationBlock(ss); // this should return/finish only when ss is finished with this specific location
 			continue;
@@ -383,7 +381,6 @@ void		Parser::_handleLocationDirective(std::stringstream& ss, const std::string&
 		_serverVec.back().getLocationVec().back().setDirective(directiveKey, directiveValue); // potential errors must be dedected there
 	}
 	else {
-		std::cerr << "Directive Key in L: " << directiveKey << std::endl;
 		throw std::runtime_error("Missing Semicolon");
 	}
 }

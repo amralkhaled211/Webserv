@@ -19,11 +19,11 @@ int main(int ac, char* av[] /*, char* env[] */)
 
         httpBlock._parser();
 
-        // std::cout << "BACK IN MAIN\n";
+        std::cout << "BACK IN MAIN\n";
 
-        // Server	server;
-        // initializeMimeTypesMap();
-        // server.run();
+        Server	server(httpBlock.getServerVec());
+        initializeMimeTypesMap();
+        server.run();
     }
     catch (const std::exception& e)
     {

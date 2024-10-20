@@ -6,10 +6,7 @@ void RequestHandler::receiveData(int clientSocket)
     char buffer[1024] = {0};
     int bytesReceived = recv(clientSocket, buffer, sizeof(buffer), 0);
     if (bytesReceived < 0)
-    {
-        close(clientSocket);
         throw std::runtime_error("Receiving failed");
-    }
 // 	this->buffer = buffer; this would copy the whole buffer this might cause storing carbege data if the buffer is not full
     this->buffer.assign(buffer, bytesReceived); // this would copy only the data that was received
 }
@@ -45,17 +42,13 @@ void RequestHandler::parseHeaders()
 		request.body = line;
 		//std::cout << "the body :" << request.body << std::endl;
 	}
-	// std::cout << "this buffer" << this->buffer << std::endl;
+	//std::cout << "this buffer" << this->buffer << std::endl;
 }
 void RequestHandler::parseRequest()
 {
 	parse_first_line();
 	parseHeaders();
 }
-
-
-
-
 
 ////// this is response part
 
@@ -68,7 +61,7 @@ void RequestHandler::notfound()
 	response.body += "<body><h1>404 Not Found</h1><p>The page you are looking for does not exist.</p></body></html>";
 }
 
-void RequestHandler::read_file(std::string const &path)
+bool RequestHandler::read_file(std::string const &path)
 {
 	std::string file_extension = get_file_extension(request.path);
 	std::ifstream file(path.c_str());
@@ -85,22 +78,145 @@ void RequestHandler::read_file(std::string const &path)
 		unsigned int content_len = response.body.size();
 		response.contentLength = "Content-Length: " + intToString(content_len) + "\r\n";
 		file.close();
+		return true;
 	}
-	else
-	{
-		notfound();
-	}
+	return false;
 }
 
-void RequestHandler::sendResponse(int clientSocket)
+
+ServerBlock RequestHandler::findServerBlock(std::vector<ServerBlock>& servers)
 {
-	std::string root = "/home/aismaili/Webserv/website";// this would be changed 
+    std::string host = request.headers["Host"];
+    size_t colon_pos = host.find(':');
+    std::string server_name = (colon_pos != std::string::npos) ? host.substr(0, colon_pos) : host;
+    std::string port = (colon_pos != std::string::npos) ? host.substr(colon_pos + 1) : "";
+
+	for (std::vector<ServerBlock>::iterator it = servers.begin(); it !=  servers.end(); ++it)
+	{
+		ServerBlock& server = *it;
+		if (findInVector(server.getListen(), stringToInt(port)) && findInVector(server.getServerName(), server_name))
+			return server;
+	}
+	// this would be fixed later 
+	std::cout << "returning the first server " << std::endl; 
+	return servers[0];// return default
+}
+
+// void RequestHandler::configResponse(LocationBlock& location)
+// {
+
+// }
+
+bool endsWithHtml(const std::string& str)
+{
+    const std::string extension = ".html";
+    if (str.size() >= extension.size() && 
+        str.compare(str.size() - extension.size(), extension.size(), extension) == 0)
+	{
+        return true;
+    }
+    return false;
+}
+
+bool isFile(const std::string& path) {
+    struct stat path_stat;
+    stat(path.c_str(), &path_stat);
+    return S_ISREG(path_stat.st_mode);
+}
+
+bool isDirectory(const std::string& path) {
+    struct stat path_stat;
+    stat(path.c_str(), &path_stat);
+    return S_ISDIR(path_stat.st_mode);
+}
+
+LocationBlock RequestHandler::findLocationBlock(std::vector<LocationBlock>& locations)
+{
+	//std::cout << "locations size :" <<  locations.size() << std::endl;
+	//std::cout << "request_path : " << request.path << std::endl;
+
+	std::string directory = request.path;
+	std::string file;
+
+	if (endsWithHtml(request.path))
+	{
+		size_t pos = request.path.find_last_of('/');
+		directory = request.path.substr(0, pos);
+		file = request.path.substr(pos + 1);
+	}
+
+
+
+	LocationBlock location;
+	for (std::vector<LocationBlock>::iterator it =  locations.begin(); it != locations.end(); ++it)
+	{
+		location = *it;
+		//std::cout << "location perfix : " << location.getPrefix() << std::endl;
+		if (location.getPrefix() == directory)
+		{
+			// check if the html file or dir
+			std::string fullPath = location.getRoot() + request.path;
+			std::cout << "full path: " << fullPath << std::endl; 
+			if (isDirectory(fullPath))
+			{
+				// std::cout << "its a dir "<< std::endl;
+				_isDir = true;
+			}
+			else
+			{
+				_isDir = false;
+				// std::cout << "its a file "<< std::endl;
+			}
+			return location;
+		}
+	}
+	throw std::exception();
+}
+
+
+bool RequestHandler::findIndexFile(const std::vector<std::string>& files, std::string& root)
+{
+	size_t i = 0;
+
+	while (i < files.size())
+	{
+		std::string file = root + '/' + files[i];
+		std::cout << "file : " << file << std::endl;
+		if (read_file(file))
+			return true;
+		i++;
+	}
+	return false;
+}
+
+void RequestHandler::sendResponse(int clientSocket, std::vector<ServerBlock>& servers)
+{
+
+	ServerBlock current_server = findServerBlock(servers);
 
 	if (request.method == "GET")
 	{
-		if (request.path == "/")// this if the whole path is not given, so i would give a default path file 
-			request.path = "/index.html";
-		this->read_file(root + request.path);
+		try
+		{
+			LocationBlock location = findLocationBlock(current_server.getLocationVec());
+			std::string root = location.getRoot() + request.path;
+			std::cout << "root : " << root << std::endl;
+			if (_isDir)
+			{
+				if (!findIndexFile(location.getIndex(), root))
+					notfound();
+
+			}
+			else
+				if(!this->read_file(root))
+					notfound();
+
+		}
+		catch (const std::exception& e)
+		{
+			// i should here send the right error for invalid locations 
+			notfound();
+		}
 	}
 	if (request.method == "POST") // this is not an important step, just checking if the Post wrok
 	{
