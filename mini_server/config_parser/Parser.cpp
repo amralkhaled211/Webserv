@@ -19,6 +19,8 @@ Parser&	Parser::operator=(const Parser& other) {
 
 Parser::~Parser() { /* delete stuff, if needed, hopefully not needed */ }
 
+std::vector<ServerBlock>&	Parser::getServerVec() { return this->_serverVec; }
+
 static bool invalidPostfix(std::string& fileName) {
 	size_t	postFixLen = std::string(POSTFIX).size();
 	size_t	fileNameLen = fileName.size();
@@ -88,20 +90,21 @@ int		Parser::_generalErrors(std::string fileName) {
 void		Parser::_parser() {
 	// prep
 	this->_configToContent();
-	// this->_printContent();
 	this->_removeExcessSpace();
-	// this->_printContent();
+
 	// this->_syntaxError();
 
 	// parsing
 	this->_fillBlocks();
+
 	// std::cout << BOLD_GREEN<< "BEFORE SETUP DEFAULT\n" << RESET;
 	// this->_printServerVec();
 
 	// setup defaults
 	this->_setupDefaults();
-	std::cout << BOLD_GREEN << "AFTER SETUP DEFAULT\n" << RESET;
-	this->_printServerVec();
+
+	// std::cout << BOLD_GREEN << "AFTER SETUP DEFAULT\n" << RESET;
+	// this->_printServerVec();
 }
 
 /*			PREP FOR PARSING			*/

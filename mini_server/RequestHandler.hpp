@@ -18,6 +18,8 @@
 #include <csignal>
 #include <sys/stat.h>
 #include <cstdlib>
+#include <dirent.h>
+#include <sys/types.h>
 #include "config_parser/Parser.hpp"
 
 extern std::map<std::string, std::string> mimeTypesMap_G;
@@ -54,6 +56,10 @@ class RequestHandler
 		void notfound();
 		void parseHeaders();
 		void parse_first_line();
+		
+		// AUTOINDEX
+		std::string displayDir(const std::string& path, const std::string& requestPath);
+
 		//void configResponse(ServerBlock &server);
 		template <typename T>
         bool findInVector(const std::vector<T>& vec, const T& target)

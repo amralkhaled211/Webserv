@@ -159,13 +159,13 @@ LocationBlock RequestHandler::findLocationBlock(std::vector<LocationBlock>& loca
 			std::cout << "full path: " << fullPath << std::endl; 
 			if (isDirectory(fullPath))
 			{
-				// std::cout << "its a dir "<< std::endl;
+				std::cout << "its a dir "<< std::endl;
 				_isDir = true;
 			}
 			else
 			{
 				_isDir = false;
-				// std::cout << "its a file "<< std::endl;
+				std::cout << "its a file "<< std::endl;
 			}
 			return location;
 		}
@@ -206,6 +206,15 @@ void RequestHandler::sendResponse(int clientSocket, std::vector<ServerBlock>& se
 				if (!findIndexFile(location.getIndex(), root))
 					notfound();
 
+				std::cout << BOLD_GREEN << "BEFORE AUTOINDEX" << RESET << std::endl;
+				if (location.getAutoindex() == ON) {
+					response.body = this->displayDir(root, request.path);
+					response.status = "HTTP/1.1 200 OK\r\n";
+					response.contentType = "Content-Type: text/html;\r\n";
+					unsigned int content_len = response.body.size();
+					response.contentLength = "Content-Length: " + intToString(content_len) + "\r\n";
+					// std::cout << "BODY\n" << response.body;
+				}
 			}
 			else
 				if(!this->read_file(root))
@@ -231,4 +240,83 @@ void RequestHandler::sendResponse(int clientSocket, std::vector<ServerBlock>& se
 	const char* resp_cstr = resp.c_str();
     size_t resp_length = resp.size();
     send(clientSocket, resp_cstr, resp_length, 0);
+}
+
+std::vector<std::pair<std::string, std::string> >	listDirectory(const std::string& path) {
+	std::vector<std::pair<std::string, std::string> >	elements;
+	DIR*	dir = opendir(path.c_str());
+	if (dir == NULL) {
+		// handle error
+		return elements;
+	}
+
+	struct dirent* entry;
+	std::string	name;
+	while ((entry = readdir(dir)) != NULL) {
+		name = entry->d_name;
+		if (name != "." /* || name != ".." */) { // nginx also displays the '..'
+			std::string	fullPath = path + '/' + name;
+			struct stat statbuf;
+			if (stat(fullPath.c_str(), &statbuf) == 0) {
+				if (S_ISDIR(statbuf.st_mode))
+					fullPath += '/';
+				elements.push_back(std::make_pair(name, fullPath));
+			}
+		}
+	}
+	closedir(dir);
+	return elements;
+}
+
+std::string escapeHtml(const std::string &input) {
+
+	std::string output;
+	
+	for (size_t i = 0; i < input.size(); ++i) {
+		switch (input[i]) {
+			case '&':  output += "&amp;";
+				break;
+			case '<':  output += "&lt;";
+				break;
+			case '>':  output += "&gt;";
+				break;
+			case '"':  output += "&quot;";
+				break;
+			case '\'': output += "&#39;";
+				break;
+			default:   output += input[i];
+				break;
+		}
+	}
+	return output;
+}
+
+
+std::string		RequestHandler::displayDir(const std::string& path, const std::string& requestPath) {
+	// first pair-element is the element, second one is the full path, but with a '/' at the end for directories
+	std::vector<std::pair<std::string, std::string> >	dirElements(listDirectory(path));
+
+	// must embed the dirElements into a html file
+	std::cout << "Elements in directory " << path << ":" << std::endl;
+	for (size_t i = 0; i < dirElements.size(); ++i) {
+		 std::cout << "dir element name: " << dirElements[i].first << "\ndir element path: " << dirElements[i].second << std::endl;
+	}
+
+	std::ostringstream html;
+	html << "<!DOCTYPE html><html><head><title>Index of " << escapeHtml(requestPath) << "</title></head><body>";
+	html << "<h1>Index of " << escapeHtml(requestPath) << "</h1>";
+	html << "<ul>";
+
+	for (size_t i = 0; i < dirElements.size(); ++i) {
+		std::string displayName = dirElements[i].first;
+		std::string fullPath = requestPath;
+		if (!fullPath.empty() && fullPath[fullPath.size() - 1] != '/')
+			fullPath += '/';
+		fullPath += displayName;
+		std::cout << "fullpath: " << fullPath << "\n";
+		html << "<li><a href=\"" << escapeHtml(fullPath) << "\">" << escapeHtml(displayName) << "</a></li>";
+	}
+
+	html << "</ul></body></html>";
+	return html.str();
 }
