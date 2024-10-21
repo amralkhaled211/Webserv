@@ -35,6 +35,7 @@ typedef struct Response
 {
 	std::string status;
 	std::string contentType;
+	std::string location;
 	std::string contentLength;
 	std::string body;
 } Response;
@@ -54,6 +55,7 @@ class RequestHandler
 		void notfound();
 		void parseHeaders();
 		void parse_first_line();
+		void RequestHandler::redirect(const std::string& url);
 		//void configResponse(ServerBlock &server);
 		template <typename T>
         bool findInVector(const std::vector<T>& vec, const T& target)
@@ -62,6 +64,7 @@ class RequestHandler
         }
 	private:
 	bool _isDir;
+	bool _isReturn;
 	parser request;
 	Response response;
 	std::string buffer;

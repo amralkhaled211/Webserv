@@ -3,12 +3,12 @@
 // this is handling the request part
 void RequestHandler::receiveData(int clientSocket)
 {
-    char buffer[1024] = {0};
-    int bytesReceived = recv(clientSocket, buffer, sizeof(buffer), 0);
-    if (bytesReceived < 0)
-        throw std::runtime_error("Receiving failed");
-// 	this->buffer = buffer; this would copy the whole buffer this might cause storing carbege data if the buffer is not full
-    this->buffer.assign(buffer, bytesReceived); // this would copy only the data that was received
+	char buffer[1024] = {0};
+	int bytesReceived = recv(clientSocket, buffer, sizeof(buffer), 0);
+	if (bytesReceived < 0)
+		throw std::runtime_error("Receiving failed");
+	// 	this->buffer = buffer; this would copy the whole buffer this might cause storing carbege data if the buffer is not full
+	this->buffer.assign(buffer, bytesReceived); // this would copy only the data that was received
 }
 
 void RequestHandler::parse_first_line()
@@ -40,9 +40,9 @@ void RequestHandler::parseHeaders()
 	{
 		std::getline(stream, line);
 		request.body = line;
-		//std::cout << "the body :" << request.body << std::endl;
+		// std::cout << "the body :" << request.body << std::endl;
 	}
-	//std::cout << "this buffer" << this->buffer << std::endl;
+	// std::cout << "this buffer" << this->buffer << std::endl;
 }
 void RequestHandler::parseRequest()
 {
@@ -83,57 +83,24 @@ bool RequestHandler::read_file(std::string const &path)
 	return false;
 }
 
-
-ServerBlock RequestHandler::findServerBlock(std::vector<ServerBlock>& servers)
+ServerBlock RequestHandler::findServerBlock(std::vector<ServerBlock> &servers)
 {
-    std::string host = request.headers["Host"];
-    size_t colon_pos = host.find(':');
-    std::string server_name = (colon_pos != std::string::npos) ? host.substr(0, colon_pos) : host;
-    std::string port = (colon_pos != std::string::npos) ? host.substr(colon_pos + 1) : "";
+	std::string host = request.headers["Host"];
+	size_t colon_pos = host.find(':');
+	std::string server_name = (colon_pos != std::string::npos) ? host.substr(0, colon_pos) : host;
+	std::string port = (colon_pos != std::string::npos) ? host.substr(colon_pos + 1) : "";
 
-	for (std::vector<ServerBlock>::iterator it = servers.begin(); it !=  servers.end(); ++it)
+	for (std::vector<ServerBlock>::iterator it = servers.begin(); it != servers.end(); ++it)
 	{
-		ServerBlock& server = *it;
+		ServerBlock &server = *it;
 		if (findInVector(server.getListen(), stringToInt(port)) && findInVector(server.getServerName(), server_name))
 			return server;
 	}
-	// this would be fixed later 
-	std::cout << "returning the first server " << std::endl; 
-	return servers[0];// return default
+	// this would be fixed later
+	std::cout << "returning the first server " << std::endl;
+	return servers[0]; // return default
 }
-
-
-LocationBlock RequestHandler::findLocationBlock(std::vector<LocationBlock>& locations)
-{
-	std::vector<std::string> spiltedDir = split(request.path, '/');
-	int i = 1;
-
-	LocationBlock location;
-	for (std::vector<LocationBlock>::iterator it =  locations.begin(); it != locations.end(); ++it)
-	{
-		location = *it;
-		if (location.getPrefix() == '/' + spiltedDir[i])
-		{
-			std::string fullPath = location.getRoot() + '/' + spiltedDir[i];
-			std::cout << "pathhhh : " << fullPath << std::endl;
-			while (++i < spiltedDir.size())
-			{
-				fullPath = fullPath + '/' + spiltedDir[i];
-				std::cout << "fullPath : " << fullPath << std::endl;
-				if (isDirectory(fullPath))
-					_isDir = true;
-				else
-					_isDir = false;
-			}
-			return location;
-		}
-	}
-	std::cout << "throwing : " << std::endl;
-	throw std::exception();
-}
-
-
-bool RequestHandler::findIndexFile(const std::vector<std::string>& files, std::string& root)
+bool RequestHandler::findIndexFile(const std::vector<std::string> &files, std::string &root)
 {
 	size_t i = 0;
 
@@ -148,7 +115,43 @@ bool RequestHandler::findIndexFile(const std::vector<std::string>& files, std::s
 	return false;
 }
 
-void RequestHandler::sendResponse(int clientSocket, std::vector<ServerBlock>& servers)
+LocationBlock RequestHandler::findLocationBlock(std::vector<LocationBlock> &locations)
+{
+	std::vector<std::string> spiltedDir = split(request.path, '/');
+	int i = 1;
+	_isDir = true;
+
+	LocationBlock location;
+	for (std::vector<LocationBlock>::iterator it = locations.begin(); it != locations.end(); ++it)
+	{
+		location = *it;
+		if (location.getPrefix() == '/' + spiltedDir[i])
+		{
+			std::string fullPath = location.getRoot() + '/' + spiltedDir[i];
+			while (++i < spiltedDir.size())
+			{
+				fullPath = fullPath + '/' + spiltedDir[i];
+				if (isDirectory(fullPath))
+					_isDir = true;
+				else
+					_isDir = false;
+			}
+			return location;
+		}
+	}
+	throw std::exception();
+}
+
+void RequestHandler::redirect(const std::string &url)
+{
+	response.status = "HTTP/1.1 302 Found\r\n";
+	response.location = "Location: " + url + "\r\n";
+	response.contentType = "Content-Type: text/html;\r\n";
+	response.contentLength = "Content-Length: 0\r\n";
+	response.body = "";
+}
+
+void RequestHandler::sendResponse(int clientSocket, std::vector<ServerBlock> &servers)
 {
 
 	ServerBlock current_server = findServerBlock(servers);
@@ -159,21 +162,29 @@ void RequestHandler::sendResponse(int clientSocket, std::vector<ServerBlock>& se
 		{
 			LocationBlock location = findLocationBlock(current_server.getLocationVec());
 			std::string root = location.getRoot() + request.path;
-			if (_isDir)
+			if (location.getReturn().empty())
 			{
-				std::cout << "its a dir : " << std::endl;
-				if (!findIndexFile(location.getIndex(), root))
-					notfound();
-
+				if (_isDir)
+				{
+					if (!findIndexFile(location.getIndex(), root))
+						notfound();
+				}
+				else
+				{
+					if (!this->read_file(root))
+						notfound();
+				}
 			}
 			else
-				if(!this->read_file(root))
-					notfound();
-
+			{	
+				redirect("https://www.liquidweb.com/blog/redirecting-urls-using-nginx/");
+				_isReturn = true;
+			}
+			// handle redercation
 		}
-		catch (const std::exception& e)
+		catch (const std::exception &e)
 		{
-			// i should here send the right error for invalid locations 
+			// i should here send the right error for invalid locations
 			notfound();
 		}
 	}
@@ -186,8 +197,14 @@ void RequestHandler::sendResponse(int clientSocket, std::vector<ServerBlock>& se
 		response.body = "<!DOCTYPE html><html><head><title>200 OK</title></head>";
 		response.body += "<body><h1>200 OK</h1><p>Thank You for login info.</p></body></html>";
 	}
-	std::string resp =  response.status + response.contentType + response.contentLength + "\r\n" + response.body;
-	const char* resp_cstr = resp.c_str();
-    size_t resp_length = resp.size();
-    send(clientSocket, resp_cstr, resp_length, 0);
+
+	std::string resp;
+
+	if (_isReturn)
+		resp = response.status + response.location  + response.contentType + response.contentLength + "\r\n" + response.body;
+	else
+		resp = response.status + response.contentType + response.contentLength + "\r\n" + response.body;
+	const char *resp_cstr = resp.c_str();
+	size_t resp_length = resp.size();
+	send(clientSocket, resp_cstr, resp_length, 0);
 }
