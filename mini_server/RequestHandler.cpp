@@ -102,74 +102,33 @@ ServerBlock RequestHandler::findServerBlock(std::vector<ServerBlock>& servers)
 	return servers[0];// return default
 }
 
-// void RequestHandler::configResponse(LocationBlock& location)
-// {
-
-// }
-
-bool endsWithHtml(const std::string& str)
-{
-    const std::string extension = ".html";
-    if (str.size() >= extension.size() && 
-        str.compare(str.size() - extension.size(), extension.size(), extension) == 0)
-	{
-        return true;
-    }
-    return false;
-}
-
-bool isFile(const std::string& path) {
-    struct stat path_stat;
-    stat(path.c_str(), &path_stat);
-    return S_ISREG(path_stat.st_mode);
-}
-
-bool isDirectory(const std::string& path) {
-    struct stat path_stat;
-    stat(path.c_str(), &path_stat);
-    return S_ISDIR(path_stat.st_mode);
-}
 
 LocationBlock RequestHandler::findLocationBlock(std::vector<LocationBlock>& locations)
 {
-	//std::cout << "locations size :" <<  locations.size() << std::endl;
-	//std::cout << "request_path : " << request.path << std::endl;
-
-	std::string directory = request.path;
-	std::string file;
-
-	if (endsWithHtml(request.path))
-	{
-		size_t pos = request.path.find_last_of('/');
-		directory = request.path.substr(0, pos);
-		file = request.path.substr(pos + 1);
-	}
-
-
+	std::vector<std::string> spiltedDir = split(request.path, '/');
+	int i = 1;
 
 	LocationBlock location;
 	for (std::vector<LocationBlock>::iterator it =  locations.begin(); it != locations.end(); ++it)
 	{
 		location = *it;
-		//std::cout << "location perfix : " << location.getPrefix() << std::endl;
-		if (location.getPrefix() == directory)
+		if (location.getPrefix() == '/' + spiltedDir[i])
 		{
-			// check if the html file or dir
-			std::string fullPath = location.getRoot() + request.path;
-			std::cout << "full path: " << fullPath << std::endl; 
-			if (isDirectory(fullPath))
+			std::string fullPath = location.getRoot() + '/' + spiltedDir[i];
+			std::cout << "pathhhh : " << fullPath << std::endl;
+			while (++i < spiltedDir.size())
 			{
-				// std::cout << "its a dir "<< std::endl;
-				_isDir = true;
-			}
-			else
-			{
-				_isDir = false;
-				// std::cout << "its a file "<< std::endl;
+				fullPath = fullPath + '/' + spiltedDir[i];
+				std::cout << "fullPath : " << fullPath << std::endl;
+				if (isDirectory(fullPath))
+					_isDir = true;
+				else
+					_isDir = false;
 			}
 			return location;
 		}
 	}
+	std::cout << "throwing : " << std::endl;
 	throw std::exception();
 }
 
@@ -200,9 +159,9 @@ void RequestHandler::sendResponse(int clientSocket, std::vector<ServerBlock>& se
 		{
 			LocationBlock location = findLocationBlock(current_server.getLocationVec());
 			std::string root = location.getRoot() + request.path;
-			std::cout << "root : " << root << std::endl;
 			if (_isDir)
 			{
+				std::cout << "its a dir : " << std::endl;
 				if (!findIndexFile(location.getIndex(), root))
 					notfound();
 
