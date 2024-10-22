@@ -31,10 +31,30 @@ std::string intToString(int value)
 
 int stringToInt(const std::string& str)
 {
-    std::stringstream ss(str);
-    int value;
-    ss >> value;
-    return value;
+	std::stringstream ss(str);
+	int value;
+	ss >> value;
+	return value;
+}
+
+
+bool isDirectory(const std::string& path)
+{
+	struct stat path_stat;
+	stat(path.c_str(), &path_stat);
+	return S_ISDIR(path_stat.st_mode);
+}
+
+std::vector<std::string> split(const std::string& str, char delimiter)
+{
+	std::vector<std::string> tokens;
+	std::string token;
+	std::stringstream ss(str);
+	while (std::getline(ss, token, delimiter))
+	{
+	    tokens.push_back(token);
+	}
+	return tokens;
 }
 
 
