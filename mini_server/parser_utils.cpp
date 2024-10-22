@@ -47,12 +47,14 @@ bool isDirectory(const std::string& path)
 
 std::vector<std::string> split(const std::string& str, char delimiter)
 {
+	// std::cout << BOLD_RED << "in split: " << str << RESET << std::endl;
 	std::vector<std::string> tokens;
 	std::string token;
 	std::stringstream ss(str);
 	while (std::getline(ss, token, delimiter))
 	{
 	    tokens.push_back(token);
+		// std::cout << BOLD_RED << "in split: " << token << RESET << std::endl;
 	}
 	return tokens;
 }

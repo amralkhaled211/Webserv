@@ -23,7 +23,7 @@
 - [ ] Edge Cases Parsing
   	[ ] Test and Handle nested locations
 - [ ] Figure out valid and invalid cases
-- [ ] Accept Quotes as Directive Key
+- [ ] Accept Quotes as Directive Key (unsure)
 - [ ] Deny Quotes as Directive Value
 
 

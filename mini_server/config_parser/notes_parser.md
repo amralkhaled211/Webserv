@@ -118,48 +118,52 @@
 
 # Defaults of all implemented directives
 ## those with no default
-* error_page
-* 
+### error_page
+### return
 
 ## those with defaults
-* listen
+### listen
 Default: listen *:80 | *:8000;
 
-* server_name
+### server_name
 Default: server_name "";
 
-* root
+### root
 Default: root html; that is a relative path from the nginx excecutable file -> Q: what if someone deletes it or it doesn't exist? A: server just give the error 404 Not Found
 
-* index
+### index
 Default: index index.html;
 
-* autoindex
+### autoindex
 Default: autoindex off;
 
-* error_page
+### error_page
 Syntax:	error_page code ... [=[response]] uri;
 Default:	—
 Context:	http, server, location, if in location
 
-* allowed_methods
+### allowed_methods
 Default: 
 
 
-* location
+### location
 Default: 
 
 
-* client_max_body_size
+### client_max_body_size
 Syntax:		client_max_body_size size;  note: Setting size to 0 disables checking of client request body size.
 Default:	client_max_body_size 1m; If the size in a request exceeds the configured value, the 413 (Request Entity Too Large) error is returned to the client.
 Context:	http, server, location
 
-* return
-Default: 
+### return
+Syntax:	return code [text];
+		return code URL;
+		return URL;
+Default:	—
+Context:	server, location, if
 
 
-* try_files
+### try_files
 Syntax:	try_files file ... uri;
 		try_files file ... =code;
 Default:	—
@@ -238,7 +242,8 @@ https://nginx.org/en/docs/http/ngx_http_core_module.html#try_files
 ## client_max_body_size
 https://nginx.org/en/docs/http/ngx_http_core_module.html#client_max_body_size
 
-
+## return
+https://nginx.org/en/docs/http/ngx_http_rewrite_module.html#return
 
 ### Example with ~* 
 **location ~* /.(gif|jpg|png)$ { ... }**

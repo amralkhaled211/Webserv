@@ -18,7 +18,7 @@ class Block // parent // the purpose of this is just to not have class with the 
 
 		// all the directives, that are in both Server and Location
 		std::string					_root;
-		std::vector<std::string>	_error_page;
+		std::vector<std::string>	_error_page; // a block can have more then one error_page
 		std::vector<std::string>	_return;
 		std::vector<std::string>	_try_files; // won't handle as of now
 		std::vector<std::string>	_index;
