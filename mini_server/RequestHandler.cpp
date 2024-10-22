@@ -1,5 +1,34 @@
 #include "RequestHandler.hpp"
 
+
+// #include <iostream>
+// #include <vector>
+// #include <stdexcept>
+// #include <sys/socket.h> // For socket functions
+
+// void receiveLargeData(int clientSocket) {
+//     const size_t bufferSize = 1024;
+//     char buffer[bufferSize] = {0};
+//     std::vector<char> receivedData;
+//     int bytesReceived = 0;
+
+//     while (true) {
+//         bytesReceived = recv(clientSocket, buffer, bufferSize, 0);
+//         if (bytesReceived < 0) {
+//             throw std::runtime_error("Receiving failed");
+//         } else if (bytesReceived == 0) {
+//             // No more data to receive
+//             break;
+//         }
+//         receivedData.insert(receivedData.end(), buffer, buffer + bytesReceived);
+//     }
+
+//     // Now receivedData contains all the data received
+//     // You can process it as needed
+//     std::cout << "Total bytes received: " << receivedData.size() << std::endl;
+// }
+
+
 // this is handling the request part
 void RequestHandler::receiveData(int clientSocket)
 {
@@ -118,16 +147,19 @@ bool RequestHandler::findIndexFile(const std::vector<std::string> &files, std::s
 LocationBlock RequestHandler::findLocationBlock(std::vector<LocationBlock> &locations)
 {
 	std::vector<std::string> spiltedDir = split(request.path, '/');
-	int i = 1;
+	std::cout << "spiltedDir ;" << spiltedDir[0] << std::endl;
+	std::cout << "spiltedDir size " << spiltedDir.size() << std::endl;
+	int i = 0;
 	_isDir = true;
 
 	LocationBlock location;
 	for (std::vector<LocationBlock>::iterator it = locations.begin(); it != locations.end(); ++it)
 	{
 		location = *it;
-		if (location.getPrefix() == '/' + spiltedDir[i])
+		if (location.getPrefix() == spiltedDir[i])
 		{
-			std::string fullPath = location.getRoot() + '/' + spiltedDir[i];
+			std::string fullPath = location.getRoot() + spiltedDir[i];
+			std::cout << "full path " << fullPath <<  std::endl;
 			while (++i < spiltedDir.size())
 			{
 				fullPath = fullPath + '/' + spiltedDir[i];
@@ -142,9 +174,22 @@ LocationBlock RequestHandler::findLocationBlock(std::vector<LocationBlock> &loca
 	throw std::exception();
 }
 
-void RequestHandler::redirect(const std::string &url)
+void RequestHandler::redirect(LocationBlock& location)
 {
-	response.status = "HTTP/1.1 302 Found\r\n";
+	std::vector<std::string> returnVec = location.getReturn();
+	std::string code;
+	std::string url;
+	if (returnVec.size() > 1)
+	{
+		code = returnVec[0];
+		url = returnVec[1];
+	}
+	else
+	{
+		code = "301";
+		url = returnVec[0];
+	}
+	response.status = "HTTP/1.1 " + code + " " + redir.CodeToMessage[code] + "\r\n";
 	response.location = "Location: " + url + "\r\n";
 	response.contentType = "Content-Type: text/html;\r\n";
 	response.contentLength = "Content-Length: 0\r\n";
@@ -153,6 +198,7 @@ void RequestHandler::redirect(const std::string &url)
 
 void RequestHandler::sendResponse(int clientSocket, std::vector<ServerBlock> &servers)
 {
+	_isReturn = false;
 
 	ServerBlock current_server = findServerBlock(servers);
 
@@ -176,11 +222,10 @@ void RequestHandler::sendResponse(int clientSocket, std::vector<ServerBlock> &se
 				}
 			}
 			else
-			{	
-				redirect("https://www.liquidweb.com/blog/redirecting-urls-using-nginx/");
+			{
+				redirect(location);
 				_isReturn = true;
 			}
-			// handle redercation
 		}
 		catch (const std::exception &e)
 		{

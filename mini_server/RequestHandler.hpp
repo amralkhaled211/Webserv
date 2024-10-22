@@ -1,4 +1,4 @@
-#pragma once 
+#pragma once
 #include <sys/socket.h>
 #include <fstream>
 #include <string>
@@ -31,6 +31,19 @@ typedef struct parser
 	std::string body;
 } parser;
 
+typedef struct Redirection
+{
+    std::map<std::string, std::string> CodeToMessage;
+
+    Redirection()
+	{
+        CodeToMessage["301"] = "Moved Permanently";
+        CodeToMessage["302"] = "Found";
+        CodeToMessage["307"] = "Temporary Redirect";
+        CodeToMessage["308"] = "Permanent Redirect";
+    }
+} Redirection;
+
 typedef struct Response
 {
 	std::string status;
@@ -42,46 +55,49 @@ typedef struct Response
 
 class RequestHandler
 {
-	public:
-		//RequestHandler();
-		//~RequestHandler();
-		bool read_file(std::string const &path);
-		bool findIndexFile(const std::vector<std::string>& files, std::string& root);
-		void receiveData(int clientSocket);
-		void parseRequest();
-		void sendResponse(int clientSocket, std::vector<ServerBlock>& servers);
-		ServerBlock findServerBlock(std::vector<ServerBlock>& servers);
-		LocationBlock findLocationBlock(std::vector<LocationBlock>& locations);
-		void notfound();
-		void parseHeaders();
-		void parse_first_line();
-		void RequestHandler::redirect(const std::string& url);
-		//void configResponse(ServerBlock &server);
-		template <typename T>
-        bool findInVector(const std::vector<T>& vec, const T& target)
-		{
-            return std::find(vec.begin(), vec.end(), target) != vec.end();
-        }
-	private:
+public:
+	// RequestHandler();
+	//~RequestHandler();
+	bool read_file(std::string const &path);
+	bool findIndexFile(const std::vector<std::string> &files, std::string &root);
+	void receiveData(int clientSocket);
+	void parseRequest();
+	void sendResponse(int clientSocket, std::vector<ServerBlock> &servers);
+	ServerBlock findServerBlock(std::vector<ServerBlock> &servers);
+	LocationBlock findLocationBlock(std::vector<LocationBlock> &locations);
+	void notfound();
+
+	void parseHeaders();
+	void parse_first_line();
+	void redirect(LocationBlock& location);
+	// void configResponse(ServerBlock &server);
+	template <typename T>
+	bool findInVector(const std::vector<T> &vec, const T &target)
+	{
+		return std::find(vec.begin(), vec.end(), target) != vec.end();
+	}
+
+private:
 	bool _isDir;
 	bool _isReturn;
 	parser request;
 	Response response;
 	std::string buffer;
+	Redirection redir;
 };
 
-//utility functions
+// utility functions
 std::string intToString(int value);
-int stringToInt(const std::string& str);
+int stringToInt(const std::string &str);
 std::string deleteSpaces(std::string const &str);
-std::string get_file_extension(const std::string& file_path);
-std::string get_file_name(const std::string& file_path);
-bool isDirectory(const std::string& path);
-std::vector<std::string> split(const std::string& str, char delimiter);
+std::string get_file_extension(const std::string &file_path);
+std::string get_file_name(const std::string &file_path);
+bool isDirectory(const std::string &path);
+std::vector<std::string> split(const std::string &str, char delimiter);
 
-//debugging functions
+// debugging functions
 void print_map(std::map<std::string, std::string> const &m);
 
 void initializeMimeTypesMap();
 
-void	printServerVec(std::vector<ServerBlock>& _serverVec);
+void printServerVec(std::vector<ServerBlock> &_serverVec);
