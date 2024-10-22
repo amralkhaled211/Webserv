@@ -8,6 +8,7 @@
 - [ ] Test case with return 307 /path; play with the space and newline
 - [ ] Test index with wrong extension
 - [ ] Test the difference between '/' and '\'
+- [ ] Test return syntax checks
 
 
 ### LEARNING
@@ -21,10 +22,19 @@
   - [x] if a Location Block's directive does not have any Value, it must take the global one
     - [x] need to know about all the directive defaults
 - [ ] Edge Cases Parsing
-  	[ ] Test and Handle nested locations
+  - [ ] Test and Handle nested locations
 - [ ] Figure out valid and invalid cases
 - [ ] Accept Quotes as Directive Key (unsure)
 - [ ] Deny Quotes as Directive Value
+- [ ] index
+  - [ ] only last value can be an absolute path
+- [ ] error_page
+  - [ ] there must be always at least one code between 300 and 599, followed by a path (which will be appended to the root)
+- [ ] return
+  - [ ] accepts multiple, but only uses the first one
+  - [ ] what is the accepted range? 0 - 999; note: client interprets 0 as 'Finished'
+  - [ ] if another location is redirected to, there must be a status code
+  - [ ] if the same location is redirected to, a 404 error is thrown
 
 
 ## DONE

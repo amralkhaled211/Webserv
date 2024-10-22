@@ -64,6 +64,27 @@ const std::vector<std::string>&	Block::getIndex() const { return this->_index; }
 const char&	Block::getAutoindex() const { return this->_autoindex; }
 
 
+void		invalidReturnSyntax(const std::vector<std::string>& valueArgs) {
+	if (valueArgs.empty() || valueArgs.size() > 2)
+		throw std::runtime_error("Invalid Return Directive");
+
+	if (valueArgs.size() == 1) { // accept either only a status code OR a link (not a location)
+		if (isdigit(valueArgs[0][0]))
+			goto codeCheck;
+		else if (valueArgs[0][0] != '/')
+			throw std::runtime_error("Invalid Return Directive (Code required for internal redirection)");
+	}
+	codeCheck:
+		std::stringstream	ss((*valueArgs.begin()).c_str());
+		int code = -1;
+		if (ss.str().find_first_not_of("0123456789") == std::string::npos)
+			throw std::runtime_error("Invalid Return Directive Code");
+		if (!(ss >> code) || !(code >= 0 && code <= 999))
+			throw std::runtime_error("Invalid Return Directive Code");
+	
+	// this function potentially misses checks for valueArgs[1] -> the url or text(internal redirection)
+}
+
 
 bool		Block::_addCommonDirective(const std::string& directiveKey, std::string& directiveValue) { // to add: invalid values
 	std::vector<std::string>	valueArgs(splitString(directiveValue));
@@ -84,8 +105,10 @@ bool		Block::_addCommonDirective(const std::string& directiveKey, std::string& d
 		return true;
 	}
 	else if (directiveKey == "return") {
-		if (!this->_return.empty())
-			throw std::runtime_error("Duplicate return Directive");
+		invalidReturnSyntax(valueArgs);
+		if (!this->_return.empty()) {
+			return true;
+		}
 		this->_return = valueArgs;
 		return true;
 	}
