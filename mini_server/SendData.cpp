@@ -155,7 +155,7 @@ void SendData::sendResponse(int clientSocket, std::vector<ServerBlock> &servers,
 	}
 	if (request.method == "POST") // this is not an important step, just checking if the Post wrok
 	{
-		std::cout << "the body :" << request.body << std::endl;
+		saveBodyToFile("/home/amalkhal/Webserv/website/upload/Booking Office.doc");
 		_response.status = "HTTP/1.1 200 OK\r\n";
 		_response.contentType = "Content-Type: text/html;\r\n";
 		_response.contentLength = "Content-Length: 122\r\n";
@@ -172,4 +172,20 @@ void SendData::sendResponse(int clientSocket, std::vector<ServerBlock> &servers,
 	const char *resp_cstr = resp.c_str();
 	size_t resp_length = resp.size();
 	send(clientSocket, resp_cstr, resp_length, 0);
+}
+
+
+void SendData::saveBodyToFile(const std::string &filename)
+{
+    std::ofstream outFile(filename.c_str(), std::ios::binary);
+    if (outFile.is_open())
+    {
+        outFile.write(_response.body.c_str(), _response.body.size());
+        outFile.close();
+    }
+    else
+    {
+        // Handle error opening file
+        std::cerr << "Error opening file for writing: " << filename << std::endl;
+    }
 }

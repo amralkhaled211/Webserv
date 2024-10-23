@@ -40,11 +40,9 @@ public:
 	void parseHeaders();
 	void parse_first_line();
 	void receiveData(int clientSocket);
-
 	parser& getRequest();
-
 private:
-	std::string buffer;
+	std::string _buffer;
 	parser request;
 };
 

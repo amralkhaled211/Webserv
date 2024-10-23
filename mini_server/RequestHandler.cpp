@@ -1,13 +1,41 @@
 #include "RequestHandler.hpp"
 
+
+
+
+// void RequestHandler::receiveData(int clientSocket)
+// {
+//     const size_t chunkSize = 1024;
+//     std::vector<char> buffer;
+//     char tempBuffer[chunkSize];
+//     int bytesReceived;
+
+//     while (true)
+//     {
+//         bytesReceived = recv(clientSocket, tempBuffer, chunkSize, 0);
+//         if (bytesReceived < 0)
+//         {
+//             std::cerr << "Receiving failed: " << strerror(errno) << std::endl;
+//             throw std::runtime_error("Receiving failed");
+//         }
+//         if (bytesReceived == 0)
+//             break; // Connection closed
+
+//         buffer.insert(buffer.end(), tempBuffer, tempBuffer + bytesReceived);
+//     }
+
+//     this->_buffer.assign(buffer.begin(), buffer.end()); // Copy all received data to _buffer
+// }
+
+
 void RequestHandler::receiveData(int clientSocket)
 {
-	char buffer[1024] = {0};
-	int bytesReceived = recv(clientSocket, buffer, sizeof(buffer), 0);
+	char Buffer[1024] = {0};
+	int bytesReceived = recv(clientSocket, Buffer, sizeof(Buffer), 0);
 	if (bytesReceived < 0)
 		throw std::runtime_error("Receiving failed");
 	// 	this->buffer = buffer; this would copy the whole buffer this might cause storing carbege data if the buffer is not full
-	this->buffer.assign(buffer, bytesReceived); // this would copy only the data that was received
+	this->_buffer.assign(Buffer, bytesReceived); // this would copy only the data that was received
 }
 
 parser& RequestHandler::getRequest()
@@ -18,20 +46,20 @@ parser& RequestHandler::getRequest()
 void RequestHandler::parse_first_line()
 {
 	size_t start = 0;
-	size_t end = this->buffer.find(' ', start);
-	request.method = this->buffer.substr(start, end - start);
+	size_t end = this->_buffer.find(' ', start);
+	request.method = this->_buffer.substr(start, end - start);
 	start = end + 1;
-	end = this->buffer.find(' ', start);
-	request.path = this->buffer.substr(start, end - start);
+	end = this->_buffer.find(' ', start);
+	request.path = this->_buffer.substr(start, end - start);
 	start = end + 1;
-	end = this->buffer.find("\r\n", start);
-	request.version = this->buffer.substr(start, end - start);
+	end = this->_buffer.find("\r\n", start);
+	request.version = this->_buffer.substr(start, end - start);
 }
 
 void RequestHandler::parseHeaders()
 {
 	std::string line;
-	std::istringstream stream(this->buffer);
+	std::istringstream stream(this->_buffer);
 	std::getline(stream, line);
 	while (std::getline(stream, line))
 	{
@@ -44,9 +72,8 @@ void RequestHandler::parseHeaders()
 	{
 		std::getline(stream, line);
 		request.body = line;
-		// std::cout << "the body :" << request.body << std::endl;
 	}
-	// std::cout << "this buffer" << this->buffer << std::endl;
+	// std::cout << "this _buffer" << this->buffer << std::endl;
 }
 void RequestHandler::parseRequest()
 {

@@ -30,8 +30,7 @@ class SendData
 	Redirection _redir;
 	bool _isDir;
 	bool _isReturn;
-	RequestHandler _request;
-
+	
 	public:
 	void notfound();
 	bool read_file(std::string const &path, parser &request);
@@ -44,5 +43,6 @@ class SendData
 	ServerBlock findServerBlock(std::vector<ServerBlock> &servers, parser &request);
 	bool findIndexFile(const std::vector<std::string> &files, std::string &root, parser &request);
 	void redirect(LocationBlock& location);
+	void saveBodyToFile(const std::string &filename);
 	void sendResponse(int clientSocket, std::vector<ServerBlock> &servers, parser &request);
 };
