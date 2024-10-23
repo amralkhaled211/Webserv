@@ -20,6 +20,7 @@
 #include <cstdlib>
 #include "config_parser/Parser.hpp"
 
+
 extern std::map<std::string, std::string> mimeTypesMap_G;
 
 typedef struct parser
@@ -31,59 +32,20 @@ typedef struct parser
 	std::string body;
 } parser;
 
-typedef struct Redirection
-{
-    std::map<std::string, std::string> CodeToMessage;
-
-    Redirection()
-	{
-        CodeToMessage["301"] = "Moved Permanently";
-        CodeToMessage["302"] = "Found";
-        CodeToMessage["307"] = "Temporary Redirect";
-        CodeToMessage["308"] = "Permanent Redirect";
-    }
-} Redirection;
-
-typedef struct Response
-{
-	std::string status;
-	std::string contentType;
-	std::string location;
-	std::string contentLength;
-	std::string body;
-} Response;
 
 class RequestHandler
 {
 public:
-	// RequestHandler();
-	//~RequestHandler();
-	bool read_file(std::string const &path);
-	bool findIndexFile(const std::vector<std::string> &files, std::string &root);
-	void receiveData(int clientSocket);
 	void parseRequest();
-	void sendResponse(int clientSocket, std::vector<ServerBlock> &servers);
-	ServerBlock findServerBlock(std::vector<ServerBlock> &servers);
-	LocationBlock findLocationBlock(std::vector<LocationBlock> &locations);
-	void notfound();
-
 	void parseHeaders();
 	void parse_first_line();
-	void redirect(LocationBlock& location);
-	// void configResponse(ServerBlock &server);
-	template <typename T>
-	bool findInVector(const std::vector<T> &vec, const T &target)
-	{
-		return std::find(vec.begin(), vec.end(), target) != vec.end();
-	}
+	void receiveData(int clientSocket);
+
+	parser& getRequest();
 
 private:
-	bool _isDir;
-	bool _isReturn;
-	parser request;
-	Response response;
 	std::string buffer;
-	Redirection redir;
+	parser request;
 };
 
 // utility functions

@@ -20,6 +20,7 @@
 #include <csignal>
 #include <cstdlib>
 #include "RequestHandler.hpp"
+#include "SendData.hpp"
 #include "config_parser/Parser.hpp"
 
 #define MAX_EVENTS 10
@@ -31,6 +32,7 @@ class Epoll
 		int _epollFD;
 		std::vector<int> _clientFDs;
 		RequestHandler requestHandle;
+		SendData sendData;
 		std::vector<ServerBlock>& _servers;
 	public :
 		Epoll(const std::vector<int>& serverSockets, std::vector<ServerBlock>& servers);
