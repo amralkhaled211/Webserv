@@ -122,6 +122,16 @@ void		Parser::_configToContent() {
 	std::string		line;
 	size_t			beginOfComment;
 
+	// size_t			openingQ = std::string::npos;
+	// size_t			closingQ = std::string::npos;
+
+	// IF WE HANDLE QUOTES
+		// counter, which dicteated whether we are inside of a quote or not
+		// we base on that , whether we should remove the '#' or not
+		// NEXT: we need to have a function to limit the use of quotes
+			// e.g. no spaces between quotes, no quotes in the middle of a word
+			// 
+
 	try
 	{
 		if (!std::getline(infileConfig, line))
@@ -133,6 +143,15 @@ void		Parser::_configToContent() {
 
 			while (line.find('\t') != std::string::npos)
 				line.replace(line.find('\t'), 1, " ");
+
+			/* for (size_t i = 0; i < line.size(); i++) {
+				if (line[i] == '"') {
+					if (openingQ == std::string::npos)
+						openingQ = i;
+					else if (closingQ == std::string::npos)
+						closingQ = i;
+				}
+			} */
 
 			beginOfComment = line.find_first_of('#'); // need to also check whether inside of quote
 
