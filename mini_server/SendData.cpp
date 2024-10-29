@@ -34,8 +34,8 @@ bool SendData::read_file(std::string const &path, parser &request)
 LocationBlock SendData::findLocationBlock(std::vector<LocationBlock> &locations, parser &request)
 {
 	std::vector<std::string> spiltedDir = split(request.path, '/');
-	std::cout << "spiltedDir ;" << spiltedDir[0] << std::endl;
-	std::cout << "spiltedDir size " << spiltedDir.size() << std::endl;
+	//std::cout << "spiltedDir ;" << spiltedDir[0] << std::endl;
+	//std::cout << "spiltedDir size " << spiltedDir.size() << std::endl;
 	int i = 0;
 	_isDir = true;
 
@@ -155,7 +155,8 @@ void SendData::sendResponse(int clientSocket, std::vector<ServerBlock> &servers,
 	}
 	if (request.method == "POST") // this is not an important step, just checking if the Post wrok
 	{
-		saveBodyToFile("/home/amalkhal/Webserv/website/upload/Booking Office.doc");
+		//std::cout << "this body :" << request.body << std::endl;
+		saveBodyToFile("/home/amalkhal/Webserv/website/upload/amalkhal.txt", request);
 		_response.status = "HTTP/1.1 200 OK\r\n";
 		_response.contentType = "Content-Type: text/html;\r\n";
 		_response.contentLength = "Content-Length: 122\r\n";
@@ -175,12 +176,12 @@ void SendData::sendResponse(int clientSocket, std::vector<ServerBlock> &servers,
 }
 
 
-void SendData::saveBodyToFile(const std::string &filename)
+void SendData::saveBodyToFile(const std::string &filename, parser &request)
 {
     std::ofstream outFile(filename.c_str(), std::ios::binary);
     if (outFile.is_open())
     {
-        outFile.write(_response.body.c_str(), _response.body.size());
+        outFile.write(request.body.c_str(), request.body.size());
         outFile.close();
     }
     else

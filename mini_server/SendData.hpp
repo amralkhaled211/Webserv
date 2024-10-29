@@ -43,6 +43,6 @@ class SendData
 	ServerBlock findServerBlock(std::vector<ServerBlock> &servers, parser &request);
 	bool findIndexFile(const std::vector<std::string> &files, std::string &root, parser &request);
 	void redirect(LocationBlock& location);
-	void saveBodyToFile(const std::string &filename);
+	void saveBodyToFile(const std::string &filename, parser &request);
 	void sendResponse(int clientSocket, std::vector<ServerBlock> &servers, parser &request);
 };

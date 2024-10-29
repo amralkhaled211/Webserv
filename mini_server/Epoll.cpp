@@ -83,13 +83,13 @@ void Epoll::handleConnection(int server_fd)
             throw std::runtime_error("epoll_ctl");
         }
         _clientFDs.push_back(client_fd);
-        std::cout << "Connection accepted" << std::endl;
+        //std::cout << "Connection accepted" << std::endl;
     }
 }
 
 void Epoll::handleData(int client_fd)
 {
-    std::cout << "Data received" << std::endl;
+    //std::cout << "Data received" << std::endl;
     requestHandle.receiveData(client_fd);
     requestHandle.parseRequest();
     sendData.sendResponse(client_fd, _servers, requestHandle.getRequest());
