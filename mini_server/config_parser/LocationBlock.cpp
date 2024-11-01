@@ -79,8 +79,20 @@ void	LocationBlock::setDirective(const std::string& directiveKey, std::string& d
 void		LocationBlock::setPrefix(const std::string& prefix) { this->_prefix = prefix; }
 
 void		LocationBlock::setupDefaults(Block& parentServer) {
+
+	// std::cout << "setup Defaults in LocationBlock\n";
+
+	// std::cout << "parent root value: " << parentServer.getRoot() << std::endl;
+
+	if (_root.empty())
+		std::cout << BOLD_YELLOW << "ROOT IS EMPTY!\n" << RESET;
+	// else
+	// 	std::cout << BOLD_YELLOW << "ROOT IS NOT EMPTY: " << _root << "!\n" << RESET;
+
 	if (this->_root.empty())
-		this->_root = parentServer.getRoot(); // nginx, relative path
+		this->_root = parentServer.getRoot();
+
+	std::cout << "current root: " << _root << std::endl;
 
 	if (this->_index.empty())
 		this->_index = parentServer.getIndex(); // note: only matters if a directory was requested

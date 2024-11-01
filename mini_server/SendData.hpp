@@ -45,4 +45,5 @@ class SendData
 	void redirect(LocationBlock& location);
 	void saveBodyToFile(const std::string &filename, parser &request);
 	void sendResponse(int clientSocket, std::vector<ServerBlock> &servers, parser &request);
+	void displayDir(const std::string& path, const std::string& requestPath);
 };

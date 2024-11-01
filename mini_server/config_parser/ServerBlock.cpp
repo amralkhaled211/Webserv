@@ -82,7 +82,7 @@ void							ServerBlock::setupDefaults() {
 		this->_server_name.push_back(""); // nginx
 
 	if (this->_root.empty())
-		this->_root = "html"; // nginx, relative path
+		this->_root = "../"; // nginx, relative path
 
 	if (this->_index.empty())
 		this->_index.push_back("index.html"); // note: only matters if a directory was requested

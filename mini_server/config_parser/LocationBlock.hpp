@@ -2,6 +2,15 @@
 
 #include "Block.hpp"
 
+// colors for debugging
+#define RED							"\033[1;31m"
+#define GREEN						"\033[1;32m"
+#define YELLOW						"\033[1;33m"
+#define BOLD_RED					"\033[1;91m"
+#define BOLD_GREEN					"\033[1;92m"
+#define BOLD_YELLOW					"\033[1;93m"
+#define RESET						"\033[0m"
+
 class LocationBlock : public Block
 {
 	private:
