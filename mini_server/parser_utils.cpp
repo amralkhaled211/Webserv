@@ -53,9 +53,11 @@ std::vector<std::string> split(const std::string& str, char delimiter)
 	std::stringstream ss(str);
 	while (std::getline(ss, token, delimiter))
 	{
-	    tokens.push_back(token);
-		// std::cout << BOLD_RED << "in split: " << token << RESET << std::endl;
+		if (!token.empty())
+	    	tokens.push_back("/" + token);
 	}
+	if (tokens.empty())
+	    	tokens.push_back("/");
 	return tokens;
 }
 

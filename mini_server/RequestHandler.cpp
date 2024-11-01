@@ -1,282 +1,121 @@
 #include "RequestHandler.hpp"
 
-// this is handling the request part
+
+
+
+// void RequestHandler::receiveData(int clientSocket)
+// {
+//     const size_t chunkSize = 1024;
+//     std::vector<char> buffer;
+//     char tempBuffer[chunkSize];
+//     int bytesReceived;
+
+//     while (true)
+//     {
+//         bytesReceived = recv(clientSocket, tempBuffer, chunkSize, 0);
+//         if (bytesReceived < 0)
+//         {
+//             std::cerr << "Receiving failed: " << strerror(errno) << std::endl;
+//             throw std::runtime_error("Receiving failed");
+//         }
+//         if (bytesReceived == 0)
+//             break; // Connection closed
+
+//         buffer.insert(buffer.end(), tempBuffer, tempBuffer + bytesReceived);
+//     }
+
+//     this->_buffer.assign(buffer.begin(), buffer.end()); // Copy all received data to _buffer
+// }
+
+
 void RequestHandler::receiveData(int clientSocket)
 {
-    char buffer[1024] = {0};
-    int bytesReceived = recv(clientSocket, buffer, sizeof(buffer), 0);
-    if (bytesReceived < 0)
-        throw std::runtime_error("Receiving failed");
-// 	this->buffer = buffer; this would copy the whole buffer this might cause storing carbege data if the buffer is not full
-    this->buffer.assign(buffer, bytesReceived); // this would copy only the data that was received
+	char Buffer[10024] = {0};
+	int bytesReceived = recv(clientSocket, Buffer, sizeof(Buffer), 0);
+	if (bytesReceived < 0)
+		throw std::runtime_error("Receiving failed");
+	// 	this->buffer = buffer; this would copy the whole buffer this might cause storing carbege data if the buffer is not full
+	this->_buffer.assign(Buffer, bytesReceived); // this would copy only the data that was received
+}
+
+parser& RequestHandler::getRequest()
+{
+    return request;
 }
 
 void RequestHandler::parse_first_line()
 {
 	size_t start = 0;
-	size_t end = this->buffer.find(' ', start);
-	request.method = this->buffer.substr(start, end - start);
+	size_t end = this->_buffer.find(' ', start);
+	request.method = this->_buffer.substr(start, end - start);
 	start = end + 1;
-	end = this->buffer.find(' ', start);
-	request.path = this->buffer.substr(start, end - start);
+	end = this->_buffer.find(' ', start);
+	request.path = this->_buffer.substr(start, end - start);
 	start = end + 1;
-	end = this->buffer.find("\r\n", start);
-	request.version = this->buffer.substr(start, end - start);
+	end = this->_buffer.find("\r\n", start);
+	request.version = this->_buffer.substr(start, end - start);
 }
+
+// void RequestHandler::parseHeaders()
+// {
+// 	std::string line;
+// 	std::istringstream stream(this->_buffer);
+// 	std::getline(stream, line);
+// 	while (std::getline(stream, line) && line != "\r\n\r\n")
+// 	{
+// 		size_t dilm = line.find(":");
+// 		std::string key = deleteSpaces(line.substr(0, dilm));
+// 		std::string value = deleteSpaces(line.substr(dilm + 1, line.length()));
+// 		request.headers[key] = value;
+// 	}
+// 	if (request.method == "POST") // TODO : i would need to parse the body in more advanced way
+// 	{
+// 		std::string body;
+// 		while (std::getline(stream, line))
+// 		{
+//        		request.body  += line;
+//    		}
+//     	std::cout << "Request body : " << request.body << std::endl;
+// 	}
+// 	// std::cout << "this _buffer" << this->buffer << std::endl;
+// }
+
+
+// std::map<std::string, std::string> parseHeaders(const std::string& headerSection)
+// {
+//     std::map<std::string, std::string> headers;
+//     std::istringstream headerStream(headerSection);
+//     std::string line;
+
+//     while (std::getline(headerStream, line) && !line.empty()) {
+//         size_t delimiterPos = line.find(": ");
+//         if (delimiterPos != std::string::npos) {
+//             std::string headerName = line.substr(0, delimiterPos);
+//             std::string headerValue = line.substr(delimiterPos + 2);
+//             headers[headerName] = headerValue;
+//         }
+//     }
+//     return headers;
+// }
+
 
 void RequestHandler::parseHeaders()
 {
-	std::string line;
-	std::istringstream stream(this->buffer);
-	std::getline(stream, line);
-	while (std::getline(stream, line))
-	{
-		size_t dilm = line.find(":");
-		std::string key = deleteSpaces(line.substr(0, dilm));
-		std::string value = deleteSpaces(line.substr(dilm + 1, line.length()));
-		request.headers[key] = value;
-	}
-	if (request.method == "POST") // TODO : i would need to parse the body in more advanced way
-	{
-		std::getline(stream, line);
-		request.body = line;
-		//std::cout << "the body :" << request.body << std::endl;
-	}
-	//std::cout << "this buffer" << this->buffer << std::endl;
+	std::cout << this->_buffer << std::endl;
+	// if (request.method == "POST")
+	// {
+	// }
+	//size_t headerEndPos = this->_buffer.find("\r\n\r\n");
+	//std::string headers = this->_buffer.substr(0, headerEndPos);
+	//std::cout << "Headers : " << headers << std::endl;
+	//std::string body = this->_buffer.substr(headerEndPos + 4);
+
 }
+
+
 void RequestHandler::parseRequest()
 {
 	parse_first_line();
 	parseHeaders();
 }
 
-////// this is response part
-
-void RequestHandler::notfound()
-{
-	response.status = "HTTP/1.1 404 Not Found\r\n";
-	response.contentType = "Content-Type: text/html;\r\n";
-	response.contentLength = "Content-Length: 155\r\n";
-	response.body += "<!DOCTYPE html><html><head><title>404 Not Found</title></head>";
-	response.body += "<body><h1>404 Not Found</h1><p>The page you are looking for does not exist.</p></body></html>";
-}
-
-bool RequestHandler::read_file(std::string const &path)
-{
-	std::string file_extension = get_file_extension(request.path);
-	std::ifstream file(path.c_str());
-	if (file.is_open())
-	{
-		response.body.clear();
-		std::string line;
-		while (std::getline(file, line))
-		{
-			response.body += line + "\n";
-		}
-		response.status = "HTTP/1.1 200 OK\r\n";
-		response.contentType = "Content-Type: " + mimeTypesMap_G[file_extension] + ";" + "\r\n";
-		unsigned int content_len = response.body.size();
-		response.contentLength = "Content-Length: " + intToString(content_len) + "\r\n";
-		file.close();
-		return true;
-	}
-	return false;
-}
-
-
-ServerBlock RequestHandler::findServerBlock(std::vector<ServerBlock>& servers)
-{
-    std::string host = request.headers["Host"];
-    size_t colon_pos = host.find(':');
-    std::string server_name = (colon_pos != std::string::npos) ? host.substr(0, colon_pos) : host;
-    std::string port = (colon_pos != std::string::npos) ? host.substr(colon_pos + 1) : "";
-
-	for (std::vector<ServerBlock>::iterator it = servers.begin(); it !=  servers.end(); ++it)
-	{
-		ServerBlock& server = *it;
-		if (findInVector(server.getListen(), stringToInt(port)) && findInVector(server.getServerName(), server_name))
-			return server;
-	}
-	// this would be fixed later 
-	std::cout << "returning the first server " << std::endl; 
-	return servers[0];// return default
-}
-
-
-LocationBlock RequestHandler::findLocationBlock(std::vector<LocationBlock>& locations)
-{
-	std::vector<std::string> spiltedDir = split(request.path, '/');
-	int i = 1;
-	_isDir = true;
-
-	LocationBlock location;
-	for (std::vector<LocationBlock>::iterator it =  locations.begin(); it != locations.end(); ++it)
-	{
-		location = *it;
-		if (location.getPrefix() == '/' + spiltedDir[i])
-		{
-			std::string fullPath = location.getRoot() + '/' + spiltedDir[i];
-			std::cout << "pathhhh : " << fullPath << std::endl;
-			while (++i < spiltedDir.size())
-			{
-				fullPath = fullPath + '/' + spiltedDir[i];
-				std::cout << "fullPath : " << fullPath << std::endl;
-				if (isDirectory(fullPath))
-					_isDir = true;
-				else
-					_isDir = false;
-			}
-			return location;
-		}
-	}
-	std::cout << "throwing : " << std::endl;
-	throw std::exception();
-}
-
-
-bool RequestHandler::findIndexFile(const std::vector<std::string>& files, std::string& root)
-{
-	size_t i = 0;
-
-	while (i < files.size())
-	{
-		std::string file = root + '/' + files[i];
-		std::cout << "file : " << file << std::endl;
-		if (read_file(file))
-			return true;
-		i++;
-	}
-	return false;
-}
-
-void RequestHandler::sendResponse(int clientSocket, std::vector<ServerBlock>& servers)
-{
-
-	ServerBlock current_server = findServerBlock(servers);
-
-	if (request.method == "GET")
-	{
-		try
-		{
-			LocationBlock location = findLocationBlock(current_server.getLocationVec());
-			std::string root = location.getRoot() + request.path;
-			if (_isDir)
-			{
-				std::cout << "its a dir : " << std::endl;
-				if (!findIndexFile(location.getIndex(), root))
-					notfound();
-
-				std::cout << BOLD_GREEN << "BEFORE AUTOINDEX" << RESET << std::endl;
-				if (location.getAutoindex() == ON) {
-					response.body = this->displayDir(root, request.path);
-					response.status = "HTTP/1.1 200 OK\r\n";
-					response.contentType = "Content-Type: text/html;\r\n";
-					unsigned int content_len = response.body.size();
-					response.contentLength = "Content-Length: " + intToString(content_len) + "\r\n";
-					// std::cout << "BODY\n" << response.body;
-				}
-			}
-			else
-				if(!this->read_file(root))
-					notfound();
-
-		}
-		catch (const std::exception& e)
-		{
-			// i should here send the right error for invalid locations 
-			notfound();
-		}
-	}
-	if (request.method == "POST") // this is not an important step, just checking if the Post wrok
-	{
-		std::cout << "the body :" << request.body << std::endl;
-		response.status = "HTTP/1.1 200 OK\r\n";
-		response.contentType = "Content-Type: text/html;\r\n";
-		response.contentLength = "Content-Length: 122\r\n";
-		response.body = "<!DOCTYPE html><html><head><title>200 OK</title></head>";
-		response.body += "<body><h1>200 OK</h1><p>Thank You for login info.</p></body></html>";
-	}
-	std::string resp =  response.status + response.contentType + response.contentLength + "\r\n" + response.body;
-	const char* resp_cstr = resp.c_str();
-    size_t resp_length = resp.size();
-    send(clientSocket, resp_cstr, resp_length, 0);
-}
-
-std::vector<std::pair<std::string, std::string> >	listDirectory(const std::string& path) {
-	std::vector<std::pair<std::string, std::string> >	elements;
-	DIR*	dir = opendir(path.c_str());
-	if (dir == NULL) {
-		// handle error
-		return elements;
-	}
-
-	struct dirent* entry;
-	std::string	name;
-	while ((entry = readdir(dir)) != NULL) {
-		name = entry->d_name;
-		if (name != "." /* || name != ".." */) { // nginx also displays the '..'
-			std::string	fullPath = path + '/' + name;
-			struct stat statbuf;
-			if (stat(fullPath.c_str(), &statbuf) == 0) {
-				if (S_ISDIR(statbuf.st_mode))
-					fullPath += '/';
-				elements.push_back(std::make_pair(name, fullPath));
-			}
-		}
-	}
-	closedir(dir);
-	return elements;
-}
-
-std::string escapeHtml(const std::string &input) {
-
-	std::string output;
-	
-	for (size_t i = 0; i < input.size(); ++i) {
-		switch (input[i]) {
-			case '&':  output += "&amp;";
-				break;
-			case '<':  output += "&lt;";
-				break;
-			case '>':  output += "&gt;";
-				break;
-			case '"':  output += "&quot;";
-				break;
-			case '\'': output += "&#39;";
-				break;
-			default:   output += input[i];
-				break;
-		}
-	}
-	return output;
-}
-
-
-std::string		RequestHandler::displayDir(const std::string& path, const std::string& requestPath) {
-	// first pair-element is the element, second one is the full path, but with a '/' at the end for directories
-	std::vector<std::pair<std::string, std::string> >	dirElements(listDirectory(path));
-
-	// must embed the dirElements into a html file
-	std::cout << "Elements in directory " << path << ":" << std::endl;
-	for (size_t i = 0; i < dirElements.size(); ++i) {
-		 std::cout << "dir element name: " << dirElements[i].first << "\ndir element path: " << dirElements[i].second << std::endl;
-	}
-
-	std::ostringstream html;
-	html << "<!DOCTYPE html><html><head><title>Index of " << escapeHtml(requestPath) << "</title></head><body>";
-	html << "<h1>Index of " << escapeHtml(requestPath) << "</h1>";
-	html << "<ul>";
-
-	for (size_t i = 0; i < dirElements.size(); ++i) {
-		std::string displayName = dirElements[i].first;
-		std::string fullPath = requestPath;
-		if (!fullPath.empty() && fullPath[fullPath.size() - 1] != '/')
-			fullPath += '/';
-		fullPath += displayName;
-		std::cout << "fullpath: " << fullPath << "\n";
-		html << "<li><a href=\"" << escapeHtml(fullPath) << "\">" << escapeHtml(displayName) << "</a></li>";
-	}
-
-	html << "</ul></body></html>";
-	return html.str();
-}
