@@ -91,7 +91,7 @@ void							ServerBlock::setupDefaults() {
 		this->_autoindex = ON;
 	
 	if (this->_return.size() == 1)
-		this->_return.insert(_return.begin(), "307");
+		this->_return.insert(_return.begin(), "302");
 
 	for (size_t i = 0; i < this->_locationVec.size(); ++i)
 		this->_locationVec[i].setupDefaults(static_cast<Block&>(*this));

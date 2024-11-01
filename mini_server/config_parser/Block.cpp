@@ -68,16 +68,16 @@ static bool	isValidRedirCode(const std::string& code) {
 	std::stringstream	ss(code.c_str());
 	int					statusCode;
 
-	if (ss.str().find_first_not_of("0123456789") == std::string::npos)
+	if (ss.str().find_first_not_of("0123456789") != std::string::npos)
 			throw std::runtime_error("Invalid Return Directive Code");
 	if (!(ss >> statusCode) || !(statusCode >= 100 && statusCode <= 599))
-		return false;
+		throw std::runtime_error("Invalid Return Directive Code");
 	return true;
 }
 
-static bool isValidRedirURLI(std::string& redir) { // URL URI check, (if comments remove)
+/* static bool isValidRedirURLI(std::string& redir) { // URL URI check, (if comments -> remove)
 	// will see what to check for, maybe something regarding quotes
-}
+} */
 
 void		invalidReturnSyntax(std::vector<std::string>& valueArgs) {
 	if (valueArgs.empty() || valueArgs.size() > 2)
@@ -86,12 +86,13 @@ void		invalidReturnSyntax(std::vector<std::string>& valueArgs) {
 	if (valueArgs.size() == 1) { // accept either only a status code OR a link (not a location)
 		if (valueArgs[0][0] >= '0' && valueArgs[0][0] <= '9') // isdigit() is from c library
 			isValidRedirCode(valueArgs[0]);
-		else
-			isValidRedirURLI(valueArgs[0]);
+		else if (valueArgs[0][0] == '/') // is a relative path -> needs a status code
+			throw std::runtime_error("Invalid Return Directive Code");
+		// isValidRedirURLI(valueArgs[0]);
 	}
 	else if (valueArgs.size() == 2) {
 		isValidRedirCode(valueArgs[0]);
-		isValidRedirURLI(valueArgs[1]);
+		// isValidRedirURLI(valueArgs[1]);
 	}
 	else
 		throw std::runtime_error("Invalid Return Directive");

@@ -17,7 +17,7 @@
 
 ### CODING
 - [ ] decide on listen directive
-- [ ] set 307 as default code for return directive / redirection
+- [ ] set 302 as default code for return directive / redirection
 - [x] throw error in case of duplicate location _prefix
 - [x] give dafaults to all the directives
   - [x] if a Location Block's directive does not have any Value, it must take the global one

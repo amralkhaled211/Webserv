@@ -93,11 +93,13 @@ void		LocationBlock::setupDefaults(Block& parentServer) {
 
 	if (this->_return.empty())
 		this->_return = parentServer.getReturn();
+	else if (this->_return.size() == 1)
+		this->_return.insert(this->_return.begin(), "302");
 
 	if (this->_autoindex == NOT_SET)
 		this->_autoindex = parentServer.getAutoindex();
 
-	// for (size_t i = 0; i < this->_locationVec.size(); i++)
+	// for (size_t i = 0; i < this->_locationVec.size(); i++) // haven't tested nested locations
 	// 	this->_locationVec[i].setupDefaults();
 }
 
