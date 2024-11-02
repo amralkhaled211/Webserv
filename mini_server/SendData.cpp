@@ -75,7 +75,7 @@ ServerBlock SendData::findServerBlock(std::vector<ServerBlock> &servers, parser 
 			return server;
 	}
 	// this would be fixed later
-	std::cout << "returning the first server " << std::endl;
+	std::cout << "\033[1;31m" <<  "returning the first server?, This is a BUG " << "\033[0m" << std::endl;
 	return servers[0]; // return default
 }
 

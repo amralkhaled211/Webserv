@@ -20,6 +20,14 @@
 #include <cstdlib>
 #include "config_parser/Parser.hpp"
 
+#define RESET_COLOR "\033[0m"
+#define RED_COLOR "\033[31m"
+#define GREEN_COLOR "\033[32m"
+#define YELLOW_COLOR "\033[33m"
+#define BLUE_COLOR "\033[34m"
+#define MAGENTA_COLOR "\033[35m"
+#define CYAN_COLOR "\033[36m"
+#define WHITE_COLOR "\033[37m"
 
 extern std::map<std::string, std::string> mimeTypesMap_G;
 
@@ -30,17 +38,20 @@ typedef struct parser
 	std::string version;
 	std::map<std::string, std::string> headers;
 	std::string body;
+	std::string fileName;
 } parser;
-
 
 class RequestHandler
 {
 public:
 	void parseRequest();
-	void parseHeaders();
 	void parse_first_line();
+	void parseHeadersAndBody();
+	void parseHeaders(std::string &Buffer);
+	void parse_body(std::string &body);
 	void receiveData(int clientSocket);
-	parser& getRequest();
+	parser &getRequest();
+
 private:
 	std::string _buffer;
 	parser request;
