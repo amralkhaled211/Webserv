@@ -9,7 +9,7 @@ void SendData::notfound()
 	_response.body += "<body><h1>404 Not Found</h1><p>The page you are looking for does not exist.</p></body></html>";
 }
 
-bool SendData::read_file(std::string const &path, parser &request)
+bool SendData::read_file(std::string const &path, parser &request) // this already prepares the response
 {
 	std::string file_extension = get_file_extension(request.path);
 	std::ifstream file(path.c_str());
@@ -31,7 +31,7 @@ bool SendData::read_file(std::string const &path, parser &request)
 	return false;
 }
 
-LocationBlock SendData::findLocationBlock(std::vector<LocationBlock> &locations, parser &request)
+LocationBlock SendData::findLocationBlock(std::vector<LocationBlock> &locations, parser &request) // this approach for matching might not handle some cases, test required ...
 {
 	std::vector<std::string> spiltedDir = split(request.path, '/');
 	//std::cout << "spiltedDir ;" << spiltedDir[0] << std::endl;
@@ -61,25 +61,31 @@ LocationBlock SendData::findLocationBlock(std::vector<LocationBlock> &locations,
 	throw std::exception();
 }
 
-ServerBlock SendData::findServerBlock(std::vector<ServerBlock> &servers, parser &request)
+ServerBlock SendData::findServerBlock(std::vector<ServerBlock> &servers, parser &request) // uses the Host header field -> server_name:port -> Host: localhost:8081
 {
 	std::string host = request.headers["Host"];
+	// std::cout << "-----------------------------------------------------\n";
+	// print_map(request.headers);
+	// std::cout << request.headers.size() << std::endl;
+	// std::cout << "-----------------------------------------------------\n";
 	size_t colon_pos = host.find(':');
 	std::string server_name = (colon_pos != std::string::npos) ? host.substr(0, colon_pos) : host;
-	std::string port = (colon_pos != std::string::npos) ? host.substr(colon_pos + 1) : "";
+	std::string port = (colon_pos != std::string::npos) ? host.substr(colon_pos + 1) : ""; // the empty str causes conitional jump on uninitialized value
 
 	for (std::vector<ServerBlock>::iterator it = servers.begin(); it != servers.end(); ++it)
 	{
 		ServerBlock &server = *it;
-		if (findInVector(server.getListen(), stringToInt(port)) && findInVector(server.getServerName(), server_name))
+		// std::cout << "port: " << port << std::endl;
+		// std::cout << "host: " << host << std::endl;
+		if (findInVector(server.getListen(), stringToInt(port)) && findInVector(server.getServerName(), server_name)) // here port is prioritized over server_name
 			return server;
 	}
 	// this would be fixed later
-	std::cout << "returning the first server " << std::endl;
+	std::cout << "NO MATCHING SERVER BLOCK FOUND, TAKING THE FIRST AS DEFAULT" << std::endl;
 	return servers[0]; // return default
 }
 
-void SendData::redirect(LocationBlock& location)
+void SendData::redirect(LocationBlock& location) // so far handling url redirection, relative will be handled soon
 {
 	std::vector<std::string> returnVec = location.getReturn();
 	std::string code;
@@ -101,7 +107,7 @@ void SendData::redirect(LocationBlock& location)
 	_response.body = "";
 }
 
-bool SendData::findIndexFile(const std::vector<std::string> &files, std::string &root, parser &request)
+bool SendData::findIndexFile(const std::vector<std::string> &files, std::string &root, parser &request) // if found will also prepare response, else return false
 {
 	size_t i = 0;
 
@@ -132,12 +138,13 @@ void SendData::sendResponse(int clientSocket, std::vector<ServerBlock> &servers,
 			{
 				if (_isDir)
 				{
-					bool foundFile = !findIndexFile(location.getIndex(), root, request);
-					if (!foundFile /* && location.getAutoindex() == ON */)
+					bool foundFile = findIndexFile(location.getIndex(), root, request);
+					if (!foundFile && location.getAutoindex() == ON) {
+						// std::cout << "before AUTOINDEX -> root for this location: " << root << std::endl;
+						this->displayDir(root, request.path);
+					}
+					else if (!foundFile)
 						notfound();
-					// else if (!foundFile && location.getAutoindex() == OFF)
-					// 	notfound();
-						// this->displayDir(root, request.path);
 				}
 				else
 				{
@@ -160,7 +167,7 @@ void SendData::sendResponse(int clientSocket, std::vector<ServerBlock> &servers,
 	if (request.method == "POST") // this is not an important step, just checking if the Post wrok
 	{
 		//std::cout << "this body :" << request.body << std::endl;
-		saveBodyToFile("/home/amalkhal/Webserv/website/upload/amalkhal.txt", request);
+		saveBodyToFile("../website/upload/amalkhal.txt", request);
 		_response.status = "HTTP/1.1 200 OK\r\n";
 		_response.contentType = "Content-Type: text/html;\r\n";
 		_response.contentLength = "Content-Length: 122\r\n";
@@ -207,7 +214,7 @@ std::vector<std::pair<std::string, std::string> >	listDirectory(const std::strin
 	std::string	name;
 	while ((entry = readdir(dir)) != NULL) {
 		name = entry->d_name;
-		if (name != "." /* || name != ".." */) { // nginx also displays the '..'
+		if (name != "." && (name == ".." || name[0] != '.')) { // not accepting hidden files, except of ".."
 			std::string	fullPath = path + '/' + name;
 			struct stat statbuf;
 			if (stat(fullPath.c_str(), &statbuf) == 0) {
@@ -251,8 +258,9 @@ void		SendData::displayDir(const std::string& path, const std::string& requestPa
 
 	// must embed the dirElements into a html file
 	std::cout << "Elements in directory " << path << ":" << std::endl;
+	std::cout << "Dir/File Name" << std::setw(30) << "Dir/File Path\n";
 	for (size_t i = 0; i < dirElements.size(); ++i) {
-		 std::cout << "dir element name: " << dirElements[i].first << "\ndir element path: " << dirElements[i].second << std::endl;
+		std::cout << dirElements[i].first << std::setw(50) << dirElements[i].second << std::endl;
 	}
 
 	std::ostringstream html;
@@ -274,6 +282,7 @@ void		SendData::displayDir(const std::string& path, const std::string& requestPa
 
 	// embed created body inside response struct
 	_response.body = html.str();
+	std::cerr << _response.body << std::endl;
 	_response.status = "HTTP/1.1 200 OK\r\n";
 	_response.contentType = "Content-Type: text/html;\r\n";
 	unsigned int content_len = _response.body.size();

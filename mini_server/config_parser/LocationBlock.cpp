@@ -84,15 +84,15 @@ void		LocationBlock::setupDefaults(Block& parentServer) {
 
 	// std::cout << "parent root value: " << parentServer.getRoot() << std::endl;
 
-	if (_root.empty())
-		std::cout << BOLD_YELLOW << "ROOT IS EMPTY!\n" << RESET;
+	// if (_root.empty())
+	// 	std::cout << BOLD_YELLOW << "ROOT IS EMPTY!\n" << RESET;
 	// else
 	// 	std::cout << BOLD_YELLOW << "ROOT IS NOT EMPTY: " << _root << "!\n" << RESET;
 
 	if (this->_root.empty())
 		this->_root = parentServer.getRoot();
 
-	std::cout << "current root: " << _root << std::endl;
+	// std::cout << "current root: " << _root << std::endl;
 
 	if (this->_index.empty())
 		this->_index = parentServer.getIndex(); // note: only matters if a directory was requested

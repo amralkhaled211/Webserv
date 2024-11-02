@@ -88,7 +88,7 @@ void							ServerBlock::setupDefaults() {
 		this->_index.push_back("index.html"); // note: only matters if a directory was requested
 
 	if (this->_autoindex == NOT_SET)
-		this->_autoindex = ON;
+		this->_autoindex = OFF;
 	
 	if (this->_return.size() == 1)
 		this->_return.insert(_return.begin(), "302");

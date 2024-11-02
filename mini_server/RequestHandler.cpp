@@ -36,6 +36,7 @@ void RequestHandler::receiveData(int clientSocket)
 		throw std::runtime_error("Receiving failed");
 	// 	this->buffer = buffer; this would copy the whole buffer this might cause storing carbege data if the buffer is not full
 	this->_buffer.assign(Buffer, bytesReceived); // this would copy only the data that was received
+	std::cout << "recieved request Buffer: " << _buffer << std::endl;
 }
 
 parser& RequestHandler::getRequest()
@@ -101,7 +102,7 @@ void RequestHandler::parse_first_line()
 
 void RequestHandler::parseHeaders()
 {
-	std::cout << this->_buffer << std::endl;
+	// std::cout << this->_buffer << std::endl;
 	// if (request.method == "POST")
 	// {
 	// }

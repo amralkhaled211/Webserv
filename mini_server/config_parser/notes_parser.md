@@ -258,3 +258,18 @@ https://nginx.org/en/docs/http/ngx_http_rewrite_module.html#return
 	The ~ indicates a case-sensitive regular expression. This block matches any URL ending with .php.
 	This block is where the CGI (or more specifically, FastCGI) process comes into play.
 
+
+
+# PLAN FOR HANDLING ERRORS
+## ERROR_PAGE
+prepare response on the occured error
+	- get the right status code
+
+void SendData::prepErrorResponse( code, locationBlock ):
+	create response header corresponding to the code
+	if code has an error_page defined for it:
+		serve the error_page with the right response header
+	else
+		create a custom response body, displaying the msg
+
+	
