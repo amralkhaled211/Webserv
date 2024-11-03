@@ -20,11 +20,11 @@ Epoll::~Epoll()
 
 void Epoll::init_epoll(const std::vector<int> &serverSockets)
 {
-    _epollFD = epoll_create1(0);
+    _epollFD = epoll_create1(0); // why are we using epoll_create1(0) --> with 0, it is the equivalent of using epoll_create()
     if (_epollFD == -1)
         throw std::runtime_error("epoll_create1");
 
-    for (std::vector<int>::const_iterator it = serverSockets.begin(); it != serverSockets.end(); ++it)
+    for (std::vector<int>::const_iterator it = serverSockets.begin(); it != serverSockets.end(); ++it) // registering the 
     {
         int sock = *it;
         struct epoll_event event;
@@ -38,7 +38,7 @@ void Epoll::init_epoll(const std::vector<int> &serverSockets)
 void Epoll::handleEpollEvents(const std::vector<int> &serverSockets)
 {
     std::vector<struct epoll_event> _events(MAX_EVENTS);
-    int n = epoll_wait(_epollFD, _events.data(), MAX_EVENTS, -1);
+    int n = epoll_wait(_epollFD, _events.data(), MAX_EVENTS, -1); // waits for I/O events, blocks the calling thread if no events are currently available
     if (n == -1)
     {
         if (errno == EINTR)

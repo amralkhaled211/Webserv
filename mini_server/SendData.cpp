@@ -257,11 +257,11 @@ void		SendData::displayDir(const std::string& path, const std::string& requestPa
 	std::vector<std::pair<std::string, std::string> >	dirElements(listDirectory(path));
 
 	// must embed the dirElements into a html file
-	std::cout << "Elements in directory " << path << ":" << std::endl;
-	std::cout << "Dir/File Name" << std::setw(30) << "Dir/File Path\n";
-	for (size_t i = 0; i < dirElements.size(); ++i) {
-		std::cout << dirElements[i].first << std::setw(50) << dirElements[i].second << std::endl;
-	}
+	// std::cout << "Elements in directory " << path << ":" << std::endl;
+	// std::cout << "Dir/File Name" << std::setw(30) << "Dir/File Path\n";
+	// for (size_t i = 0; i < dirElements.size(); ++i) {
+	// 	std::cout << dirElements[i].first << std::setw(50) << dirElements[i].second << std::endl;
+	// }
 
 	std::ostringstream html;
 	html << "<!DOCTYPE html><html><head><title>Index of " << escapeHtml(requestPath) << "</title></head><body>";
@@ -274,7 +274,7 @@ void		SendData::displayDir(const std::string& path, const std::string& requestPa
 		if (!fullPath.empty() && fullPath[fullPath.size() - 1] != '/')
 			fullPath += '/';
 		fullPath += displayName;
-		std::cout << "fullpath: " << fullPath << "\n";
+		// std::cout << "fullpath: " << fullPath << "\n";
 		html << "<li><a href=\"" << escapeHtml(fullPath) << "\">" << escapeHtml(displayName) << "</a></li>";
 	}
 
@@ -282,7 +282,7 @@ void		SendData::displayDir(const std::string& path, const std::string& requestPa
 
 	// embed created body inside response struct
 	_response.body = html.str();
-	std::cerr << _response.body << std::endl;
+	// std::cerr << _response.body << std::endl;
 	_response.status = "HTTP/1.1 200 OK\r\n";
 	_response.contentType = "Content-Type: text/html;\r\n";
 	unsigned int content_len = _response.body.size();
