@@ -47,8 +47,15 @@ void Epoll::handleEpollEvents(const std::vector<int> &serverSockets)
     }
     for (int i = 0; i < n; ++i)
     {
+        //if (_events[i].events &  EPOLLRDHUP)
         if (_events[i].events & (EPOLLERR | EPOLLHUP | EPOLLRDHUP))
         {
+            //std::cerr << "Error on fd " << _events[i].data.fd << ": ";
+            //if (_events[i].events & EPOLLERR) std::cerr << YELLOW_COLOR << "EPOLLERR " << RESET_COLOR;
+            //if (_events[i].events & EPOLLHUP) std::cerr << YELLOW_COLOR << "EPOLLHUP " << RESET_COLOR;
+            //if (_events[i].events & EPOLLRDHUP) std::cerr << YELLOW_COLOR << "EPOLLRDHUP "<< RESET_COLOR;
+            //std::cerr << std::endl;
+
             close(_events[i].data.fd);
             std::cout << "Connection closed" << std::endl;
             continue;
@@ -83,13 +90,13 @@ void Epoll::handleConnection(int server_fd)
             throw std::runtime_error("epoll_ctl");
         }
         _clientFDs.push_back(client_fd);
-        //std::cout << "Connection accepted" << std::endl;
+        // std::cout << "Connection accepted" << std::endl;
     }
 }
 
 void Epoll::handleData(int client_fd)
 {
-    //std::cout << "Data received" << std::endl;
+    // std::cout << "Data received" << std::endl;
     requestHandle.receiveData(client_fd);
     requestHandle.parseRequest();
     sendData.sendResponse(client_fd, _servers, requestHandle.getRequest());
