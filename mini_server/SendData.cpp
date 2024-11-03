@@ -35,7 +35,7 @@ LocationBlock SendData::findLocationBlock(std::vector<LocationBlock> &locations,
 {
 	std::vector<std::string> spiltedDir = split(request.path, '/');
 	//std::cout << "spiltedDir ;" << spiltedDir[0] << std::endl;
-	//std::cout << "spiltedDir size " << spiltedDir.size() << std::endl;
+	std::cout << "spiltedDir size " << spiltedDir.size() << std::endl;
 	int i = 0;
 	_isDir = true;
 
@@ -57,6 +57,11 @@ LocationBlock SendData::findLocationBlock(std::vector<LocationBlock> &locations,
 			}
 			return location;
 		}
+		else 
+		{
+			std::cout << "location prefix : " << location.getPrefix() << std::endl;
+			std::cout << "spiltedDir[i] : " << spiltedDir[i] << std::endl;
+		}
 	}
 	throw std::exception();
 }
@@ -64,6 +69,7 @@ LocationBlock SendData::findLocationBlock(std::vector<LocationBlock> &locations,
 ServerBlock SendData::findServerBlock(std::vector<ServerBlock> &servers, parser &request)
 {
 	std::string host = request.headers["Host"];
+	//std::cout << "host : " << host << std::endl;
 	size_t colon_pos = host.find(':');
 	std::string server_name = (colon_pos != std::string::npos) ? host.substr(0, colon_pos) : host;
 	std::string port = (colon_pos != std::string::npos) ? host.substr(colon_pos + 1) : "";
@@ -116,7 +122,7 @@ bool SendData::findIndexFile(const std::vector<std::string> &files, std::string 
 	return false;
 }
 
-void SendData::sendResponse(int clientSocket, std::vector<ServerBlock> &servers, parser &request)
+void SendData::sendResponse(int clientSocket, std::vector<ServerBlock> &servers, parser &request, int epollFD)
 {
 	_isReturn = false;
 
@@ -156,12 +162,12 @@ void SendData::sendResponse(int clientSocket, std::vector<ServerBlock> &servers,
 	if (request.method == "POST") // this is not an important step, just checking if the Post wrok
 	{
 		//std::cout << "this body :" << request.body << std::endl;
-		saveBodyToFile("/home/amalkhal/Webserv/website/upload/amalkhal.txt", request);
-		_response.status = "HTTP/1.1 200 OK\r\n";
-		_response.contentType = "Content-Type: text/html;\r\n";
-		_response.contentLength = "Content-Length: 122\r\n";
-		_response.body = "<!DOCTYPE html><html><head><title>200 OK</title></head>";
-		_response.body += "<body><h1>200 OK</h1><p>Thank You for login info.</p></body></html>";
+		saveBodyToFile("/home/amalkhal/Webserv/website/upload/amalkhal.png", request);
+		// _response.status = "HTTP/1.1 200 OK\r\n";
+		// _response.contentType = "Content-Type: text/html;\r\n";
+		// _response.contentLength = "Content-Length: 122\r\n";
+		// _response.body = "<!DOCTYPE html><html><head><title>200 OK</title></head>";
+		// _response.body += "<body><h1>200 OK</h1><p>Thank You for login info.</p></body></html>";
 	}
 
 	std::string resp;
@@ -172,6 +178,11 @@ void SendData::sendResponse(int clientSocket, std::vector<ServerBlock> &servers,
 		resp = _response.status + _response.contentType + _response.contentLength + "\r\n" + _response.body;
 	const char *resp_cstr = resp.c_str();
 	size_t resp_length = resp.size();
+	//if (epoll_ctl(epollFD, EPOLL_CTL_ADD, clientSocket, &EPOLLOUT) == -1)
+    //{
+    //    close(client_fd);
+    //    throw std::runtime_error("epoll_ctl");
+    //}
 	send(clientSocket, resp_cstr, resp_length, 0);
 }
 

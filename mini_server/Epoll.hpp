@@ -35,6 +35,7 @@ class Epoll
 		SendData sendData;
 		std::vector<ServerBlock>& _servers;
 	public :
+		//getEpollFD() { return _epollFD; }
 		Epoll(const std::vector<int>& serverSockets, std::vector<ServerBlock>& servers);
 		~Epoll();
 		void acceptConnection(const std::vector<int>& serverSockets);

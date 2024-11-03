@@ -50,11 +50,11 @@ void Epoll::handleEpollEvents(const std::vector<int> &serverSockets)
         //if (_events[i].events &  EPOLLRDHUP)
         if (_events[i].events & (EPOLLERR | EPOLLHUP | EPOLLRDHUP))
         {
-            //std::cerr << "Error on fd " << _events[i].data.fd << ": ";
-            //if (_events[i].events & EPOLLERR) std::cerr << YELLOW_COLOR << "EPOLLERR " << RESET_COLOR;
-            //if (_events[i].events & EPOLLHUP) std::cerr << YELLOW_COLOR << "EPOLLHUP " << RESET_COLOR;
-            //if (_events[i].events & EPOLLRDHUP) std::cerr << YELLOW_COLOR << "EPOLLRDHUP "<< RESET_COLOR;
-            //std::cerr << std::endl;
+            std::cerr << "Error on fd " << _events[i].data.fd << ": ";
+            if (_events[i].events & EPOLLERR) std::cerr << YELLOW_COLOR << "EPOLLERR " << RESET_COLOR;
+            if (_events[i].events & EPOLLHUP) std::cerr << YELLOW_COLOR << "EPOLLHUP " << RESET_COLOR;
+            if (_events[i].events & EPOLLRDHUP) std::cerr << YELLOW_COLOR << "EPOLLRDHUP "<< RESET_COLOR;
+            std::cerr << std::endl;
 
             close(_events[i].data.fd);
             std::cout << "Connection closed" << std::endl;
@@ -99,7 +99,7 @@ void Epoll::handleData(int client_fd)
     // std::cout << "Data received" << std::endl;
     requestHandle.receiveData(client_fd);
     requestHandle.parseRequest();
-    sendData.sendResponse(client_fd, _servers, requestHandle.getRequest());
+    sendData.sendResponse(client_fd, _servers, requestHandle.getRequest(), _epollFD);
 }
 
 void Epoll::acceptConnection(const std::vector<int> &serverSockets)
