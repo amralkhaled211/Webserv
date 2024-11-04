@@ -1,23 +1,5 @@
 #include "Epoll.hpp"
 
-Epoll::Epoll(const std::vector<int> &serverSockets, std::vector<ServerBlock> &servers) : _servers(servers)
-{
-    _epollFD = -1;
-    // printServerVec(_servers);
-    acceptConnection(serverSockets);
-}
-
-Epoll::~Epoll()
-{
-    if (_epollFD != -1)
-        close(_epollFD);
-    for (std::vector<int>::iterator it = _clientFDs.begin(); it != _clientFDs.end(); ++it)
-    {
-        epoll_ctl(_epollFD, EPOLL_CTL_DEL, *it, NULL);
-        close(*it);
-    }
-}
-
 void Epoll::init_epoll(const std::vector<int> &serverSockets)
 {
     _epollFD = epoll_create1(0);
@@ -34,9 +16,18 @@ void Epoll::init_epoll(const std::vector<int> &serverSockets)
             throw std::runtime_error("epoll_ctl");
     }
 }
+void Epoll::acceptConnection(const std::vector<int> &serverSockets)
+{
+    init_epoll(serverSockets);
+    while (serverRunning)
+    {
+        handleEpollEvents(serverSockets);
+    }
+}
 
 void Epoll::handleEpollEvents(const std::vector<int> &serverSockets)
 {
+    std::cout << "Waiting for events" << std::endl;
     std::vector<struct epoll_event> _events(MAX_EVENTS);
     int n = epoll_wait(_epollFD, _events.data(), MAX_EVENTS, -1);
     if (n == -1)
@@ -47,7 +38,6 @@ void Epoll::handleEpollEvents(const std::vector<int> &serverSockets)
     }
     for (int i = 0; i < n; ++i)
     {
-        //if (_events[i].events &  EPOLLRDHUP)
         if (_events[i].events & (EPOLLERR | EPOLLHUP | EPOLLRDHUP))
         {
             std::cerr << "Error on fd " << _events[i].data.fd << ": ";
@@ -58,14 +48,24 @@ void Epoll::handleEpollEvents(const std::vector<int> &serverSockets)
 
             close(_events[i].data.fd);
             std::cout << "Connection closed" << std::endl;
-            continue;
+            //continue;
+            return;
         }
         if (std::find(serverSockets.begin(), serverSockets.end(), _events[i].data.fd) != serverSockets.end())
             handleConnection(_events[i].data.fd);
-        else
+        // else if (_events[i].events & EPOLLIN || _events[i].events & EPOLLET)
+        else if (_events[i].events & EPOLLIN )
             handleData(_events[i].data.fd);
     }
 }
+void Epoll::handleData(int client_fd)
+{
+    // std::cout << "Data received" << std::endl;
+    requestHandle.receiveData(client_fd);
+    requestHandle.parseRequest();
+    sendData.sendResponse(client_fd, _servers, requestHandle.getRequest(), _epollFD);
+}
+
 
 void Epoll::handleConnection(int server_fd)
 {
@@ -83,7 +83,7 @@ void Epoll::handleConnection(int server_fd)
         make_socket_non_blocking(client_fd);
         struct epoll_event client_event;
         client_event.data.fd = client_fd;
-        client_event.events = EPOLLIN;
+        client_event.events = EPOLLIN ;
         if (epoll_ctl(_epollFD, EPOLL_CTL_ADD, client_fd, &client_event) == -1)
         {
             close(client_fd);
@@ -94,20 +94,22 @@ void Epoll::handleConnection(int server_fd)
     }
 }
 
-void Epoll::handleData(int client_fd)
+
+Epoll::Epoll(const std::vector<int> &serverSockets, std::vector<ServerBlock> &servers) : _servers(servers)
 {
-    // std::cout << "Data received" << std::endl;
-    requestHandle.receiveData(client_fd);
-    requestHandle.parseRequest();
-    sendData.sendResponse(client_fd, _servers, requestHandle.getRequest(), _epollFD);
+    _epollFD = -1;
+    // printServerVec(_servers);
+    acceptConnection(serverSockets);
 }
 
-void Epoll::acceptConnection(const std::vector<int> &serverSockets)
+Epoll::~Epoll()
 {
-    init_epoll(serverSockets);
-    while (serverRunning)
+    if (_epollFD != -1)
+        close(_epollFD);
+    for (std::vector<int>::iterator it = _clientFDs.begin(); it != _clientFDs.end(); ++it)
     {
-        handleEpollEvents(serverSockets);
+        epoll_ctl(_epollFD, EPOLL_CTL_DEL, *it, NULL);
+        close(*it);
     }
 }
 

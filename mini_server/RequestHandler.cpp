@@ -1,49 +1,21 @@
 #include "RequestHandler.hpp"
 
-
-// void RequestHandler::receiveData(int clientSocket)
-// {
-//     char Buffer[60000] = {0};
-//     std::vector<char> buffer;
-//     int bytesReceived;
-
-
-//     bytesReceived = recv(clientSocket, Buffer, sizeof(Buffer), 0);
-//     std::cout << "clientSocket : " << clientSocket << std::endl;
-//     std::cout << "bytesReceived : " << bytesReceived << std::endl;
-//     if (bytesReceived < 0)
-//     {
-//         if (errno == EAGAIN || errno == EWOULDBLOCK)
-//         {
-//             // No data available, try again later
-//             std::cerr << "No data available" << std::endl;
-//         }
-//         else
-//         {
-//             std::cerr << "Receiving failed: " << strerror(errno) << std::endl;
-//             throw std::runtime_error("Receiving failed");
-//         }
-//     }
-//     else if (bytesReceived == 0)
-//     {
-//         // Connection closed
-// 		std::cerr << "Connection hello" << std::endl;
-//         return;
-//     }
-//     buffer.insert(buffer.end(), Buffer, Buffer + bytesReceived);
-//     this->_buffer.assign(buffer.begin(), buffer.end()); // Copy all received data to _buffer
-// }
-
+#include <thread> // Include this header for sleep functionality
+#include <chrono> // 
 
 void RequestHandler::receiveData(int clientSocket)
 {
 	char Buffer[60000] = {0};
 	int bytesReceived = recv(clientSocket, Buffer, sizeof(Buffer), 0);
-	//std::cout << "clineSocket : " << clientSocket << std::endl;	
-	//std::cout << "bytesReceived : " << bytesReceived << std::endl;
+	std::cout << "clineSocket : " << clientSocket << std::endl;	
+	std::cout << "bytesReceived : " << bytesReceived << std::endl;
+	if (bytesReceived == -1)
+	{
+		std::cout << "Error in recv(). Quitting" << std::endl;
+		return;
+	}
 	if (bytesReceived < 0)
 		throw std::runtime_error("Receiving failed");
-	// 	this->buffer = buffer; this would copy the whole buffer this might cause storing carbege data if the buffer is not full
 	this->_buffer.assign(Buffer, bytesReceived); // this would copy only the data that was received
 }
 
@@ -97,7 +69,7 @@ void RequestHandler::parseHeaders(std::string &Buffer)
 void RequestHandler::parseHeadersAndBody()
 {
 
-	//std::cout << RED << "Buffer :" << RESET << "\n" << GREEN_COLOR << this->_buffer << RESET << std::endl;
+	std::cout << RED << "Buffer :" << RESET << "\n" << GREEN_COLOR << this->_buffer << RESET << std::endl;
 	if (request.method == "POST")
 	{
 		size_t headerEndPos = this->_buffer.find("\r\n\r\n");
@@ -106,7 +78,7 @@ void RequestHandler::parseHeadersAndBody()
 		parseHeaders(headerSection);
 		request.body = body;
 		//std::cout << "Body : " << body << std::endl;
-		parse_body(body);
+		//parse_body(body);
 	}
 
 	parseHeaders(this->_buffer);

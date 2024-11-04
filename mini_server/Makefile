@@ -11,7 +11,7 @@ OBJ	= $(SRC:%.cpp=$(OBJ_DIR)/%.o)
 
 CC	= c++
 
-CFLAGS	= -std=c++98 -g
+CFLAGS	=  -g
 
 #CFLAGS	= -Wall -Wextra -Werror -std=c++98 -g
 

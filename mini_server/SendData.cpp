@@ -183,7 +183,8 @@ void SendData::sendResponse(int clientSocket, std::vector<ServerBlock> &servers,
     //    close(client_fd);
     //    throw std::runtime_error("epoll_ctl");
     //}
-	send(clientSocket, resp_cstr, resp_length, 0);
+	//std::cout << BLUE_COLOR << "sending response " << RESET << std::endl;
+	//send(clientSocket, resp_cstr, resp_length, 0);
 }
 
 
