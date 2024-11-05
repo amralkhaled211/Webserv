@@ -31,9 +31,24 @@ bool SendData::read_file(std::string const &path, parser &request) // this alrea
 	return false;
 }
 
+std::vector<std::string>	possibleRequestedLoc(std::string uri) {
+	std::vector<std::string>	possibleReqLoc;
+	size_t						lastSlash;
+	// remove excess slashes -> this should be done at the request parsing, to avoid repetitive work
+
+	possibleReqLoc.push_back(uri);
+	while (!uri.empty()) {
+		lastSlash = uri.find_last_of('/');
+		uri = uri.substr(0, lastSlash);
+		possibleReqLoc.push_back(uri);
+	}
+
+	return possibleReqLoc;
+}
+
 LocationBlock SendData::findLocationBlock(std::vector<LocationBlock> &locations, parser &request) // this approach for matching might not handle some cases, test required ...
 {
-	std::vector<std::string> spiltedDir = split(request.path, '/');
+	std::vector<std::string> spiltedDir = possibleRequestedLoc(request.path); // other name: possibleReqLoc --> uri /1/2
 	//std::cout << "spiltedDir ;" << spiltedDir[0] << std::endl;
 	//std::cout << "spiltedDir size " << spiltedDir.size() << std::endl;
 	int i = 0;

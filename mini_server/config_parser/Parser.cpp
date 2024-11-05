@@ -409,10 +409,43 @@ void		Parser::_handleLocationDirective(std::stringstream& ss, const std::string&
 
 /*		SETUP DEFAULTS		*/
 
-void		Parser::_setupDefaults() {
-	for (size_t i = 0; i < _serverVec.size(); i++) {
+void		Parser::_setupDefaults() { // change name or create new function for errors
+	for (size_t i = 0; i < _serverVec.size(); ++i) {
 		_serverVec[i].setupDefaults();
-		_serverVec[i].contextError();
+	}
+}
+
+/*		ERRORS AFTER PARSING		*/
+
+void			errorsAfterParsing() {
+	for (size_t i = 0; i < _serverVec.size(); ++i) {
+		_serverVec[i].contextError(); // name should be more specific
+	}
+	this->_identServer();
+}
+
+static bool		foundIdentServers(ServerBlock& serverOne, ServerBlock& serverTwo) {
+
+	std::vector<std::string>	hostPortOne = serverOne.getHostPort();
+	std::vector<std::string>	hostPortTwo = serverTwo.getHostPort();
+
+	for (size_t k = 0; k < hostPortOne.size(); ++k) {
+		for (size_t l = k; l < hostPortTwo.size(); ++l) {
+			if (hostPortOne[k] == hostPortTwo[l])
+				return true;
+		}
+	}
+
+	return false;
+}
+
+void		Parser::_identServer() {
+	// error -> two servers with the same port and server_name
+	for (size_t i = 0; i < _serverVec.size(); ++i) {
+		for (size_t j = i + 1; j < _serverVec.size(); ++j) {
+			if (foundIdentServers(_serverVec[i], _serverVec[j]))
+				throw std::runtime_error("Error: Found Ident Server Blocks!");
+		}
 	}
 }
 

@@ -71,8 +71,33 @@ std::vector<int>&				ServerBlock::getListen() { return this->_listen; }
 
 std::vector<std::string>&		ServerBlock::getServerName() { return this->_server_name; }
 
+std::vector<std::string>&		ServerBlock::getHostPort() { return this->_hostPort; }
+
 void							ServerBlock::addLocationBlock() { this->_locationVec.push_back(LocationBlock()); }
 
+
+void							ServerBlock::createNamePortComb() {
+
+	std::vector<std::string>		hosts = this->getServerName();
+	std::vector<std::string>		ports;
+	std::stringstream				ss;
+	std::string						port;
+	for (size_t i = 0; i < this->getListen().size(); ++i) {
+		ss << this->getListen()[i];
+		ss >> port;
+		if (ss.fail())
+			throw std::runtime_error("sstream fail");
+		ports.push_back(port);
+		ss.clear();
+		ss.str("");
+	}
+
+	for (size_t i = 0; i < hosts.size(); ++i) {
+		for (size_t j = i; j < ports.size(); ++j)
+			this->_hostPort.push_back(hosts[i] + ":" + ports[j]);
+	}
+
+}
 
 void							ServerBlock::setupDefaults() {
 	if (this->_listen.empty())
@@ -80,6 +105,8 @@ void							ServerBlock::setupDefaults() {
 
 	if (this->_server_name.empty())
 		this->_server_name.push_back(""); // nginx
+
+	this->createNamePortComb();
 
 	if (this->_root.empty())
 		this->_root = "../"; // nginx, relative path
@@ -98,7 +125,7 @@ void							ServerBlock::setupDefaults() {
 }
 
 
-void			ServerBlock::contextError() {
+void							ServerBlock::contextError() { // checkDupLocation()
 
 	std::string		tmpPrefix;
 

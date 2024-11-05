@@ -12,7 +12,7 @@ Server::~Server()
         close(_serverSockets[i]);
 }
 
-bool isValidIPAddress(const std::string& ipAddress)
+bool isValidIPAddress(const std::string& ipAddress) // we use forbidden c functions here!
 {
     int num, dots = 0;
     char *ptr;

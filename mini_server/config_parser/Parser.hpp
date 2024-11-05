@@ -78,6 +78,7 @@ class Parser // http Block basically
 		void		_handleServerDirective(std::stringstream& ss, const std::string& directiveKey);
 		void		_handleLocationDirective(std::stringstream& ss, const std::string& directiveKey);
 
+		void		_identServer();
 
 		/*			SETUP DEFAULTS			*/
 		void		_setupDefaults(); // other name: _setDefaults()
