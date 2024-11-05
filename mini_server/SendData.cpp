@@ -35,7 +35,7 @@ LocationBlock SendData::findLocationBlock(std::vector<LocationBlock> &locations,
 {
 	std::vector<std::string> spiltedDir = split(request.path, '/');
 	//std::cout << "spiltedDir ;" << spiltedDir[0] << std::endl;
-	std::cout << "spiltedDir size " << spiltedDir.size() << std::endl;
+	//std::cout << "spiltedDir size " << spiltedDir.size() << std::endl;
 	int i = 0;
 	_isDir = true;
 
@@ -57,11 +57,11 @@ LocationBlock SendData::findLocationBlock(std::vector<LocationBlock> &locations,
 			}
 			return location;
 		}
-		else 
-		{
-			std::cout << "location prefix : " << location.getPrefix() << std::endl;
-			std::cout << "spiltedDir[i] : " << spiltedDir[i] << std::endl;
-		}
+		//else 
+		//{
+		//	std::cout << "location prefix : " << location.getPrefix() << std::endl;
+		//	std::cout << "spiltedDir[i] : " << spiltedDir[i] << std::endl;
+		//}
 	}
 	throw std::exception();
 }
@@ -162,12 +162,14 @@ void SendData::sendResponse(int clientSocket, std::vector<ServerBlock> &servers,
 	if (request.method == "POST") // this is not an important step, just checking if the Post wrok
 	{
 		//std::cout << "this body :" << request.body << std::endl;
-		saveBodyToFile("/home/amalkhal/Webserv/website/upload/amalkhal.png", request);
-		// _response.status = "HTTP/1.1 200 OK\r\n";
-		// _response.contentType = "Content-Type: text/html;\r\n";
-		// _response.contentLength = "Content-Length: 122\r\n";
-		// _response.body = "<!DOCTYPE html><html><head><title>200 OK</title></head>";
-		// _response.body += "<body><h1>200 OK</h1><p>Thank You for login info.</p></body></html>";
+		saveBodyToFile("/home/amalkhal/Webserv/website/upload/" + request.fileName, request);
+		//std::cout << "file saved" << std::endl;
+
+		_response.status = "HTTP/1.1 200 OK\r\n";
+		_response.contentType = "Content-Type: text/html;\r\n";
+		_response.body = "<!DOCTYPE html><html><head><title>200 OK</title></head>";
+		_response.body += "<body><h1>200 OK</h1><p>file saved</p></body></html>";
+		_response.contentLength = "Content-Length: " + intToString(_response.body.size()) + "\r\n";
 	}
 
 	std::string resp;
@@ -184,7 +186,7 @@ void SendData::sendResponse(int clientSocket, std::vector<ServerBlock> &servers,
     //    throw std::runtime_error("epoll_ctl");
     //}
 	//std::cout << BLUE_COLOR << "sending response " << RESET << std::endl;
-	//send(clientSocket, resp_cstr, resp_length, 0);
+	send(clientSocket, resp_cstr, resp_length, 0);
 }
 
 

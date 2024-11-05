@@ -1,19 +1,9 @@
 #include "RequestHandler.hpp"
 
-#include <thread> // Include this header for sleep functionality
-#include <chrono> // 
-
 void RequestHandler::receiveData(int clientSocket)
 {
 	char Buffer[60000] = {0};
 	int bytesReceived = recv(clientSocket, Buffer, sizeof(Buffer), 0);
-	std::cout << "clineSocket : " << clientSocket << std::endl;	
-	std::cout << "bytesReceived : " << bytesReceived << std::endl;
-	if (bytesReceived == -1)
-	{
-		std::cout << "Error in recv(). Quitting" << std::endl;
-		return;
-	}
 	if (bytesReceived < 0)
 		throw std::runtime_error("Receiving failed");
 	this->_buffer.assign(Buffer, bytesReceived); // this would copy only the data that was received
@@ -37,17 +27,29 @@ void RequestHandler::parse_first_line()
 	request.version = this->_buffer.substr(start, end - start);
 }
 
-void RequestHandler::parse_body(std::string& body)
+bool RequestHandler::parse_body(std::string& body)
 {
 	std::istringstream stream(body);
 	std::string line;
-	std::getline(stream, line);
-	//std::cout << "first line "  << line << std::endl;
+	std::getline(stream, line); // this ganna be the first _boundary
+	std::getline(stream, line); // this ganna be the scond Content-Disposition and file name
+	request.fileName = line.substr(line.find("filename=") + 9);
+	if (!request.fileName.empty() && request.fileName[0] == '"' && request.fileName[request.fileName.size() - 2] == '"')
+		request.fileName = request.fileName.substr(1, request.fileName.size() - 3);
+	std::getline(stream, line); // this ganna be the third Content-Type:
+	std::getline(stream, line); // this ganna be the forth blank:
+	std::string endBoundary = _boundary + "--\r";
 	while (std::getline(stream, line))
 	{
-		//std::cout << GREEN_COLOR << "body Line :" << RESET_COLOR << line << std::endl;
-		break;
+		if (line == endBoundary)
+		{
+			std::cout << "end of body  dont read anymore " << std::endl;
+			return true;
+		}
+		request.body += line + "\n";
+
 	}
+	return false;
 }
 
 
@@ -55,83 +57,133 @@ void RequestHandler::parseHeaders(std::string &Buffer)
 {
 	std::istringstream headerStream(Buffer);
     std::string line;
-    while (std::getline(headerStream, line) && !line.empty()) {
+    while (std::getline(headerStream, line) && !line.empty())
+	{
         size_t delimiterPos = line.find(": ");
-        if (delimiterPos != std::string::npos) {
+        if (delimiterPos != std::string::npos)
+		{
             std::string headerName = line.substr(0, delimiterPos);
             std::string headerValue = line.substr(delimiterPos + 2);
             request.headers[headerName] = headerValue;
         }
-        //std::cout << GREEN_COLOR << "Headers Line :" << RESET_COLOR << line << std::endl;
     }
 }
 
-void RequestHandler::parseHeadersAndBody()
+bool RequestHandler::HandlChunk()
 {
-
-	std::cout << RED << "Buffer :" << RESET << "\n" << GREEN_COLOR << this->_buffer << RESET << std::endl;
-	if (request.method == "POST")
+	//std::cout << "this_buffer : " << this->_buffer << std::endl;
+	if (_bytesRead == 0 && !_boundary.empty()) //this is if the begining of boundry_body is in another chunk
 	{
+
+		_bytesRead += this->_buffer.size(); 
+		if (parse_body(this->_buffer))
+			return true;
+	}
+	else if (_bytesRead != 0 &&!_boundary.empty()) // this if middle of boundry_body is in another chunk
+	{
+		std::istringstream stream(this->_buffer);
+		std::string line;
+		_bytesRead += this->_buffer.size();
+		std::string endBoundary = _boundary;
+		endBoundary = endBoundary.substr(0, endBoundary.size() - 1) + "--\r"; // i have to tirm the /r first
+		while (std::getline(stream, line))
+		{
+			if (line == endBoundary)
+			{
+				std::cout << "end of body  dont read anymore " << std::endl;
+				return true;
+			}
+			request.body += line + "\n";
+		}
+	}
+	else // this would be for chunks that has no boundry 
+	{
+		std::istringstream stream(this->_buffer);
+		std::string line;
+		while (std::getline(stream, line))
+		{
+			request.body += line + "\n";
+		}
+		_bytesRead += this->_buffer.size(); 
+		if (_bytesRead == _targetBytes)
+			return true;
+	}
+	return false;
+}
+
+bool RequestHandler::parseHeadersAndBody()
+{
+	if (_isChunked)
+	{
+		std::cout << this->_buffer;
+		if (HandlChunk())
+			return true;
+	}
+	else if (request.method == "POST")
+	{
+		std::cout << "this is the buffer : " << this->_buffer << std::endl;
+		std::cout << this->_buffer << std::endl;
 		size_t headerEndPos = this->_buffer.find("\r\n\r\n");
 		std::string body = this->_buffer.substr(headerEndPos + 4);
 		std::string headerSection = this->_buffer.substr(0, headerEndPos);
 		parseHeaders(headerSection);
-		request.body = body;
-		//std::cout << "Body : " << body << std::endl;
-		//parse_body(body);
+
+		std::map<std::string, std::string>::iterator it = request.headers.find("Content-Type");
+		if (it != request.headers.end() && it->second.find("multipart/form-data") != std::string::npos)
+		{
+			_boundary = "--" + it->second.substr(it->second.find("boundary=") + 9);
+			//std::cout << "this is the boundary : " << _boundary << std::endl;
+		}
+
+		if (body.size() > 0)// this is if the body comes with the headers in one chunk
+		{
+			if (!_boundary.empty())//that would mean we would have to upload a file 
+			{
+				if (parse_body(body))
+					return true;
+			}
+			else
+				request.body = body;
+		}
+		_bytesRead = body.size();
+		std::cout << "this size the body : " << _bytesRead << std::endl;
+		_targetBytes = stringToSizeT(request.headers["Content-Length"]);
+		if (_bytesRead < _targetBytes)
+		{
+			_isChunked = true;
+			return false;
+		}
+		else if (_bytesRead == _targetBytes)
+			return true;
 	}
-
-	parseHeaders(this->_buffer);
+	else
+	{
+		parseHeaders(this->_buffer);
+		return true;
+	}
+	return false;
 }
 
 
-void RequestHandler::parseRequest()
+bool RequestHandler::parseRequest()
 {
-	parse_first_line();
-	parseHeadersAndBody();
+	if (!_isChunked)
+	{
+		parse_first_line();
+	}
+	if (parseHeadersAndBody())
+	{
+		std::cout << "ready to send  " << std::endl;
+		_isChunked = false;
+		_bytesRead = 0;
+		size_t _targetBytes = 0;
+		//std::cout << request.body << std::endl;
+		return true;
+	}
+	return false;
 }
-
-
-// void RequestHandler::parseRequest() {
-//     parse_first_line();
-//     parseHeaders();
-
-//     if (request.method == "POST") {
-//         auto it = request.headers.find("Content-Type");
-//         if (it != request.headers.end() && it->second.find("multipart/form-data") != std::string::npos) {
-//             std::string boundary = "--" + it->second.substr(it->second.find("boundary=") + 9);
-//             std::string body;
-//             std::istringstream stream(this->_buffer);
-//             std::getline(stream, body, '\0'); // Read the entire body
-
-//             size_t pos = 0;
-//             while ((pos = body.find(boundary, pos)) != std::string::npos) {
-//                 pos += boundary.length();
-//                 size_t end = body.find(boundary, pos);
-//                 std::string part = body.substr(pos, end - pos);
-//                 pos = end;
-
-//                 // Process each part
-//                 std::istringstream partStream(part);
-//                 std::string partLine;
-//                 std::unordered_map<std::string, std::string> partHeaders;
-//                 while (std::getline(partStream, partLine) && partLine != "\r\n") {
-//                     size_t dilm = partLine.find(":");
-//                     std::string key = deleteSpaces(partLine.substr(0, dilm));
-//                     std::string value = deleteSpaces(partLine.substr(dilm + 1, partLine.length()));
-//                     partHeaders[key] = value;
-//                 }
-
-//                 std::string content;
-//                 std::getline(partStream, content, '\0'); // Read the content of the part
-//                 // Store or process the content as needed
-//             }
-//         } else {
-//             std::string line;
-//             std::istringstream stream(this->_buffer);
-//             while (std::getline(stream, line)) {
-//                 request.body += line;
-//             }
-//         }
-//     }
-// }
+RequestHandler::RequestHandler()
+{
+	_isChunked = false;
+	std::cout << "just called this object " << std::endl;
+}

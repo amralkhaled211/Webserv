@@ -55,6 +55,11 @@
 		"ctime": "cpp",
 		"iomanip": "cpp",
 		"bitset": "cpp",
-		"regex": "cpp"
+		"regex": "cpp",
+		"chrono": "cpp",
+		"ratio": "cpp",
+		"stop_token": "cpp",
+		"thread": "cpp",
+		"semaphore": "cpp"
 	}
 }

@@ -9,7 +9,7 @@ HEADERS = $(wildcard $(SRC_DIR)/*.hpp) $(wildcard $(CONFIG_PARSER_DIR)/*.hpp)
 OBJ_DIR = obj
 OBJ	= $(SRC:%.cpp=$(OBJ_DIR)/%.o)
 
-CC	= c++
+CC	= c++ -std=c++98
 
 CFLAGS	=  -g
 

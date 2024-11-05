@@ -27,7 +27,7 @@ void Epoll::acceptConnection(const std::vector<int> &serverSockets)
 
 void Epoll::handleEpollEvents(const std::vector<int> &serverSockets)
 {
-    std::cout << "Waiting for events" << std::endl;
+   // std::cout << "Waiting for events" << std::endl;
     std::vector<struct epoll_event> _events(MAX_EVENTS);
     int n = epoll_wait(_epollFD, _events.data(), MAX_EVENTS, -1);
     if (n == -1)
@@ -62,8 +62,11 @@ void Epoll::handleData(int client_fd)
 {
     // std::cout << "Data received" << std::endl;
     requestHandle.receiveData(client_fd);
-    requestHandle.parseRequest();
-    sendData.sendResponse(client_fd, _servers, requestHandle.getRequest(), _epollFD);
+    if (requestHandle.parseRequest())
+    {
+        std::cout << "ready to send . " << std::endl;
+        sendData.sendResponse(client_fd, _servers, requestHandle.getRequest(), _epollFD);
+    }
 }
 
 
