@@ -42,13 +42,20 @@ std::vector<std::string>	possibleRequestedLoc(std::string uri) {
 		uri = uri.substr(0, lastSlash);
 		possibleReqLoc.push_back(uri);
 	}
-	possibleReqLoc.pop_back();
+	if (possibleReqLoc[possibleReqLoc.size() - 1].empty())
+		possibleReqLoc.pop_back();
+	if (possibleReqLoc[possibleReqLoc.size() - 1] != "/")
+		possibleReqLoc.push_back("/");
 	return possibleReqLoc;
 }
 
 LocationBlock SendData::findLocationBlock(std::vector<LocationBlock> &locations, parser &request)
 {
 	std::vector<std::string> spiltedDir = possibleRequestedLoc(request.path); // other name: possibleReqLoc
+	for (size_t i = 0; i < spiltedDir.size(); ++i)
+	{
+		std::cout << "spiltedDir: " << spiltedDir[i] << std::endl;
+	}
 	//std::cout << "spiltedDir ;" << spiltedDir[0] << std::endl;
 	//std::cout << "spiltedDir size " << spiltedDir.size() << std::endl;
 	// int i = 0;
@@ -138,7 +145,7 @@ bool SendData::findIndexFile(const std::vector<std::string> &files, std::string 
 	while (i < files.size())
 	{
 		std::string file = root + '/' + files[i];
-		std::cout << "file : " << file << std::endl;
+		std::cout << BOLD_GREEN << "FILE : " << file << RESET << std::endl;
 		if (read_file(file, request))
 			return true;
 		i++;
