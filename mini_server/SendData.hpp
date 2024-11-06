@@ -38,7 +38,7 @@ class SendData
 	template <typename T>
 	bool findInVector(const std::vector<T> &vec, const T &target)
 	{
-		std::cout << BOLD_YELLOW << "FIND IN VECTOR -> size: " << vec.size() << " begin: " << *vec.begin() << RESET << std::endl;
+		// std::cout << BOLD_YELLOW << "FIND IN VECTOR -> size: " << vec.size() << " begin: " << *vec.begin() << RESET << std::endl;
 		// std::cout << "FIND IN VECTOR -> target: " << target << std::endl;
 		return std::find(vec.begin(), vec.end(), target) != vec.end();
 	}

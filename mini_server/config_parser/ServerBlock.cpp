@@ -82,6 +82,7 @@ void							ServerBlock::createNamePortComb() {
 	std::vector<std::string>		ports;
 	std::stringstream				ss;
 	std::string						port;
+
 	for (size_t i = 0; i < this->getListen().size(); ++i) {
 		ss << this->getListen()[i];
 		ss >> port;

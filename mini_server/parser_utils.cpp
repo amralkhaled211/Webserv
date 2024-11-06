@@ -42,7 +42,11 @@ int stringToInt(const std::string& str) // issue: value gets not initialized, if
 bool isDirectory(const std::string& path)
 {
 	struct stat path_stat;
-	stat(path.c_str(), &path_stat);
+	if (stat(path.c_str(), &path_stat) == -1)
+	{
+		// std::cerr << BOLD_RED << "stat: " << strerror(errno) << RESET << std::endl;
+		return false;
+	}
 	return S_ISDIR(path_stat.st_mode);
 }
 

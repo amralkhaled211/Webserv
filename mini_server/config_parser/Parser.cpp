@@ -103,6 +103,8 @@ void		Parser::_parser() {
 	// setup defaults
 	this->_setupDefaults();
 
+	// errors after parsing
+	this->_errorsAfterParsing();
 	// std::cout << BOLD_GREEN << "AFTER SETUP DEFAULT\n" << RESET;
 	// this->_printServerVec();
 }
@@ -417,7 +419,7 @@ void		Parser::_setupDefaults() { // change name or create new function for error
 
 /*		ERRORS AFTER PARSING		*/
 
-void			errorsAfterParsing() {
+void			Parser::_errorsAfterParsing() {
 	for (size_t i = 0; i < _serverVec.size(); ++i) {
 		_serverVec[i].contextError(); // name should be more specific
 	}

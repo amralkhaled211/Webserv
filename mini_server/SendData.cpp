@@ -42,38 +42,47 @@ std::vector<std::string>	possibleRequestedLoc(std::string uri) {
 		uri = uri.substr(0, lastSlash);
 		possibleReqLoc.push_back(uri);
 	}
-
+	possibleReqLoc.pop_back();
 	return possibleReqLoc;
 }
 
-LocationBlock SendData::findLocationBlock(std::vector<LocationBlock> &locations, parser &request) // this approach for matching might not handle some cases, test required ...
+LocationBlock SendData::findLocationBlock(std::vector<LocationBlock> &locations, parser &request)
 {
-	std::vector<std::string> spiltedDir = possibleRequestedLoc(request.path); // other name: possibleReqLoc --> uri /1/2
+	std::vector<std::string> spiltedDir = possibleRequestedLoc(request.path); // other name: possibleReqLoc
 	//std::cout << "spiltedDir ;" << spiltedDir[0] << std::endl;
 	//std::cout << "spiltedDir size " << spiltedDir.size() << std::endl;
-	int i = 0;
+	// int i = 0;
 	_isDir = true;
 
-	LocationBlock location;
-	for (std::vector<LocationBlock>::iterator it = locations.begin(); it != locations.end(); ++it)
-	{
-		location = *it;
-		if (location.getPrefix() == spiltedDir[i])
+	LocationBlock	location;
+	std::string		fullPath;
+	
+	for (int i = 0; i < spiltedDir.size(); ++i) {
+
+		for (std::vector<LocationBlock>::iterator it = locations.begin(); it != locations.end(); ++it)
 		{
-			std::string fullPath = location.getRoot() + spiltedDir[i];
-			std::cout << "full path " << fullPath <<  std::endl;
-			while (++i < spiltedDir.size())
+			location = *it;
+
+			if (location.getPrefix() == spiltedDir[i]) // need to make sure the prefix is also cleaned from excess slashes
 			{
-				fullPath = fullPath + '/' + spiltedDir[i];
+				std::cout << "location prefix: " << location.getPrefix() << std::endl;
+				std::cout << "spiltedDir[i] : " << spiltedDir[i] << std::endl;
+			
+				fullPath = location.getRoot() + spiltedDir[i];
+				std::cout << BOLD_GREEN << "full path " << fullPath << RESET << std::endl;
+				
+				fullPath = location.getRoot() + '/' + spiltedDir[0]; // for defining whether request is a directory or a file
 				if (isDirectory(fullPath))
 					_isDir = true;
 				else
 					_isDir = false;
+
+				return location;
 			}
-			return location;
 		}
 	}
-	throw std::exception();
+	std::cout << BOLD_RED << "COULD NOT FIND LOCATION BLOCK" << RESET << std::endl;
+	throw std::exception(); // this is temporary, will create a error handling mechanism
 }
 
 ServerBlock SendData::findServerBlock(std::vector<ServerBlock> &servers, parser &request) // uses the Host header field -> server_name:port -> Host: localhost:8081

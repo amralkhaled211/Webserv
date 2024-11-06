@@ -35,7 +35,7 @@ void RequestHandler::receiveData(int clientSocket)
 	// 	this->buffer = buffer; this would copy the whole buffer this might cause storing carbege data if the buffer is not full
 	this->_buffer.assign(Buffer, bytesReceived); // this would copy only the data that was received
 	std::cout << BOLD_GREEN << "recieved request Buffer: \n" << RESET;
-	std::cerr << _buffer << std::endl;
+	std::cerr << BOLD_WHITE << _buffer << RESET << std::endl;
 }
 
 parser& RequestHandler::getRequest()
