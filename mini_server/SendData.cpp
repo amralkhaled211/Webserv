@@ -122,7 +122,7 @@ bool SendData::findIndexFile(const std::vector<std::string> &files, std::string 
 	return false;
 }
 
-void SendData::sendResponse(int clientSocket, std::vector<ServerBlock> &servers, parser &request, int epollFD)
+std::string SendData::sendResponse(int clientSocket, std::vector<ServerBlock> &servers, parser &request, int epollFD)
 {
 	_isReturn = false;
 
@@ -159,18 +159,19 @@ void SendData::sendResponse(int clientSocket, std::vector<ServerBlock> &servers,
 			notfound();
 		}
 	}
-	if (request.method == "POST") // this is not an important step, just checking if the Post wrok
+	if (request.method == "POST")
 	{
-		//std::cout << "this body :" << request.body << std::endl;
+		//should make a flag her if i want to save the file or save user info database
 		saveBodyToFile("/home/amalkhal/Webserv/website/upload/" + request.fileName, request);
-		//std::cout << "file saved" << std::endl;
 
+		//this is hard coded for now
 		_response.status = "HTTP/1.1 200 OK\r\n";
 		_response.contentType = "Content-Type: text/html;\r\n";
 		_response.body = "<!DOCTYPE html><html><head><title>200 OK</title></head>";
 		_response.body += "<body><h1>200 OK</h1><p>file saved</p></body></html>";
 		_response.contentLength = "Content-Length: " + intToString(_response.body.size()) + "\r\n";
 	}
+		std::cout << "came here " << std::endl;
 
 	std::string resp;
 
@@ -178,15 +179,18 @@ void SendData::sendResponse(int clientSocket, std::vector<ServerBlock> &servers,
 		resp = _response.status + _response.location  + _response.contentType + _response.contentLength + "\r\n" + _response.body;
 	else
 		resp = _response.status + _response.contentType + _response.contentLength + "\r\n" + _response.body;
-	const char *resp_cstr = resp.c_str();
-	size_t resp_length = resp.size();
-	//if (epoll_ctl(epollFD, EPOLL_CTL_ADD, clientSocket, &EPOLLOUT) == -1)
-    //{
-    //    close(client_fd);
-    //    throw std::runtime_error("epoll_ctl");
-    //}
-	//std::cout << BLUE_COLOR << "sending response " << RESET << std::endl;
-	send(clientSocket, resp_cstr, resp_length, 0);
+	
+
+	struct epoll_event client_event;
+    client_event.data.fd = clientSocket;
+    client_event.events = EPOLLOUT;
+	if (epoll_ctl(epollFD, EPOLL_CTL_MOD, clientSocket, &client_event) == -1)
+    {
+        close(clientSocket);
+        throw std::runtime_error("epoll_ctl");
+    }
+	std::cout << BLUE_COLOR << "sending response " << RESET << std::endl;
+	return resp;
 }
 
 
@@ -203,4 +207,5 @@ void SendData::saveBodyToFile(const std::string &filename, parser &request)
         // Handle error opening file
         std::cerr << "Error opening file for writing: " << filename << std::endl;
     }
+	request.body.clear();
 }

@@ -47,8 +47,8 @@ void compareFiles(const std::string &file1, const std::string &file2) {
 }
 
 int main() {
-    std::string file1 = "ones.txt";
-    std::string file2 = "test/ones.txt";
+    std::string file1 = "comp.txt";
+    std::string file2 = "ones.txt";
 
     compareFiles(file1, file2);
 
