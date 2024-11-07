@@ -33,11 +33,11 @@
 #define BOLD_WHITE "\033[1;97m"
 #define RESET "\033[0m"
 
-// not in use
-#define IS_BRACE_O ch == '{'
-#define IS_BRACE_C ch == '}'
-#define IS_SEMICOLON ch == ';'
-#define IS_SPACE ch == ' '
+// // not in use
+// #define IS_BRACE_O ch == '{'
+// #define IS_BRACE_C ch == '}'
+// #define IS_SEMICOLON ch == ';'
+// #define IS_SPACE ch == ' '
 
 class Parser // http Block basically
 {

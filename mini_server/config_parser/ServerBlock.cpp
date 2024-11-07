@@ -121,6 +121,9 @@ void							ServerBlock::setupDefaults() {
 	if (this->_return.size() == 1)
 		this->_return.insert(_return.begin(), "302");
 
+	if (this->_client_max_body_size.empty())
+		this->_client_max_body_size = "1m";
+
 	for (size_t i = 0; i < this->_locationVec.size(); ++i)
 		this->_locationVec[i].setupDefaults(static_cast<Block&>(*this));
 }

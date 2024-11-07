@@ -16,22 +16,29 @@
 
 
 ### CODING
-- [ ] decide on listen directive
-- [ ] set 302 as default code for return directive / redirection
+- [ ] REMOVE TRY_FILES FROM PARSING
+
+
+- [ ] PARSER ERROR HANDLING FOR 
+  - [ ] ERROR_PAGE - see below for details
+  - [ ] INDEX - only last can be absolute path
+  - [ ] client_max_body_size -> accepted k,m,g as postfix, 0 means do not check size
+
+
+- [X] decide on listen directive
+- [X] defualt allowed_methods
+- [x] set 302 as default code for return directive / redirection
 - [x] throw error in case of duplicate location _prefix
 - [x] give dafaults to all the directives
   - [x] if a Location Block's directive does not have any Value, it must take the global one
     - [x] need to know about all the directive defaults
 - [ ] Edge Cases Parsing
   - [ ] Test and Handle nested locations
-- [ ] Figure out valid and invalid cases
 - [ ] QUOTES
   - [ ] ask around how others implement quotes
     - [ ] Accept/Deny Quotes as Directive Key
     - [ ] Accept/Deny Quotes as Directive Value
         - [ ] adjust removal of comments '#'
-- [ ] index
-  - [ ] only last value can be an absolute path
 - [ ] error_page
   - [ ] there must be always at least one code between 300 and 599, followed by a path (which will be appended to the root)
 - [ ] return

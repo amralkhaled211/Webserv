@@ -394,15 +394,14 @@ void		Parser::_locationBlock(std::stringstream& ss) { // this is gonna be recurc
 
 void		Parser::_handleLocationDirective(std::stringstream& ss, const std::string& directiveKey) {
 
-	std::string			directiveValue; // will be splited
-	// std::streampos		lastPos(ss.tellg()); // save pos
+	std::string			directiveValue;
 
 	if (std::getline(ss, directiveValue, ';')) {
 		if (DEBUG) {
 			std::cerr << std::setw(20) << "L Dir Key: " << directiveKey << "		";
 			std::cerr << std::setw(20) << "L Dir Value: " << directiveValue << std::endl;
 		}
-		_serverVec.back().getLocationVec().back().setDirective(directiveKey, directiveValue); // potential errors must be dedected there
+		_serverVec.back().getLocationVec().back().setDirective(directiveKey, directiveValue); // potential errors must be detected there
 	}
 	else {
 		throw std::runtime_error("Missing Semicolon");

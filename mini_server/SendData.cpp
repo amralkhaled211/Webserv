@@ -36,49 +36,48 @@ std::vector<std::string>	possibleRequestedLoc(std::string uri) {
 	size_t						lastSlash;
 	// remove excess slashes -> this should be done at the request parsing, to avoid repetitive work
 
-	possibleReqLoc.push_back(uri);
-	while (!uri.empty()) {
+	removeExcessSlashes(uri);
+
+	do
+	{
+		possibleReqLoc.push_back(uri);
 		lastSlash = uri.find_last_of('/');
 		uri = uri.substr(0, lastSlash);
-		possibleReqLoc.push_back(uri);
-	}
-	if (possibleReqLoc[possibleReqLoc.size() - 1].empty())
-		possibleReqLoc.pop_back();
+	} while (!uri.empty());
+
 	if (possibleReqLoc[possibleReqLoc.size() - 1] != "/")
 		possibleReqLoc.push_back("/");
+
 	return possibleReqLoc;
 }
 
 LocationBlock SendData::findLocationBlock(std::vector<LocationBlock> &locations, parser &request)
 {
-	std::vector<std::string> spiltedDir = possibleRequestedLoc(request.path); // other name: possibleReqLoc
-	for (size_t i = 0; i < spiltedDir.size(); ++i)
-	{
-		std::cout << "spiltedDir: " << spiltedDir[i] << std::endl;
-	}
-	//std::cout << "spiltedDir ;" << spiltedDir[0] << std::endl;
-	//std::cout << "spiltedDir size " << spiltedDir.size() << std::endl;
-	// int i = 0;
+	std::vector<std::string> possibleReqLoc = possibleRequestedLoc(request.path); // other name: possibleReqLoc
+	
+	// for (size_t i = 0; i < possibleReqLoc.size(); ++i)
+	// 	std::cout << "possibleReqLoc: " << possibleReqLoc[i] << std::endl;
+
 	_isDir = true;
 
 	LocationBlock	location;
 	std::string		fullPath;
 	
-	for (int i = 0; i < spiltedDir.size(); ++i) {
-
+	for (int i = 0; i < possibleReqLoc.size(); ++i)
+	{
 		for (std::vector<LocationBlock>::iterator it = locations.begin(); it != locations.end(); ++it)
 		{
 			location = *it;
 
-			if (location.getPrefix() == spiltedDir[i]) // need to make sure the prefix is also cleaned from excess slashes
+			if (location.getPrefix() == possibleReqLoc[i]) // need to make sure the prefix is also cleaned from excess slashes
 			{
 				std::cout << "location prefix: " << location.getPrefix() << std::endl;
-				std::cout << "spiltedDir[i] : " << spiltedDir[i] << std::endl;
+				std::cout << "possibleReqLoc[i] : " << possibleReqLoc[i] << std::endl;
 			
-				fullPath = location.getRoot() + spiltedDir[i];
+				fullPath = location.getRoot() + possibleReqLoc[i];
 				std::cout << BOLD_GREEN << "full path " << fullPath << RESET << std::endl;
 				
-				fullPath = location.getRoot() + '/' + spiltedDir[0]; // for defining whether request is a directory or a file
+				fullPath = location.getRoot() + '/' + possibleReqLoc[0]; // for defining whether request is a directory or a file
 				if (isDirectory(fullPath))
 					_isDir = true;
 				else

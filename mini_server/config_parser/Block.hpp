@@ -57,4 +57,6 @@ class Block // parent // the purpose of this is just to not have class with the 
 
 };
 
-std::vector<std::string>	splitString(const std::string& input); // will put this in a diff file
+// will put these in a diff file
+std::vector<std::string>	splitString(const std::string& input);
+void						removeExcessSlashes(std::string& path);

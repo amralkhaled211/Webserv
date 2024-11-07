@@ -111,6 +111,12 @@ void		LocationBlock::setupDefaults(Block& parentServer) {
 	if (this->_autoindex == NOT_SET)
 		this->_autoindex = parentServer.getAutoindex();
 
+	if (this->_allowed_methods.empty()) {
+		this->_allowed_methods.push_back("GET");
+		this->_allowed_methods.push_back("POST");
+		this->_allowed_methods.push_back("DELETE");
+	}
+
 	// for (size_t i = 0; i < this->_locationVec.size(); i++) // haven't tested nested locations
 	// 	this->_locationVec[i].setupDefaults();
 }

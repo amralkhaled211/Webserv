@@ -99,6 +99,31 @@ void		invalidReturnSyntax(std::vector<std::string>& valueArgs) {
 }
 
 
+void	removeExcessSlashes(std::string& path) // this should be used when working with paths, except for location prefix
+{
+	std::string		result;
+	bool			lastWasSlash = false;
+
+	for (size_t i = 0; i < path.size(); ++i)
+	{
+		if (path[i] == '/')
+		{
+			if (!lastWasSlash)
+			{
+				result += path[i];
+				lastWasSlash = true;
+			}
+		}
+		else
+		{
+			result += path[i];
+			lastWasSlash = false;
+		}
+	}
+
+	path = result;
+}
+
 bool		Block::_addCommonDirective(const std::string& directiveKey, std::string& directiveValue) { // to add: invalid values
 	std::vector<std::string>	valueArgs(splitString(directiveValue));
 	size_t						amountArgs(valueArgs.size());
@@ -108,12 +133,14 @@ bool		Block::_addCommonDirective(const std::string& directiveKey, std::string& d
 			throw std::runtime_error("Duplicate root Directive");
 		if (amountArgs != 1)
 			throw std::runtime_error("Invalid root Directive");
+		removeExcessSlashes(directiveValue);
 		this->_root = directiveValue;
 		return true;
 	}
 	else if (directiveKey == "error_page") {
 		if (!this->_error_page.empty())
 			throw std::runtime_error("Duplicate error_page Directive");
+		// ERROR HANDLING MISSING and remove excess slashes for the path
 		this->_error_page = valueArgs;
 		return true;
 	}
@@ -125,7 +152,7 @@ bool		Block::_addCommonDirective(const std::string& directiveKey, std::string& d
 		this->_return = valueArgs;
 		return true;
 	}
-	else if (directiveKey == "try_files") {
+	else if (directiveKey == "try_files") { // NO NEED TO HANDLE THIS
 		if (!this->_try_files.empty())
 			throw std::runtime_error("Duplicate try_files Directive");
 		this->_try_files = valueArgs;
@@ -134,6 +161,7 @@ bool		Block::_addCommonDirective(const std::string& directiveKey, std::string& d
 	else if (directiveKey == "index") { // requires new implementation, not handling some cases
 		if (!this->_index.empty())
 			throw std::runtime_error("Duplicate index Directive");
+		// ERROR HANDLING MISSING
 		this->_index = valueArgs;
 		return true;
 	}
