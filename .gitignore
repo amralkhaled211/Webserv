@@ -2,3 +2,5 @@
 *.o
 out
 Server
+a.out
+test.cpp
