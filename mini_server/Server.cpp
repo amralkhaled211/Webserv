@@ -95,7 +95,7 @@ void Server::bindNamesWithPorts(std::vector<std::string>& serverName, std::vecto
 
 void Server::createSocket()
 {
-    std::cout << "size of serverBlock :" << _servers.size() << std::endl;
+    //std::cout << "size of serverBlock :" << _servers.size() << std::endl;
     for(int i = 0; i < _servers.size(); i++)
     {
         bindNamesWithPorts(_servers[i].getServerName(), _servers[i].getListen());

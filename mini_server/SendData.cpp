@@ -1,4 +1,5 @@
 #include "SendData.hpp"
+#include "CGI.hpp"
 
 void SendData::notfound()
 {
@@ -136,11 +137,22 @@ std::string SendData::sendResponse(int clientSocket, std::vector<ServerBlock> &s
 			std::string root = location.getRoot() + request.path;
 			if (location.getReturn().empty())
 			{
+				if (request.path.find("cgi")) // need to check correctly for CGI paths here + if they're in the config file
+				{
+					CGI cgi(root + request.path, request);
+					cgi.setEnv();
+					cgi.executeScript();
+					cgi.generateResponse();
+					cgi.createhtml();
+					this->read_file("cgi_output.html", request);
+				}
+
 				if (_isDir)
 				{
 					if (!findIndexFile(location.getIndex(), root, request))
 						notfound();
 				}
+				//How should I check for CGI?
 				else
 				{
 					if (!this->read_file(root, request))
@@ -171,7 +183,6 @@ std::string SendData::sendResponse(int clientSocket, std::vector<ServerBlock> &s
 		_response.body += "<body><h1>200 OK</h1><p>file saved</p></body></html>";
 		_response.contentLength = "Content-Length: " + intToString(_response.body.size()) + "\r\n";
 	}
-		std::cout << "came here " << std::endl;
 
 	std::string resp;
 
@@ -189,7 +200,8 @@ std::string SendData::sendResponse(int clientSocket, std::vector<ServerBlock> &s
         close(clientSocket);
         throw std::runtime_error("epoll_ctl");
     }
-	std::cout << BLUE_COLOR << "sending response " << RESET << std::endl;
+	//std::cout << BLUE_COLOR << "sending response " << RESET << std::endl;
+	//std::cout << resp << std::endl;
 	return resp;
 }
 

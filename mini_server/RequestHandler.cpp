@@ -156,15 +156,28 @@ bool RequestHandler::parseHeadersAndBody()
 	return false;
 }
 
+void RequestHandler::parseQueryString()
+{
+	size_t pos = request.path.find('?');
+	if (pos != std::string::npos)
+	{
+		request.queryString = request.path.substr(pos + 1);
+		request.path = request.path.substr(0, pos);
+	}
+	else
+		request.queryString = "";
+}
+
 bool RequestHandler::parseRequest()
 {
 	if (!_isChunked)
 	{
 		parse_first_line();
 	}
+	parseQueryString();
 	if (parseHeadersAndBody())
 	{
-		std::cout << "ready to send  " << std::endl;
+		//std::cout << "ready to send  " << std::endl;
 		_isChunked = false;
 		_bytesRead = 0;
 		size_t _targetBytes = 0;
@@ -176,5 +189,5 @@ bool RequestHandler::parseRequest()
 RequestHandler::RequestHandler()
 {
 	_isChunked = false;
-	std::cout << "just called this object " << std::endl;
+	//std::cout << "just called this object " << std::endl;
 }

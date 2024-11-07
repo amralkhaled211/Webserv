@@ -47,7 +47,7 @@ void Epoll::handleEpollEvents(const std::vector<int> &serverSockets)
             std::cerr << std::endl;
 
             close(_events[i].data.fd);
-            std::cout << "Connection closed" << std::endl;
+            //std::cout << "Connection closed" << std::endl;
             //continue;
             return;
         }
@@ -61,7 +61,7 @@ void Epoll::handleEpollEvents(const std::vector<int> &serverSockets)
             // std::cout << "Sending data" << std::endl;
             send(_events[i].data.fd, _buffer.c_str(), _buffer.size(), 0);
             close(_events[i].data.fd);
-            std::cout << "Connection closed" << std::endl;
+            //std::cout << "Connection closed" << std::endl;
         }
     }
 }
@@ -71,7 +71,7 @@ void Epoll::handleData(int client_fd)
     requestHandle.receiveData(client_fd);
     if (requestHandle.parseRequest())
     {
-        std::cout << "ready to send . " << std::endl;
+        //std::cout << "ready to send . " << std::endl;
         _buffer = sendData.sendResponse(client_fd, _servers, requestHandle.getRequest(), _epollFD);
     }
 }

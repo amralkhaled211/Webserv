@@ -36,6 +36,7 @@ typedef struct parser
 	std::string method;
 	std::string path;
 	std::string version;
+	std::string queryString;
 	std::map<std::string, std::string> headers;
 	std::string body;
 	std::string fileName;
@@ -49,6 +50,7 @@ public:
 	void parse_first_line();
 	bool parseHeadersAndBody();
 	void parseHeaders(std::string &Buffer);
+	void parseQueryString();
 	bool parse_body(std::string &body);
 	void receiveData(int clientSocket);
 	bool HandlChunk();
