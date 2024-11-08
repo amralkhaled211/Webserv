@@ -39,6 +39,7 @@ typedef struct parser
 	std::string method;
 	std::string path;
 	std::string version;
+	std::string queryString;
 	std::map<std::string, std::string> headers;
 	std::string body;
 	std::string fileName;
@@ -47,22 +48,30 @@ typedef struct parser
 class RequestHandler
 {
 public:
-	void parseRequest();
+	RequestHandler();
+	bool parseRequest();
 	void parse_first_line();
-	void parseHeadersAndBody();
+	bool parseHeadersAndBody();
 	void parseHeaders(std::string &Buffer);
-	void parse_body(std::string &body);
+	void parseQueryString();
+	bool parse_body(std::string &body);
 	void receiveData(int clientSocket);
+	bool HandlChunk();
 	parser &getRequest();
 
 private:
 	std::string _buffer;
 	parser request;
+	bool _isChunked;
+	size_t _bytesRead;
+	size_t _targetBytes;
+	std::string _boundary;
 };
 
 // utility functions
 std::string intToString(int value);
 int stringToInt(const std::string &str);
+size_t stringToSizeT(const std::string& str);
 std::string deleteSpaces(std::string const &str);
 std::string get_file_extension(const std::string &file_path);
 std::string get_file_name(const std::string &file_path);

@@ -1,4 +1,5 @@
 #include "SendData.hpp"
+#include "CGI.hpp"
 
 void SendData::notfound()
 {
@@ -86,6 +87,11 @@ LocationBlock SendData::findLocationBlock(std::vector<LocationBlock> &locations,
 				return location;
 			}
 		}
+		//else 
+		//{
+		//	std::cout << "location prefix : " << location.getPrefix() << std::endl;
+		//	std::cout << "spiltedDir[i] : " << spiltedDir[i] << std::endl;
+		//}
 	}
 	std::cout << BOLD_RED << "COULD NOT FIND LOCATION BLOCK" << RESET << std::endl;
 	throw std::exception(); // this is temporary, will create a error handling mechanism
@@ -94,10 +100,7 @@ LocationBlock SendData::findLocationBlock(std::vector<LocationBlock> &locations,
 ServerBlock SendData::findServerBlock(std::vector<ServerBlock> &servers, parser &request) // uses the Host header field -> server_name:port -> Host: localhost:8081
 {
 	std::string host = request.headers["Host"];
-	// std::cout << "-----------------------------------------------------\n";
-	// print_map(request.headers);
-	// std::cout << request.headers.size() << std::endl;
-	// std::cout << "-----------------------------------------------------\n";
+	//std::cout << "host : " << host << std::endl;
 	size_t colon_pos = host.find(':');
 	std::string server_name = (colon_pos != std::string::npos) ? host.substr(0, colon_pos) : host;
 	std::string port = (colon_pos != std::string::npos) ? host.substr(colon_pos + 1) : ""; // the empty str causes conitional jump on uninitialized value
@@ -152,7 +155,7 @@ bool SendData::findIndexFile(const std::vector<std::string> &files, std::string 
 	return false;
 }
 
-void SendData::sendResponse(int clientSocket, std::vector<ServerBlock> &servers, parser &request)
+std::string SendData::sendResponse(int clientSocket, std::vector<ServerBlock> &servers, parser &request, int epollFD)
 {
 	_isReturn = false;
 
@@ -166,6 +169,16 @@ void SendData::sendResponse(int clientSocket, std::vector<ServerBlock> &servers,
 			std::string root = location.getRoot() + request.path;
 			if (location.getReturn().empty())
 			{
+				/* if (request.path.find("cgi")) // need to check correctly for CGI paths here + if they're in the config file
+				{
+					CGI cgi(root + request.path, request);
+					cgi.setEnv();
+					cgi.executeScript();
+					cgi.generateResponse();
+					cgi.createhtml();
+					this->read_file("cgi_output.html", request);
+				} */
+
 				if (_isDir)
 				{
 					bool foundFile = findIndexFile(location.getIndex(), root, request);
@@ -176,6 +189,7 @@ void SendData::sendResponse(int clientSocket, std::vector<ServerBlock> &servers,
 					else if (!foundFile)
 						notfound();
 				}
+				//How should I check for CGI?
 				else
 				{
 					if (!this->read_file(root, request))
@@ -194,15 +208,15 @@ void SendData::sendResponse(int clientSocket, std::vector<ServerBlock> &servers,
 			notfound();
 		}
 	}
-	if (request.method == "POST") // this is not an important step, just checking if the Post wrok
+	if (request.method == "POST")
 	{
 		//std::cout << "this body :" << request.body << std::endl;
-		saveBodyToFile("../website/upload/amalkhal.txt", request);
+		saveBodyToFile("../website/upload/" + request.fileName, request);
 		_response.status = "HTTP/1.1 200 OK\r\n";
 		_response.contentType = "Content-Type: text/html;\r\n";
-		_response.contentLength = "Content-Length: 122\r\n";
 		_response.body = "<!DOCTYPE html><html><head><title>200 OK</title></head>";
-		_response.body += "<body><h1>200 OK</h1><p>Thank You for login info.</p></body></html>";
+		_response.body += "<body><h1>200 OK</h1><p>file saved</p></body></html>";
+		_response.contentLength = "Content-Length: " + intToString(_response.body.size()) + "\r\n";
 	}
 
 	std::string resp;
@@ -211,9 +225,19 @@ void SendData::sendResponse(int clientSocket, std::vector<ServerBlock> &servers,
 		resp = _response.status + _response.location  + _response.contentType + _response.contentLength + "\r\n" + _response.body;
 	else
 		resp = _response.status + _response.contentType + _response.contentLength + "\r\n" + _response.body;
-	const char *resp_cstr = resp.c_str();
-	size_t resp_length = resp.size();
-	send(clientSocket, resp_cstr, resp_length, 0);
+	
+
+	struct epoll_event client_event;
+    client_event.data.fd = clientSocket;
+    client_event.events = EPOLLOUT;
+	if (epoll_ctl(epollFD, EPOLL_CTL_MOD, clientSocket, &client_event) == -1)
+    {
+        close(clientSocket);
+        throw std::runtime_error("epoll_ctl");
+    }
+	//std::cout << BLUE_COLOR << "sending response " << RESET << std::endl;
+	//std::cout << resp << std::endl;
+	return resp;
 }
 
 
@@ -230,6 +254,7 @@ void SendData::saveBodyToFile(const std::string &filename, parser &request)
         // Handle error opening file
         std::cerr << "Error opening file for writing: " << filename << std::endl;
     }
+	request.body.clear();
 }
 
 std::vector<std::pair<std::string, std::string> >	listDirectory(const std::string& path) {

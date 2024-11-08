@@ -34,7 +34,9 @@ class Epoll
 		RequestHandler requestHandle;
 		SendData sendData;
 		std::vector<ServerBlock>& _servers;
+		std::string _buffer;
 	public :
+		//getEpollFD() { return _epollFD; }
 		Epoll(const std::vector<int>& serverSockets, std::vector<ServerBlock>& servers);
 		~Epoll();
 		void acceptConnection(const std::vector<int>& serverSockets);
