@@ -137,7 +137,7 @@ std::string SendData::sendResponse(int clientSocket, std::vector<ServerBlock> &s
 			std::string root = location.getRoot() + request.path;
 			if (location.getReturn().empty())
 			{
-				if (request.path.find("cgi")) // need to check correctly for CGI paths here + if they're in the config file
+				/* if (request.path.find("cgi")) // need to check correctly for CGI paths here + if they're in the config file
 				{
 					CGI cgi(root + request.path, request);
 					cgi.setEnv();
@@ -145,7 +145,7 @@ std::string SendData::sendResponse(int clientSocket, std::vector<ServerBlock> &s
 					cgi.generateResponse();
 					cgi.createhtml();
 					this->read_file("cgi_output.html", request);
-				}
+				} */
 
 				if (_isDir)
 				{
