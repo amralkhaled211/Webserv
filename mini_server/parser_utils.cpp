@@ -48,6 +48,15 @@ size_t stringToSizeT(const std::string& str)
 }
 
 
+size_t stringToSizeT(const std::string& str)
+{
+	std::stringstream ss(str);
+	size_t value;
+	ss >> value;
+	return value;
+}
+
+
 bool isDirectory(const std::string& path)
 {
 	struct stat path_stat;

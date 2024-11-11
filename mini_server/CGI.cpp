@@ -29,14 +29,26 @@ std::vector<char*> CGI::setUpEnvp()
     return envp;
 }
 
-void CGI::setEnv()
+std::string join(const std::vector<std::string>& vec, const std::string& delimiter)
+{
+    std::ostringstream oss;
+    for (size_t i = 0; i < vec.size(); ++i)
+    {
+        if (i != 0)
+            oss << delimiter;
+        oss << vec[i];
+    }
+    return oss.str();
+}
+
+void CGI::setEnv(ServerBlock server)
 {
 	_env["REQUEST_METHOD"] = _request.method;
 	_env["QUERY_STRING"] = _request.queryString;
 	_env["SCRIPT_NAME"] = _scriptPath;
 	_env["PATH_INFO"] = _request.path;
 	_env["PATH_TRANSLATED"] = "/translated/path" + _request.path;
-	_env["SERVER_NAME"] = "localhost";
+	_env["SERVER_NAME"] = join(server.getServerName(), ", ");//replace with actual host name etc THIS  IS HARDCODED RN
 	_env["SERVER_PORT"] = "8080";
 	_env["SERVER_PROTOCOL"] = "HTTP/1.1";
 	std::string remoteAddr = "127.0.0.1"; // Replace with actual method to get remote address
@@ -148,6 +160,7 @@ void CGI::executeScript()
         if (execve(_scriptPath.c_str(), arg, &envp[0]) == -1)
         {
             std::cerr << "Failed to execute CGI script: " << strerror(errno) << std::endl;
+			throw std::runtime_error("Failed to execute CGI script");
             freeEnvp(envp);
             exit(1);
         }

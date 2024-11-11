@@ -2,6 +2,7 @@
 
 #include "Server.hpp"
 #include "RequestHandler.hpp"
+#include "config_parser/LocationBlock.hpp"
 #include <sys/wait.h>
 
 class CGI
@@ -21,7 +22,7 @@ class CGI
 
 		Response getResponse() const;
 
-		void setEnv();
+		void setEnv(ServerBlock server);
 		void executeScript();
 		void generateResponse();
 		void createhtml();
