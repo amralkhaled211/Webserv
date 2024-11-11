@@ -166,10 +166,6 @@ void	ServerBlock::printServerBlock() {
 	for (size_t i = 0; i < this->_return.size(); i++)
 		std::cout << this->_return[i] << " ";
 	std::cout << std::endl;
-	std::cout << "Try Files: ";
-	for (size_t i = 0; i < this->_try_files.size(); i++)
-		std::cout << this->_try_files[i] << " ";
-	std::cout << std::endl;
 	std::cout << "Index: ";
 	for (size_t i = 0; i < this->_index.size(); i++)
 		std::cout << this->_index[i] << " ";

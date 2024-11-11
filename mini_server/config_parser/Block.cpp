@@ -6,7 +6,6 @@ Block::Block(std::string type) : _blockType(type) {
 	this->_root = "";
 	this->_error_page = std::vector<std::string>();
 	this->_return = std::vector<std::string>();
-	this->_try_files = std::vector<std::string>();
 	this->_index = std::vector<std::string>();
 	this->_autoindex = NOT_SET;
 	this->_client_max_body_size = "";
@@ -22,7 +21,6 @@ Block&	Block::operator=( const Block& other ) {
 	this->_root = other._root;
 	this->_error_page = other._error_page;
 	this->_return = other._return;
-	this->_try_files = other._try_files;
 	this->_index = other._index;
 	this->_autoindex = other._autoindex;
 
@@ -40,8 +38,6 @@ void	Block::setErrorPage(std::vector<std::string>& error_page) { this->_error_pa
 
 void	Block::setReturn(std::vector<std::string>& ret) { this->_return = ret; }
 
-void	Block::setTryFiles(std::vector<std::string>& try_files) { this->_try_files = try_files; }
-
 void	Block::setIndex(std::vector<std::string>& index) { this->_index = index; }
 
 void	Block::setAutoindex(bool autoindex) { this->_autoindex = autoindex; }
@@ -56,8 +52,6 @@ const std::string&	Block::getRoot() const { return this->_root; }
 const std::vector<std::string>&	Block::getErrorPage() const { return this->_error_page; }
 
 const std::vector<std::string>&	Block::getReturn() const { return this->_return; }
-
-const std::vector<std::string>&	Block::getTryFiles() const { return this->_try_files; }
 
 const std::vector<std::string>&	Block::getIndex() const { return this->_index; }
 
@@ -124,6 +118,34 @@ void	removeExcessSlashes(std::string& path) // this should be used when working 
 	path = result;
 }
 
+static bool		invalidMeasurementPostfix(std::string& directiveValue) {
+
+	size_t		len = directiveValue.size();
+	std::string	measurementUnitSet("kmg"); // kilo, mega and giga byte
+
+	size_t		postfixNotSet = measurementUnitSet.find(directiveValue[len - 1]) == std::string::npos;
+
+	if (postfixNotSet && !std::isdigit(directiveValue[len - 1])) // can we use isdigit()???
+		return true;
+	else if (postfixNotSet)
+		directiveValue += 'm';
+
+	std::stringstream	ss(directiveValue.c_str());
+
+	int			size;
+	std::string	word;
+
+	ss >> size;
+	if (ss.fail())
+		return true;
+
+	ss >> word;
+	if (!ss.eof() || word.size() != 1)
+		return true;
+
+	return false;
+}
+
 bool		Block::_addCommonDirective(const std::string& directiveKey, std::string& directiveValue) { // to add: invalid values
 	std::vector<std::string>	valueArgs(splitString(directiveValue));
 	size_t						amountArgs(valueArgs.size());
@@ -146,16 +168,9 @@ bool		Block::_addCommonDirective(const std::string& directiveKey, std::string& d
 	}
 	else if (directiveKey == "return") {
 		invalidReturnSyntax(valueArgs);
-		if (!this->_return.empty()) {
+		if (!this->_return.empty())// no duplicate check, nginx multiple but will only use the first, maybe we should do it different???
 			return true;
-		}
 		this->_return = valueArgs;
-		return true;
-	}
-	else if (directiveKey == "try_files") { // NO NEED TO HANDLE THIS
-		if (!this->_try_files.empty())
-			throw std::runtime_error("Duplicate try_files Directive");
-		this->_try_files = valueArgs;
 		return true;
 	}
 	else if (directiveKey == "index") { // requires new implementation, not handling some cases
@@ -180,9 +195,12 @@ bool		Block::_addCommonDirective(const std::string& directiveKey, std::string& d
 		if (!this->_client_max_body_size.empty())
 			throw std::runtime_error("Duplicate client_max_body_size Directive");
 		else if (amountArgs != 1)
-			throw std::runtime_error("Invalid client_max_body_size Directive");
-		else
+			throw std::runtime_error("Invalid client_max_body_size Directive, too many args");
+		// client_max_body_size error handling
+		else if (!invalidMeasurementPostfix(directiveValue))
 			this->_client_max_body_size = directiveValue;
+		else
+			throw std::runtime_error("Invalid client_max_body_size Directive");
 		return true;
 	}
 	return false;

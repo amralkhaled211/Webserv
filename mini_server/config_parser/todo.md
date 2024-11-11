@@ -16,14 +16,16 @@
 
 
 ### CODING
-- [ ] REMOVE TRY_FILES FROM PARSING
+- [x] REMOVE TRY_FILES FROM PARSING
 
 
-- [ ] PARSER ERROR HANDLING FOR 
+- [ ] PARSER ERROR HANDLING FOR
   - [ ] ERROR_PAGE - see below for details
   - [ ] INDEX - only last can be absolute path
-  - [ ] client_max_body_size -> accepted k,m,g as postfix, 0 means do not check size
+  - [x] client_max_body_size -> accepted k,m,g as postfix, 0 means do not check size
+  - [ ] cgi-ext and cgi-path
 
+- [ ] autoindex better design
 
 - [X] decide on listen directive
 - [X] defualt allowed_methods

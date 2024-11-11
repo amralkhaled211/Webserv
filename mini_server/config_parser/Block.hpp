@@ -20,7 +20,6 @@ class Block // parent // the purpose of this is just to not have class with the 
 		std::string					_root;
 		std::vector<std::string>	_error_page; // a block can have more then one error_page
 		std::vector<std::string>	_return;
-		std::vector<std::string>	_try_files; // won't handle as of now
 		std::vector<std::string>	_index;
 		char						_autoindex;
 		std::string					_client_max_body_size;
@@ -38,7 +37,6 @@ class Block // parent // the purpose of this is just to not have class with the 
 		void		setRoot(std::string& root);
 		void		setErrorPage(std::vector<std::string>& error_page);
 		void		setReturn(std::vector<std::string>& ret);
-		void		setTryFiles(std::vector<std::string>& try_files);
 		void		setIndex(std::vector<std::string>& index);
 		void		setAutoindex(bool autoindex);
 
