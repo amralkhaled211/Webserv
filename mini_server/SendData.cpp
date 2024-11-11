@@ -123,6 +123,37 @@ bool SendData::findIndexFile(const std::vector<std::string> &files, std::string 
 	return false;
 }
 
+bool SendData::isCGI(const parser &request, LocationBlock location)
+{
+	if (request.path.find("/cgi-bin/") != std::string::npos)
+	{
+		std::string file_extension = '.' +  get_file_extension(request.path);
+		std::vector<std::string> allowed_ext = location.getCgiExt();
+		bool isAllowed = false;
+		for (std::vector<std::string>::iterator it = allowed_ext.begin(); it != allowed_ext.end(); it++)
+		{
+			/* std::cout << "allowed ext : " << *it << std::endl; */
+			if (*it == file_extension)
+			{
+				isAllowed = true;
+				break;
+			}
+		}
+		if (isAllowed)
+		{
+			/* std::cout << "Extension " << file_extension << " is allowed " << std::endl; */
+			return true;
+		}
+		else
+		{
+			/* std::cout << "Extension " << file_extension << " is not allowed " << std::endl; */
+			return false;
+		}
+	}
+	else
+		return false;
+}
+
 std::string SendData::sendResponse(int clientSocket, std::vector<ServerBlock> &servers, parser &request, int epollFD)
 {
 	_isReturn = false;
@@ -135,24 +166,33 @@ std::string SendData::sendResponse(int clientSocket, std::vector<ServerBlock> &s
 		{
 			LocationBlock location = findLocationBlock(current_server.getLocationVec(), request);
 			std::string root = location.getRoot() + request.path;
+			/* std::cout << MAGENTA_COLOR << "Root: " << root << std::endl << "Request path:" <<  request.path << RESET << std::endl;
+			location.printLocationBlock(); */
 			if (location.getReturn().empty())
 			{
-				/* if (request.path.find("cgi")) // need to check correctly for CGI paths here + if they're in the config file
-				{
-					CGI cgi(root + request.path, request);
-					cgi.setEnv();
-					cgi.executeScript();
-					cgi.generateResponse();
-					cgi.createhtml();
-					this->read_file("cgi_output.html", request);
-				} */
-
 				if (_isDir)
 				{
 					if (!findIndexFile(location.getIndex(), root, request))
 						notfound();
 				}
-				//How should I check for CGI?
+				else if (isCGI(request, location))
+				{
+					std::cout << RED_COLOR << "In CGI" << RESET << std::endl;
+					try 
+					{
+						CGI cgi(root, request);
+						cgi.setEnv(current_server);
+						cgi.executeScript();
+						cgi.generateResponse();
+						cgi.createhtml();
+						this->read_file("cgi_output.html", request);
+					}
+					catch (const std::exception &e)
+					{
+						std::cerr << e.what() << std::endl;
+						notfound();
+					}
+				}
 				else
 				{
 					if (!this->read_file(root, request))
