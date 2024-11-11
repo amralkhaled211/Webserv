@@ -205,20 +205,10 @@ std::string SendData::sendResponse(int clientSocket, std::vector<ServerBlock> &s
 		{
 			LocationBlock location = findLocationBlock(current_server.getLocationVec(), request);
 			std::string root = location.getRoot() + request.path;
-			/* std::cout << MAGENTA_COLOR << "Root: " << root << std::endl << "Request path:" <<  request.path << RESET << std::endl;
-			location.printLocationBlock(); */
+			std::cout << MAGENTA_COLOR << "Root: " << root << std::endl << "Request path:" <<  request.path << RESET << std::endl;
+			location.printLocationBlock();
 			if (location.getReturn().empty())
 			{
-				/* if (request.path.find("cgi")) // need to check correctly for CGI paths here + if they're in the config file
-				{
-					CGI cgi(root + request.path, request);
-					cgi.setEnv();
-					cgi.executeScript();
-					cgi.generateResponse();
-					cgi.createhtml();
-					this->read_file("cgi_output.html", request);
-				} */
-
 				if (_isDir)
 				{
 					bool foundFile = findIndexFile(location.getIndex(), root, request);
@@ -285,20 +275,6 @@ std::string SendData::sendResponse(int clientSocket, std::vector<ServerBlock> &s
 		resp = _response.status + _response.location  + _response.contentType + _response.contentLength + "\r\n" + _response.body;
 	else
 		resp = _response.status + _response.contentType + _response.contentLength + "\r\n" + _response.body;
-	
-
-	struct epoll_event client_event;
-    client_event.data.fd = clientSocket;
-    client_event.events = EPOLLOUT;
-	if (epoll_ctl(epollFD, EPOLL_CTL_MOD, clientSocket, &client_event) == -1)
-    {
-        close(clientSocket);
-        throw std::runtime_error("epoll_ctl");
-    }
-	//std::cout << BLUE_COLOR << "sending response " << RESET << std::endl;
-	//std::cout << resp << std::endl;
-	return resp;
-	
 
 	struct epoll_event client_event;
     client_event.data.fd = clientSocket;
