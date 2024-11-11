@@ -3,7 +3,6 @@
 - [ ] Integrate LocationBlock & ServerBlock attributes into CGI header and code
 - [ ] CGI Enviroment setup with correct values
 - [ ] Setup signals for interrupting infinite loops
-- [ ] Return an error when execve cannot open file, use the notfound page there as well
 - [ ] Return an error when file extension is not allowed, error page here or not found page??
 
 ## LEARNING
@@ -19,5 +18,7 @@
 
 #### DONE
 
+- [x] Return an error when execve cannot open file, use the notfound page there as well
 - [x] Check for allowed extensions -> compare request path extension with allowed ones
 - [x] Check for a CGI request a better way
+- [x] Test with images and vids
