@@ -187,7 +187,8 @@ std::string SendData::sendResponse(int clientSocket, std::vector<ServerBlock> &s
 						this->displayDir(root, request.path);
 					}
 					else if (!foundFile)
-						notfound();
+						prepErrorResponse(404, location);
+						// notfound();
 				}
 				//How should I check for CGI?
 				else
@@ -212,11 +213,10 @@ std::string SendData::sendResponse(int clientSocket, std::vector<ServerBlock> &s
 	{
 		//std::cout << "this body :" << request.body << std::endl;
 		saveBodyToFile("../website/upload/" + request.fileName, request);
-		_response.status = "HTTP/1.1 200 OK\r\n";
-		_response.contentType = "Content-Type: text/html;\r\n";
+		// we should have a function that creates responses, based on the Code and body, file type
 		_response.body = "<!DOCTYPE html><html><head><title>200 OK</title></head>";
 		_response.body += "<body><h1>200 OK</h1><p>file saved</p></body></html>";
-		_response.contentLength = "Content-Length: " + intToString(_response.body.size()) + "\r\n";
+		createResponseHeader(200, _response.body.size(), "text/html;");
 	}
 
 	std::string resp;
@@ -261,16 +261,18 @@ std::vector<std::pair<std::string, std::string> >	listDirectory(const std::strin
 	std::vector<std::pair<std::string, std::string> >	elements;
 	DIR*	dir = opendir(path.c_str());
 	if (dir == NULL) {
-		// handle error
+		// handle error, should I throw exception?
+		// it can return NULL, if no permission to open directory!
 		return elements;
 	}
 
 	struct dirent* entry;
 	std::string	name;
+	std::string	fullPath;
 	while ((entry = readdir(dir)) != NULL) {
 		name = entry->d_name;
 		if (name != "." && (name == ".." || name[0] != '.')) { // not accepting hidden files, except of ".."
-			std::string	fullPath = path + '/' + name;
+			fullPath = path + '/' + name;
 			struct stat statbuf;
 			if (stat(fullPath.c_str(), &statbuf) == 0) {
 				if (S_ISDIR(statbuf.st_mode))
@@ -311,13 +313,13 @@ void		SendData::displayDir(const std::string& path, const std::string& requestPa
 	// first pair-element is the element, second one is the full path, but with a '/' at the end for directories
 	std::vector<std::pair<std::string, std::string> >	dirElements(listDirectory(path));
 
-	// must embed the dirElements into a html file
 	// std::cout << "Elements in directory " << path << ":" << std::endl;
 	// std::cout << "Dir/File Name" << std::setw(30) << "Dir/File Path\n";
 	// for (size_t i = 0; i < dirElements.size(); ++i) {
 	// 	std::cout << dirElements[i].first << std::setw(50) << dirElements[i].second << std::endl;
 	// }
 
+	// must embed the dirElements into a html file
 	std::ostringstream html;
 	html << "<!DOCTYPE html><html><head><title>Index of " << escapeHtml(requestPath) << "</title></head><body>";
 	html << "<h1>Index of " << escapeHtml(requestPath) << "</h1>";
@@ -342,4 +344,89 @@ void		SendData::displayDir(const std::string& path, const std::string& requestPa
 	_response.contentType = "Content-Type: text/html;\r\n";
 	unsigned int content_len = _response.body.size();
 	_response.contentLength = "Content-Length: " + intToString(content_len) + "\r\n";
+}
+
+
+bool			codeDefinedInErrorPage(int code, const std::vector<std::string>& errorPage)
+{
+	std::stringstream	ss;
+	int					errCode;
+
+	for (size_t i = 0; i < errorPage.size() - 1; ++i) {
+		ss << errorPage[i];
+		ss >> errCode;
+		if (errCode == code)
+			return true;
+	}
+	return false;
+}
+
+std::string		getErrorPagePath(int code, const std::vector<std::string>& errorPage)
+{
+	if (errorPage.empty())
+		return "";
+	if (codeDefinedInErrorPage(code, errorPage))
+		return errorPage.back();
+	return "";
+}
+
+void		SendData::createResponseHeader(int code, int bodySize, std::string contentTypes) {
+	_response.status = "HTTP/1.1 " + intToString(code) + " " + _status._statusMsg[code][0] + "\r\n";
+	_response.contentType = "Content-Type: " + contentTypes + "\r\n";
+	_response.contentLength = "Content-Length: " + intToString(bodySize) + "\r\n";
+}
+
+bool		readFromErrorPage(std::string& errorPagePath, std::string& body) {
+
+	std::ifstream	file(errorPagePath.c_str());
+	std::string		line;
+
+	// probably permission issue or file doesnt exist
+	if (!file.is_open())
+		return false;
+
+	std::stringstream	ss;
+	ss << file.rdbuf();
+
+	body = ss.str();
+	return true;
+}
+
+
+void		SendData::prepErrorResponse(int code, LocationBlock& location) {
+
+	std::string		errorPagePath = getErrorPagePath(code, location.getErrorPage());
+	std::cout << BOLD_RED << "errorPagePath: " << errorPagePath << RESET << "\n";
+	std::string		contentType;
+	bool			newErrorOccured = false;
+
+	// we have a errorPage case
+	if (!errorPagePath.empty()) { // need to create error response from errorPage
+		errorPagePath = location.getRoot() + errorPagePath;
+		std::cout << BOLD_RED << "errorPagePath: " << errorPagePath << RESET << "\n";
+		if (readFromErrorPage(errorPagePath, _response.body)) { // body gets init with right errorpage content
+			contentType = mimeTypesMap_G[get_file_extension(errorPagePath)];
+			if (contentType == "") {
+				// if we don't accept this mime type
+				newErrorOccured = true;
+				// gotta see what we do here
+				// prepErrorResponse();
+				return ;
+			}
+		} else {
+			// if file has issues to be opened
+			newErrorOccured = true;
+			if (code != 404)
+				prepErrorResponse(404, location);
+			// else
+
+			return ; // to avoid overriding the _response
+		}
+	} else { // need to create hardcoded error response
+		_response.body = "<!DOCTYPE html><html><head><title>" + intToString(code) + " " + _status._statusMsg[code][0]/*  + " Not Found" */ + "</title></head>";
+		_response.body += "<body><h1>" + intToString(code) + " " + _status._statusMsg[code][0] + "</h1><p>" + _status._statusMsg[code][1] + "</p></body></html>";
+		contentType = mimeTypesMap_G["html"];
+	}
+
+	createResponseHeader(code, _response.body.size(), contentType);
 }

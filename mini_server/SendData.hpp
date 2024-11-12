@@ -1,5 +1,6 @@
 #pragma once
 #include "RequestHandler.hpp"
+#include "StatusMsg.hpp"
 
 typedef struct Redirection
 {
@@ -30,6 +31,7 @@ class SendData
 	Redirection _redir;
 	bool _isDir;
 	bool _isReturn;
+	StatusMsg _status;
 	
 	public:
 	void notfound();
@@ -48,4 +50,6 @@ class SendData
 	void saveBodyToFile(const std::string &filename, parser &request);
 	std::string sendResponse(int clientSocket, std::vector<ServerBlock> &servers, parser &request, int epollFD);
 	void displayDir(const std::string& path, const std::string& requestPath);
+	void prepErrorResponse(int code, LocationBlock& locationBlock);
+	void createResponseHeader(int code, int bodySize, std::string contentTypes);
 };

@@ -16,6 +16,7 @@ void Epoll::init_epoll(const std::vector<int> &serverSockets)
             throw std::runtime_error("epoll_ctl");
     }
 }
+
 void Epoll::acceptConnection(const std::vector<int> &serverSockets)
 {
     init_epoll(serverSockets);
@@ -38,7 +39,7 @@ void Epoll::handleEpollEvents(const std::vector<int> &serverSockets)
     }
     for (int i = 0; i < n; ++i)
     {
-        if (_events[i].events & (EPOLLERR | EPOLLHUP | EPOLLRDHUP))
+        if (_events[i].events & (EPOLLERR | EPOLLHUP | EPOLLRDHUP)) // what do these errors/flags mean?
         {
             std::cerr << "Error on fd " << _events[i].data.fd << ": ";
             if (_events[i].events & EPOLLERR) std::cerr << YELLOW_COLOR << "EPOLLERR " << RESET_COLOR;
@@ -51,12 +52,12 @@ void Epoll::handleEpollEvents(const std::vector<int> &serverSockets)
             //continue;
             return;
         }
-        if (std::find(serverSockets.begin(), serverSockets.end(), _events[i].data.fd) != serverSockets.end())
+        if (std::find(serverSockets.begin(), serverSockets.end(), _events[i].data.fd) != serverSockets.end()) // find which serverFD the request came to, and accept it in 
             handleConnection(_events[i].data.fd);
         // else if (_events[i].events & EPOLLIN || _events[i].events & EPOLLET)
-        else if (_events[i].events & EPOLLIN )
-            handleData(_events[i].data.fd);
-        else if (_events[i].events & EPOLLOUT)
+        else if (_events[i].events & EPOLLIN ) // does this have to be else if OR can it also be just if
+            handleData(_events[i].data.fd); // handle incoming request
+        else if (_events[i].events & EPOLLOUT) // handle outgoing response
         {
             // std::cout << "Sending data" << std::endl;
             send(_events[i].data.fd, _buffer.c_str(), _buffer.size(), 0);
@@ -65,6 +66,7 @@ void Epoll::handleEpollEvents(const std::vector<int> &serverSockets)
         }
     }
 }
+
 void Epoll::handleData(int client_fd)
 {
     // std::cout << "Data received" << std::endl;
@@ -72,7 +74,7 @@ void Epoll::handleData(int client_fd)
     if (requestHandle.parseRequest())
     {
         //std::cout << "ready to send . " << std::endl;
-        _buffer = sendData.sendResponse(client_fd, _servers, requestHandle.getRequest(), _epollFD);
+        _buffer = sendData.sendResponse(client_fd, _servers, requestHandle.getRequest(), _epollFD); // consider change of name to prepareResponse()
     }
 }
 

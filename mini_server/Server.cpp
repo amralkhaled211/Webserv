@@ -100,7 +100,7 @@ void Server::createSocket()
     {
         bindNamesWithPorts(_servers[i].getServerName(), _servers[i].getListen());
     }
-    Epoll epoll(_serverSockets, _servers);
+    Epoll epoll(_serverSockets, _servers); // maybe we should start everything in run(), not in createSocket()
 }
 
 

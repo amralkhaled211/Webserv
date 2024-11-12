@@ -188,6 +188,7 @@ bool RequestHandler::parseRequest()
 	}
 	return false;
 }
+
 RequestHandler::RequestHandler()
 {
 	_isChunked = false;
