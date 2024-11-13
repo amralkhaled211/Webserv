@@ -73,8 +73,8 @@ LocationBlock SendData::findLocationBlock(std::vector<LocationBlock> &locations,
 
 			if (location.getPrefix() == possibleReqLoc[i]) // need to make sure the prefix is also cleaned from excess slashes
 			{
-				std::cout << "location prefix: " << location.getPrefix() << std::endl;
-				std::cout << "possibleReqLoc[i] : " << possibleReqLoc[i] << std::endl;
+				/* std::cout << "location prefix: " << location.getPrefix() << std::endl;
+				std::cout << "possibleReqLoc[i] : " << possibleReqLoc[i] << std::endl; */
 			
 				fullPath = location.getRoot() + possibleReqLoc[i];
 				std::cout << BOLD_GREEN << "full path " << fullPath << RESET << std::endl;
@@ -255,7 +255,6 @@ std::string SendData::sendResponse(int clientSocket, std::vector<ServerBlock> &s
 			notfound();
 		}
 	}
-	if (request.method == "POST")
 	if (request.method == "POST")
 	{
 		//std::cout << "this body :" << request.body << std::endl;
