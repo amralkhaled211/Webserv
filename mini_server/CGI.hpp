@@ -12,9 +12,9 @@ class CGI
 		std::string _scriptPath;
 		std::string _responseBody;
 		std::string _contentType;
+		parser _request;
 		bool 		_typeSet;
 		std::map<std::string, std::string> _env;
-		parser _request;
 		//Response		_response;
 
 	public:
