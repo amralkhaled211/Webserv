@@ -2,6 +2,7 @@
 
 #include "Server.hpp"
 #include "RequestHandler.hpp"
+#include "config_parser/LocationBlock.hpp"
 #include <sys/wait.h>
 
 class CGI
@@ -9,9 +10,12 @@ class CGI
 	private:
 		
 		std::string _scriptPath;
-		std::map<std::string, std::string> _env;
+		std::string _responseBody;
+		std::string _contentType;
 		parser _request;
-		Response		_response;
+		bool 		_typeSet;
+		std::map<std::string, std::string> _env;
+		//Response		_response;
 
 	public:
 
@@ -19,9 +23,11 @@ class CGI
 		CGI(const std::string &scriptPath, const parser &request);
 		~CGI();
 
-		Response getResponse() const;
+		std::string getResponse() const;
+		std::string getContentType() const;
+		bool getTypeSet() const;
 
-		void setEnv();
+		void setEnv(ServerBlock server);
 		void executeScript();
 		void generateResponse();
 		void createhtml();

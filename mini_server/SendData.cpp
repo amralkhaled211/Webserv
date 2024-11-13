@@ -1,5 +1,6 @@
 #include "SendData.hpp"
 #include "CGI.hpp"
+#include "CGI.hpp"
 
 void SendData::notfound()
 {
@@ -30,6 +31,39 @@ bool SendData::read_file(std::string const &path, parser &request) // this alrea
 		return true;
 	}
 	return false;
+}
+
+void SendData::handleCGI(const std::string &root, parser &request, ServerBlock server, LocationBlock location) //will need to return errors from here
+{
+	std::string file_extension = '.' +  get_file_extension(request.path);
+	std::vector<std::string> allowed_ext = location.getCgiExt();
+	bool isAllowed = false;
+	for (std::vector<std::string>::iterator it = allowed_ext.begin(); it != allowed_ext.end(); it++)
+	{
+		/* std::cout << "allowed ext : " << *it << std::endl; */
+		if (*it == file_extension)
+		{
+			isAllowed = true;
+				break;
+		}
+	}
+	if (!isAllowed)
+	{
+		throw std::runtime_error("CGI extension not allowed");
+	}
+	CGI cgi(root, request);
+	cgi.setEnv(server);
+	cgi.executeScript();
+	cgi.generateResponse();
+	_response.body = cgi.getResponse();
+	_response.status = "HTTP/1.1 200 OK\r\n";
+	file_extension = get_file_extension(request.path);
+	if (cgi.getTypeSet())
+		_response.contentType = cgi.getContentType() + ";" + "\r\n";
+	else
+		_response.contentType = "Content-Type: text/html;\r\n";
+	unsigned int content_len = _response.body.size();
+	_response.contentLength = "Content-Length: " + intToString(content_len) + "\r\n";
 }
 
 std::vector<std::string>	possibleRequestedLoc(std::string uri) {
@@ -72,11 +106,11 @@ LocationBlock SendData::findLocationBlock(std::vector<LocationBlock> &locations,
 
 			if (location.getPrefix() == possibleReqLoc[i]) // need to make sure the prefix is also cleaned from excess slashes
 			{
-				std::cout << "location prefix: " << location.getPrefix() << std::endl;
-				std::cout << "possibleReqLoc[i] : " << possibleReqLoc[i] << std::endl;
+				/* std::cout << "location prefix: " << location.getPrefix() << std::endl;
+				std::cout << "possibleReqLoc[i] : " << possibleReqLoc[i] << std::endl; */
 			
 				fullPath = location.getRoot() + possibleReqLoc[i];
-				std::cout << BOLD_GREEN << "full path " << fullPath << RESET << std::endl;
+				/* std::cout << BOLD_GREEN << "full path " << fullPath << RESET << std::endl; */
 				
 				fullPath = location.getRoot() + '/' + possibleReqLoc[0]; // for defining whether request is a directory or a file
 				if (isDirectory(fullPath))
@@ -92,6 +126,11 @@ LocationBlock SendData::findLocationBlock(std::vector<LocationBlock> &locations,
 		//	std::cout << "location prefix : " << location.getPrefix() << std::endl;
 		//	std::cout << "spiltedDir[i] : " << spiltedDir[i] << std::endl;
 		//}
+		//else 
+		//{
+		//	std::cout << "location prefix : " << location.getPrefix() << std::endl;
+		//	std::cout << "spiltedDir[i] : " << spiltedDir[i] << std::endl;
+		//}
 	}
 	std::cout << BOLD_RED << "COULD NOT FIND LOCATION BLOCK" << RESET << std::endl;
 	throw std::exception(); // this is temporary, will create a error handling mechanism
@@ -100,6 +139,7 @@ LocationBlock SendData::findLocationBlock(std::vector<LocationBlock> &locations,
 ServerBlock SendData::findServerBlock(std::vector<ServerBlock> &servers, parser &request) // uses the Host header field -> server_name:port -> Host: localhost:8081
 {
 	std::string host = request.headers["Host"];
+	//std::cout << "host : " << host << std::endl;
 	//std::cout << "host : " << host << std::endl;
 	size_t colon_pos = host.find(':');
 	std::string server_name = (colon_pos != std::string::npos) ? host.substr(0, colon_pos) : host;
@@ -155,6 +195,14 @@ bool SendData::findIndexFile(const std::vector<std::string> &files, std::string 
 	return false;
 }
 
+bool SendData::isCGI(const parser &request, LocationBlock location)
+{
+	if (request.path.find("/cgi-bin/") != std::string::npos)
+		return true;
+	else
+		return false;
+}
+
 std::string SendData::sendResponse(int clientSocket, std::vector<ServerBlock> &servers, parser &request, int epollFD)
 {
 	_isReturn = false;
@@ -167,18 +215,10 @@ std::string SendData::sendResponse(int clientSocket, std::vector<ServerBlock> &s
 		{
 			LocationBlock location = findLocationBlock(current_server.getLocationVec(), request);
 			std::string root = location.getRoot() + request.path;
+			std::cout << MAGENTA_COLOR << "Root: " << root << std::endl << "Request path:" <<  request.path << RESET << std::endl;
+			/* location.printLocationBlock(); */
 			if (location.getReturn().empty())
 			{
-				/* if (request.path.find("cgi")) // need to check correctly for CGI paths here + if they're in the config file
-				{
-					CGI cgi(root + request.path, request);
-					cgi.setEnv();
-					cgi.executeScript();
-					cgi.generateResponse();
-					cgi.createhtml();
-					this->read_file("cgi_output.html", request);
-				} */
-
 				if (_isDir)
 				{
 					bool foundFile = findIndexFile(location.getIndex(), root, request);
@@ -190,7 +230,11 @@ std::string SendData::sendResponse(int clientSocket, std::vector<ServerBlock> &s
 						prepErrorResponse(404, location);
 						// notfound();
 				}
-				//How should I check for CGI?
+				else if (isCGI(request, location)) // might need to rethink this, eg. if resource for video.py is in cgi-bin it wont output the video beacuse it thinks its not an acceptable extension
+				{
+					std::cout << RED_COLOR << "In CGI" << RESET << std::endl;
+					handleCGI(root, request, current_server, location);
+				}
 				else
 				{
 					if (!this->read_file(root, request))
@@ -205,6 +249,8 @@ std::string SendData::sendResponse(int clientSocket, std::vector<ServerBlock> &s
 		}
 		catch (const std::exception &e)
 		{
+			std::string error = e.what();
+			std::cout << RED_COLOR << "Error: " << error << RESET << std::endl;
 			// i should here send the right error for invalid locations
 			notfound();
 		}
@@ -216,7 +262,7 @@ std::string SendData::sendResponse(int clientSocket, std::vector<ServerBlock> &s
 		// we should have a function that creates responses, based on the Code and body, file type
 		_response.body = "<!DOCTYPE html><html><head><title>200 OK</title></head>";
 		_response.body += "<body><h1>200 OK</h1><p>file saved</p></body></html>";
-		createResponseHeader(200, _response.body.size(), "text/html;");
+		_response.contentLength = "Content-Length: " + intToString(_response.body.size()) + "\r\n";
 	}
 
 	std::string resp;
@@ -225,7 +271,6 @@ std::string SendData::sendResponse(int clientSocket, std::vector<ServerBlock> &s
 		resp = _response.status + _response.location  + _response.contentType + _response.contentLength + "\r\n" + _response.body;
 	else
 		resp = _response.status + _response.contentType + _response.contentLength + "\r\n" + _response.body;
-	
 
 	struct epoll_event client_event;
     client_event.data.fd = clientSocket;
@@ -235,8 +280,8 @@ std::string SendData::sendResponse(int clientSocket, std::vector<ServerBlock> &s
         close(clientSocket);
         throw std::runtime_error("epoll_ctl");
     }
-	//std::cout << BLUE_COLOR << "sending response " << RESET << std::endl;
-	//std::cout << resp << std::endl;
+	/* std::cout << BLUE_COLOR << "sending response " << RESET << std::endl;
+	std::cout << resp << std::endl; */
 	return resp;
 }
 

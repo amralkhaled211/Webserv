@@ -39,6 +39,15 @@ int stringToInt(const std::string& str) // issue: value gets not initialized, if
 }
 
 
+/* size_t stringToSizeT(const std::string& str)
+{
+	std::stringstream ss(str);
+	size_t value;
+	ss >> value;
+	return value;
+} */
+
+
 size_t stringToSizeT(const std::string& str)
 {
 	std::stringstream ss(str);
