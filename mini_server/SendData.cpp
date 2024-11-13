@@ -262,7 +262,7 @@ std::string SendData::sendResponse(int clientSocket, std::vector<ServerBlock> &s
 		// we should have a function that creates responses, based on the Code and body, file type
 		_response.body = "<!DOCTYPE html><html><head><title>200 OK</title></head>";
 		_response.body += "<body><h1>200 OK</h1><p>file saved</p></body></html>";
-		_response.contentLength = "Content-Length: " + intToString(_response.body.size()) + "\r\n";
+		createResponseHeader(200, _response.body.size(), "text/html;");
 	}
 
 	std::string resp;
