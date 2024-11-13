@@ -10,9 +10,12 @@ class CGI
 	private:
 		
 		std::string _scriptPath;
+		std::string _responseBody;
+		std::string _contentType;
+		bool 		_typeSet;
 		std::map<std::string, std::string> _env;
 		parser _request;
-		Response		_response;
+		//Response		_response;
 
 	public:
 
@@ -20,7 +23,9 @@ class CGI
 		CGI(const std::string &scriptPath, const parser &request);
 		~CGI();
 
-		Response getResponse() const;
+		std::string getResponse() const;
+		std::string getContentType() const;
+		bool getTypeSet() const;
 
 		void setEnv(ServerBlock server);
 		void executeScript();

@@ -33,6 +33,23 @@ bool SendData::read_file(std::string const &path, parser &request) // this alrea
 	return false;
 }
 
+void SendData::handleCGI(const std::string &root, parser &request, ServerBlock server) //will need to return errors from here
+{
+	CGI cgi(root, request);
+	cgi.setEnv(server);
+	cgi.executeScript();
+	cgi.generateResponse();
+	_response.body = cgi.getResponse();
+	_response.status = "HTTP/1.1 200 OK\r\n";
+	std::string file_extension = get_file_extension(request.path);
+	if (cgi.getTypeSet())
+		_response.contentType = cgi.getContentType() + ";" + "\r\n";
+	else
+		_response.contentType = "Content-Type: text/html;\r\n";
+	unsigned int content_len = _response.body.size();
+	_response.contentLength = "Content-Length: " + intToString(content_len) + "\r\n";
+}
+
 std::vector<std::string>	possibleRequestedLoc(std::string uri) {
 	std::vector<std::string>	possibleReqLoc;
 	size_t						lastSlash;
@@ -77,7 +94,7 @@ LocationBlock SendData::findLocationBlock(std::vector<LocationBlock> &locations,
 				std::cout << "possibleReqLoc[i] : " << possibleReqLoc[i] << std::endl; */
 			
 				fullPath = location.getRoot() + possibleReqLoc[i];
-				std::cout << BOLD_GREEN << "full path " << fullPath << RESET << std::endl;
+				/* std::cout << BOLD_GREEN << "full path " << fullPath << RESET << std::endl; */
 				
 				fullPath = location.getRoot() + '/' + possibleReqLoc[0]; // for defining whether request is a directory or a file
 				if (isDirectory(fullPath))
@@ -206,7 +223,7 @@ std::string SendData::sendResponse(int clientSocket, std::vector<ServerBlock> &s
 			LocationBlock location = findLocationBlock(current_server.getLocationVec(), request);
 			std::string root = location.getRoot() + request.path;
 			std::cout << MAGENTA_COLOR << "Root: " << root << std::endl << "Request path:" <<  request.path << RESET << std::endl;
-			location.printLocationBlock();
+			/* location.printLocationBlock(); */
 			if (location.getReturn().empty())
 			{
 				if (_isDir)
@@ -222,20 +239,7 @@ std::string SendData::sendResponse(int clientSocket, std::vector<ServerBlock> &s
 				else if (isCGI(request, location))
 				{
 					std::cout << RED_COLOR << "In CGI" << RESET << std::endl;
-					try 
-					{
-						CGI cgi(root, request);
-						cgi.setEnv(current_server);
-						cgi.executeScript();
-						cgi.generateResponse();
-						cgi.createhtml();
-						this->read_file("cgi_output.html", request);
-					}
-					catch (const std::exception &e)
-					{
-						std::cerr << e.what() << std::endl;
-						notfound();
-					}
+					handleCGI(root, request, current_server);
 				}
 				else
 				{
@@ -283,8 +287,8 @@ std::string SendData::sendResponse(int clientSocket, std::vector<ServerBlock> &s
         close(clientSocket);
         throw std::runtime_error("epoll_ctl");
     }
-	//std::cout << BLUE_COLOR << "sending response " << RESET << std::endl;
-	//std::cout << resp << std::endl;
+	std::cout << BLUE_COLOR << "sending response " << RESET << std::endl;
+	std::cout << resp << std::endl;
 	return resp;
 }
 
