@@ -33,15 +33,31 @@ bool SendData::read_file(std::string const &path, parser &request) // this alrea
 	return false;
 }
 
-void SendData::handleCGI(const std::string &root, parser &request, ServerBlock server) //will need to return errors from here
+void SendData::handleCGI(const std::string &root, parser &request, ServerBlock server, LocationBlock location) //will need to return errors from here
 {
+	std::string file_extension = '.' +  get_file_extension(request.path);
+	std::vector<std::string> allowed_ext = location.getCgiExt();
+	bool isAllowed = false;
+	for (std::vector<std::string>::iterator it = allowed_ext.begin(); it != allowed_ext.end(); it++)
+	{
+		/* std::cout << "allowed ext : " << *it << std::endl; */
+		if (*it == file_extension)
+		{
+			isAllowed = true;
+				break;
+		}
+	}
+	if (!isAllowed)
+	{
+		throw std::runtime_error("CGI extension not allowed");
+	}
 	CGI cgi(root, request);
 	cgi.setEnv(server);
 	cgi.executeScript();
 	cgi.generateResponse();
 	_response.body = cgi.getResponse();
 	_response.status = "HTTP/1.1 200 OK\r\n";
-	std::string file_extension = get_file_extension(request.path);
+	file_extension = get_file_extension(request.path);
 	if (cgi.getTypeSet())
 		_response.contentType = cgi.getContentType() + ";" + "\r\n";
 	else
@@ -182,30 +198,7 @@ bool SendData::findIndexFile(const std::vector<std::string> &files, std::string 
 bool SendData::isCGI(const parser &request, LocationBlock location)
 {
 	if (request.path.find("/cgi-bin/") != std::string::npos)
-	{
-		std::string file_extension = '.' +  get_file_extension(request.path);
-		std::vector<std::string> allowed_ext = location.getCgiExt();
-		bool isAllowed = false;
-		for (std::vector<std::string>::iterator it = allowed_ext.begin(); it != allowed_ext.end(); it++)
-		{
-			/* std::cout << "allowed ext : " << *it << std::endl; */
-			if (*it == file_extension)
-			{
-				isAllowed = true;
-				break;
-			}
-		}
-		if (isAllowed)
-		{
-			/* std::cout << "Extension " << file_extension << " is allowed " << std::endl; */
-			return true;
-		}
-		else
-		{
-			/* std::cout << "Extension " << file_extension << " is not allowed " << std::endl; */
-			return false;
-		}
-	}
+		return true;
 	else
 		return false;
 }
@@ -239,7 +232,7 @@ std::string SendData::sendResponse(int clientSocket, std::vector<ServerBlock> &s
 				else if (isCGI(request, location))
 				{
 					std::cout << RED_COLOR << "In CGI" << RESET << std::endl;
-					handleCGI(root, request, current_server);
+					handleCGI(root, request, current_server, location);
 				}
 				else
 				{
@@ -255,6 +248,8 @@ std::string SendData::sendResponse(int clientSocket, std::vector<ServerBlock> &s
 		}
 		catch (const std::exception &e)
 		{
+			std::string error = e.what();
+			std::cout << RED_COLOR << "Error: " << error << RESET << std::endl;
 			// i should here send the right error for invalid locations
 			notfound();
 		}
@@ -287,8 +282,8 @@ std::string SendData::sendResponse(int clientSocket, std::vector<ServerBlock> &s
         close(clientSocket);
         throw std::runtime_error("epoll_ctl");
     }
-	std::cout << BLUE_COLOR << "sending response " << RESET << std::endl;
-	std::cout << resp << std::endl;
+	/* std::cout << BLUE_COLOR << "sending response " << RESET << std::endl;
+	std::cout << resp << std::endl; */
 	return resp;
 }
 
