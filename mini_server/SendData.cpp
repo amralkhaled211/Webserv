@@ -229,7 +229,7 @@ std::string SendData::sendResponse(int clientSocket, std::vector<ServerBlock> &s
 					else if (!foundFile)
 						notfound();
 				}
-				else if (isCGI(request, location))
+				else if (isCGI(request, location)) // might need to rethink this, eg. if resource for video.py is in cgi-bin it wont output the video beacuse it thinks its not an acceptable extension
 				{
 					std::cout << RED_COLOR << "In CGI" << RESET << std::endl;
 					handleCGI(root, request, current_server, location);

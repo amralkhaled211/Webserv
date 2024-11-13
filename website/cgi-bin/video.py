@@ -9,7 +9,7 @@ import cgitb
 cgitb.enable()
 
 # Set the video file path
-video_path = "/home/aszabo/Docs/Webserv/website/cgi-bin/pics/NPC.mp4"
+video_path = "/home/aszabo/Docs/Webserv/website/pics/NPC.mp4"
 
 # Check if the video file exists
 if not os.path.isfile(video_path):
@@ -40,7 +40,7 @@ print(f"""
     <p>Dimensions: {video_width}x{video_height}</p>
     <p>Duration: {video_duration:.2f} seconds</p>
     <video width="{video_width}" height="{video_height}" controls>
-        <source src="/website/cgi-bin/pics/NPC.mp4" type="video/mp4">
+        <source src="/website/pics/NPC.mp4" type="video/mp4">
         Your browser does not support the video tag.
     </video>
 </body>
