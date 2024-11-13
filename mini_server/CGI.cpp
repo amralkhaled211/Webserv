@@ -1,4 +1,5 @@
 #include "CGI.hpp"
+#include <signal.h>
 
 CGI::CGI() {}
 
@@ -182,7 +183,31 @@ void CGI::executeScript()
 		if (_request.method == "POST" && !_request.body.empty())
 			write (inPipe[1], _request.body.c_str(), _request.body.size());
 		close(inPipe[1]);
-		
+
+		fd_set readfds;
+        struct timeval timeout;
+        timeout.tv_sec = 15; // Set timeout to 5 seconds
+        timeout.tv_usec = 0;
+
+        FD_ZERO(&readfds);
+        FD_SET(outPipe[0], &readfds);
+
+        int selectResult = select(outPipe[0] + 1, &readfds, NULL, NULL, &timeout);
+        if (selectResult == -1)
+        {
+            close(outPipe[0]);
+            throw std::runtime_error("select() failed");
+        }
+        else if (selectResult == 0)
+        {
+            // Timeout occurred
+            kill(pid, SIGTERM); // Send SIGTERM to the child process
+            sleep(1); // Give the child process some time to terminate
+            kill(pid, SIGKILL); // Send SIGKILL if the child process is still running
+            close(outPipe[0]);
+            throw std::runtime_error("CGI script execution timed out");
+        }
+
 		char buffer[1024];
 		std::ostringstream output;
 		ssize_t bytesRead;
