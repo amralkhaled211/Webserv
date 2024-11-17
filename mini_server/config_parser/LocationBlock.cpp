@@ -127,8 +127,10 @@ void		LocationBlock::printLocationBlock() {
 	std::cout << "Block Type: " << this->_blockType << std::endl;
 	std::cout << "Root: " << this->_root << std::endl;
 	std::cout << "Error Page: ";
-	for (size_t i = 0; i < this->_error_page.size(); i++)
-		std::cout << this->_error_page[i] << " ";
+	for (size_t i = 0; i < this->_error_page.size(); ++i) {
+		for (size_t j = 0; j < this->_error_page[i].size(); ++j)
+			std::cout << this->_error_page[i][j] << " ";
+	}
 	std::cout << std::endl;
 	std::cout << "Return: ";
 	for (size_t i = 0; i < this->_return.size(); i++)

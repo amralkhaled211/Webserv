@@ -89,14 +89,10 @@ std::vector<std::string>	possibleRequestedLoc(std::string uri) {
 LocationBlock SendData::findLocationBlock(std::vector<LocationBlock> &locations, parser &request)
 {
 	std::vector<std::string> possibleReqLoc = possibleRequestedLoc(request.path); // other name: possibleReqLoc
-	
-	// for (size_t i = 0; i < possibleReqLoc.size(); ++i)
-	// 	std::cout << "possibleReqLoc: " << possibleReqLoc[i] << std::endl;
-
-	_isDir = true;
-
 	LocationBlock	location;
 	std::string		fullPath;
+
+	_isDir = true;
 	
 	for (int i = 0; i < possibleReqLoc.size(); ++i)
 	{
@@ -105,13 +101,7 @@ LocationBlock SendData::findLocationBlock(std::vector<LocationBlock> &locations,
 			location = *it;
 
 			if (location.getPrefix() == possibleReqLoc[i]) // need to make sure the prefix is also cleaned from excess slashes
-			{
-				/* std::cout << "location prefix: " << location.getPrefix() << std::endl;
-				std::cout << "possibleReqLoc[i] : " << possibleReqLoc[i] << std::endl; */
-			
-				fullPath = location.getRoot() + possibleReqLoc[i];
-				/* std::cout << BOLD_GREEN << "full path " << fullPath << RESET << std::endl; */
-				
+			{				
 				fullPath = location.getRoot() + '/' + possibleReqLoc[0]; // for defining whether request is a directory or a file
 				if (isDirectory(fullPath))
 					_isDir = true;
@@ -121,16 +111,6 @@ LocationBlock SendData::findLocationBlock(std::vector<LocationBlock> &locations,
 				return location;
 			}
 		}
-		//else 
-		//{
-		//	std::cout << "location prefix : " << location.getPrefix() << std::endl;
-		//	std::cout << "spiltedDir[i] : " << spiltedDir[i] << std::endl;
-		//}
-		//else 
-		//{
-		//	std::cout << "location prefix : " << location.getPrefix() << std::endl;
-		//	std::cout << "spiltedDir[i] : " << spiltedDir[i] << std::endl;
-		//}
 	}
 	std::cout << BOLD_RED << "COULD NOT FIND LOCATION BLOCK" << RESET << std::endl;
 	throw std::exception(); // this is temporary, will create a error handling mechanism
@@ -139,17 +119,13 @@ LocationBlock SendData::findLocationBlock(std::vector<LocationBlock> &locations,
 ServerBlock SendData::findServerBlock(std::vector<ServerBlock> &servers, parser &request) // uses the Host header field -> server_name:port -> Host: localhost:8081
 {
 	std::string host = request.headers["Host"];
-	//std::cout << "host : " << host << std::endl;
-	//std::cout << "host : " << host << std::endl;
 	size_t colon_pos = host.find(':');
 	std::string server_name = (colon_pos != std::string::npos) ? host.substr(0, colon_pos) : host;
-	std::string port = (colon_pos != std::string::npos) ? host.substr(colon_pos + 1) : ""; // the empty str causes conitional jump on uninitialized value
+	std::string port = (colon_pos != std::string::npos) ? host.substr(colon_pos + 1) : "";
 
 	for (std::vector<ServerBlock>::iterator it = servers.begin(); it != servers.end(); ++it)
 	{
 		ServerBlock &server = *it;
-		// std::cout << "port: " << port << std::endl;
-		// std::cout << "host: " << host << std::endl;
 		if (findInVector(server.getListen(), stringToInt(port)) && findInVector(server.getServerName(), server_name)) // here port is prioritized over server_name
 			return server;
 	}
@@ -214,7 +190,7 @@ std::string SendData::sendResponse(int clientSocket, std::vector<ServerBlock> &s
 		try
 		{
 			LocationBlock location = findLocationBlock(current_server.getLocationVec(), request);
-			std::string root = location.getRoot() + request.path;
+			std::string root = location.getRoot() + request.path; // maybe a more suitable name: pathToFileToServe
 			std::cout << MAGENTA_COLOR << "Root: " << root << std::endl << "Request path:" <<  request.path << RESET << std::endl;
 			/* location.printLocationBlock(); */
 			if (location.getReturn().empty())
@@ -227,8 +203,7 @@ std::string SendData::sendResponse(int clientSocket, std::vector<ServerBlock> &s
 						this->displayDir(root, request.path);
 					}
 					else if (!foundFile)
-						prepErrorResponse(404, location);
-						// notfound();
+						prepErrorResponse(403, location);
 				}
 				else if (isCGI(request, location)) // might need to rethink this, eg. if resource for video.py is in cgi-bin it wont output the video beacuse it thinks its not an acceptable extension
 				{
@@ -238,7 +213,7 @@ std::string SendData::sendResponse(int clientSocket, std::vector<ServerBlock> &s
 				else
 				{
 					if (!this->read_file(root, request))
-						notfound();
+						prepErrorResponse(404, location);
 				}
 			}
 			else
@@ -247,7 +222,7 @@ std::string SendData::sendResponse(int clientSocket, std::vector<ServerBlock> &s
 				_isReturn = true;
 			}
 		}
-		catch (const std::exception &e)
+		catch (const std::exception &e) // what kind of error do we expect here?
 		{
 			std::string error = e.what();
 			std::cout << RED_COLOR << "Error: " << error << RESET << std::endl;
@@ -262,7 +237,7 @@ std::string SendData::sendResponse(int clientSocket, std::vector<ServerBlock> &s
 		// we should have a function that creates responses, based on the Code and body, file type
 		_response.body = "<!DOCTYPE html><html><head><title>200 OK</title></head>";
 		_response.body += "<body><h1>200 OK</h1><p>file saved</p></body></html>";
-		createResponseHeader(200, _response.body.size(), "text/html;");
+		createResponseHeader(200, _response.body.size(), "text/html");
 	}
 
 	std::string resp;
@@ -406,72 +381,96 @@ bool			codeDefinedInErrorPage(int code, const std::vector<std::string>& errorPag
 	return false;
 }
 
-std::string		getErrorPagePath(int code, const std::vector<std::string>& errorPage)
+std::string		getErrorPagePath(int code, const std::vector<std::vector<std::string> >& errorPage)
 {
 	if (errorPage.empty())
 		return "";
-	if (codeDefinedInErrorPage(code, errorPage))
-		return errorPage.back();
+	for (size_t i = 0; i < errorPage.size(); ++i) {
+		if (codeDefinedInErrorPage(code, errorPage[i]))
+			return errorPage[i].back();
+	}
 	return "";
 }
 
 void		SendData::createResponseHeader(int code, int bodySize, std::string contentTypes) {
 	_response.status = "HTTP/1.1 " + intToString(code) + " " + _status._statusMsg[code][0] + "\r\n";
-	_response.contentType = "Content-Type: " + contentTypes + "\r\n";
+	_response.contentType = "Content-Type: " + contentTypes + ";\r\n";
 	_response.contentLength = "Content-Length: " + intToString(bodySize) + "\r\n";
 }
 
-bool		readFromErrorPage(std::string& errorPagePath, std::string& body) {
+int		readFromErrorPage(std::string& errorPagePath, std::string& body) {
+
+	struct stat		buffer;
+
+	if (stat(errorPagePath.c_str(), &buffer) != 0)
+		return SD_NO_FILE;
+
+	if (access(errorPagePath.c_str(), R_OK) != 0)
+		return SD_NO_READ_PERM;
 
 	std::ifstream	file(errorPagePath.c_str());
-	std::string		line;
 
-	// probably permission issue or file doesnt exist
-	if (!file.is_open())
-		return false;
+	if (!file.is_open()) // should never go here, because of above checks! maybe will remove later
+		return SD_NO_FILE;
 
 	std::stringstream	ss;
 	ss << file.rdbuf();
 
 	body = ss.str();
-	return true;
+	return SD_OK;
 }
 
 
-void		SendData::prepErrorResponse(int code, LocationBlock& location) {
-
+void		SendData::prepErrorResponse(int code, LocationBlock& location)
+{
 	std::string		errorPagePath = getErrorPagePath(code, location.getErrorPage());
-	std::cout << BOLD_RED << "errorPagePath: " << errorPagePath << RESET << "\n";
+	// std::cout << BOLD_RED << "errorPagePath: " << errorPagePath << RESET << "\n";
 	std::string		contentType;
-	bool			newErrorOccured = false;
+	int				fileStatus;
 
-	// we have a errorPage case
+	std::cout << "IN PREP ERROR RESPONSE\n";
+
 	if (!errorPagePath.empty()) { // need to create error response from errorPage
-		errorPagePath = location.getRoot() + errorPagePath;
-		std::cout << BOLD_RED << "errorPagePath: " << errorPagePath << RESET << "\n";
-		if (readFromErrorPage(errorPagePath, _response.body)) { // body gets init with right errorpage content
+		errorPagePath = location.getRoot() + location.getPrefix() + "/" + errorPagePath;
+		removeExcessSlashes(errorPagePath);
+		// std::cout << BOLD_RED << "errorPagePath: " << errorPagePath << RESET << "\n";
+
+		std::cout << "ERROR PAGE PATH: " << errorPagePath << std::endl;
+
+		fileStatus = readFromErrorPage(errorPagePath, _response.body); // this already reads into the body (passed by reference)
+		if (fileStatus == SD_OK) { // body gets init with right error_page content
 			contentType = mimeTypesMap_G[get_file_extension(errorPagePath)];
-			if (contentType == "") {
-				// if we don't accept this mime type
-				newErrorOccured = true;
-				// gotta see what we do here
-				// prepErrorResponse();
+
+			std::cout << "CONTENT TYPE: -->" << contentType << "<--" << std::endl;
+
+			if (contentType == "")
+				createDfltResponseBody(code, contentType, "txt");
+		}
+		else if (fileStatus == SD_NO_READ_PERM) {
+			if (code != 403) {
+				prepErrorResponse(403, location);
 				return ;
 			}
-		} else {
-			// if file has issues to be opened
-			newErrorOccured = true;
-			if (code != 404)
-				prepErrorResponse(404, location);
-			// else
-
-			return ; // to avoid overriding the _response
+			else
+				createDfltResponseBody(code, contentType);
 		}
-	} else { // need to create hardcoded error response
-		_response.body = "<!DOCTYPE html><html><head><title>" + intToString(code) + " " + _status._statusMsg[code][0]/*  + " Not Found" */ + "</title></head>";
-		_response.body += "<body><h1>" + intToString(code) + " " + _status._statusMsg[code][0] + "</h1><p>" + _status._statusMsg[code][1] + "</p></body></html>";
-		contentType = mimeTypesMap_G["html"];
+		else if (fileStatus == SD_NO_FILE) {
+			if (code != 404) {
+				prepErrorResponse(404, location);
+				return ;
+			}
+			else
+				createDfltResponseBody(code, contentType);
+		}
 	}
+	else // need to create hardcoded error response
+		createDfltResponseBody(code, contentType);
 
 	createResponseHeader(code, _response.body.size(), contentType);
+}
+
+void		SendData::createDfltResponseBody(int code, std::string&	contentType, std::string postFix) {
+	_response.body = "<!DOCTYPE html><html><head><title>" + intToString(code) + " " + _status._statusMsg[code][0]/*  + " Not Found" */ + "</title></head>";
+	_response.body += "<body><h1>" + intToString(code) + " " + _status._statusMsg[code][0] + "</h1><p>" + _status._statusMsg[code][1] + "</p></body></html>";
+	contentType = mimeTypesMap_G[postFix];
 }

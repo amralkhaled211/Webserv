@@ -2,6 +2,10 @@
 #include "RequestHandler.hpp"
 #include "StatusMsg.hpp"
 
+#define	SD_OK	0
+#define	SD_NO_READ_PERM	-1
+#define	SD_NO_FILE			-2
+
 typedef struct Redirection
 {
     std::map<std::string, std::string> CodeToMessage;
@@ -54,4 +58,5 @@ class SendData
 	void displayDir(const std::string& path, const std::string& requestPath);
 	void prepErrorResponse(int code, LocationBlock& locationBlock);
 	void createResponseHeader(int code, int bodySize, std::string contentTypes);
+	void createDfltResponseBody(int code, std::string&	contentType, std::string postFix = "html");
 };

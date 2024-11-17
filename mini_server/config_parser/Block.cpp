@@ -4,7 +4,7 @@ Block::Block() { }
 
 Block::Block(std::string type) : _blockType(type) {
 	this->_root = "";
-	this->_error_page = std::vector<std::string>();
+	this->_error_page = std::vector<std::vector<std::string> >();
 	this->_return = std::vector<std::string>();
 	this->_index = std::vector<std::string>();
 	this->_autoindex = NOT_SET;
@@ -34,7 +34,7 @@ Block::~Block() { }
 
 void	Block::setRoot(std::string& root) { this->_root = root; }
 
-void	Block::setErrorPage(std::vector<std::string>& error_page) { this->_error_page = error_page; }
+void	Block::setErrorPage(std::vector<std::vector<std::string> >& error_page) { this->_error_page = error_page; }
 
 void	Block::setReturn(std::vector<std::string>& ret) { this->_return = ret; }
 
@@ -49,7 +49,7 @@ const std::string&	Block::getBlockType() const { return this->_blockType; }
 
 const std::string&	Block::getRoot() const { return this->_root; }
 
-const std::vector<std::string>&	Block::getErrorPage() const { return this->_error_page; }
+const std::vector<std::vector<std::string> >&	Block::getErrorPage() const { return this->_error_page; }
 
 const std::vector<std::string>&	Block::getReturn() const { return this->_return; }
 
@@ -160,10 +160,8 @@ bool		Block::_addCommonDirective(const std::string& directiveKey, std::string& d
 		return true;
 	}
 	else if (directiveKey == "error_page") {
-		if (!this->_error_page.empty())
-			throw std::runtime_error("Duplicate error_page Directive");
 		// ERROR HANDLING MISSING and remove excess slashes for the path
-		this->_error_page = valueArgs;
+		this->_error_page.push_back(valueArgs);
 		return true;
 	}
 	else if (directiveKey == "return") {

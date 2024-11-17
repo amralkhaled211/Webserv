@@ -272,4 +272,32 @@ void SendData::prepErrorResponse( code, locationBlock ):
 	else
 		create a custom response body, displaying the msg
 
-	
+
+
+error 4xx (client)
+https://datatracker.ietf.org/doc/html/rfc2616#section-10.4
+
+
+cases to check with nginx:
+
+error happens with error_page directive in conf file,
+
+	but the specified file does not OPEN
+		---->	new error 403 will be thrown
+
+	but the specified file does not EXIST
+		---->	new error 404 will be thrown
+
+	but the specified file extension is not supported (has permissions)
+		---->	
+
+
+
+where should the error_page file be appended?
+	-->		take root from requested location, but add to it also the location's prefix
+
+
+   403    vs   404
+Forbidden vs Not Found
+403: when location found, but file not mentioned in index
+404: when location not found

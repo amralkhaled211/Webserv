@@ -7,8 +7,8 @@ void RequestHandler::receiveData(int clientSocket)
 	if (bytesReceived < 0)
 		throw std::runtime_error("Receiving failed");
 	this->_buffer.assign(Buffer, bytesReceived); // this would copy only the data that was received
-	/* std::cout << BOLD_GREEN << "recieved request Buffer: \n" << RESET;
-	std::cerr << BOLD_WHITE << _buffer << RESET << std::endl; */
+	std::cout << BOLD_GREEN << "recieved request Buffer: \n" << RESET;
+	std::cout << BOLD_WHITE << _buffer << RESET << std::endl;
 }
 
 parser& RequestHandler::getRequest()
@@ -65,7 +65,7 @@ bool RequestHandler::parse_body(std::string& body)
 		std::size_t pos = request.body.rfind(endBoundary);
         	if (pos != std::string::npos)
         	    request.body.resize(pos);
-		if (!request.body.empty() && request.body[request.body.size() - 1] == '\n')
+		if (!request.body.empty() && request.body[request.body.size() - 1] == '\n') // this might be a bit risky
                 request.body.erase(request.body.size() - 2);
 		std::cout << "end of body  dont read anymore " << std::endl;
 		return true;

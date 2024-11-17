@@ -11,8 +11,8 @@ void Epoll::init_epoll(const std::vector<int> &serverSockets)
         int sock = *it;
         struct epoll_event event;
         event.data.fd = sock;
-        event.events = EPOLLIN | EPOLLET;
-        if (epoll_ctl(_epollFD, EPOLL_CTL_ADD, sock, &event) == -1)
+        event.events = EPOLLIN | EPOLLET; // this means this fd is gonna be for reading/recieving and edge triggered (must use non-blocking fds)
+        if (epoll_ctl(_epollFD, EPOLL_CTL_ADD, sock, &event) == -1) // about edge triggered: how do we manage to read everything from the fd buffer, when on the next interation, we won't be notified about he remainings in the fd buffer?
             throw std::runtime_error("epoll_ctl");
     }
 }
@@ -37,6 +37,11 @@ void Epoll::handleEpollEvents(const std::vector<int> &serverSockets)
             return;
         throw std::runtime_error("epoll_wait");
     }
+    std::cout << BOLD_YELLOW << "NEW ITERATION  --> ATTENTION: NUMBER OF FD WITH ACTIVE EVENTS: " << n << RESET << std::endl;
+    for (int i = 0; i < n; ++i) {
+        std::cout << _events[i].data.fd << ", ";
+    }
+    std::cout << std::endl;
     for (int i = 0; i < n; ++i)
     {
         if (_events[i].events & (EPOLLERR | EPOLLHUP | EPOLLRDHUP)) // what do these errors/flags mean?
@@ -52,14 +57,22 @@ void Epoll::handleEpollEvents(const std::vector<int> &serverSockets)
             //continue;
             return;
         }
-        if (std::find(serverSockets.begin(), serverSockets.end(), _events[i].data.fd) != serverSockets.end()) // find which serverFD the request came to, and accept it in 
-            handleConnection(_events[i].data.fd);
+        // std::cout << BOLD_YELLOW << "EVENT ON THIS FD: " << _events[i].data.fd << RESET << std::endl;
+        if (std::find(serverSockets.begin(), serverSockets.end(), _events[i].data.fd) != serverSockets.end()) // find IF and WHICH serverFD the request came to, and accept it in 
+        {
+            std::cout << BOLD_GREEN << "COMMUNICATION AT THIS SOCKET: " << _events[i].data.fd << RESET << std::endl;
+            handleConnection(_events[i].data.fd); // here we accept the connection, and get a client_fd, from which we read in the next if
+        }
         // else if (_events[i].events & EPOLLIN || _events[i].events & EPOLLET)
-        else if (_events[i].events & EPOLLIN ) // does this have to be else if OR can it also be just if
+        else if (_events[i].events & EPOLLIN ) // it has to be else if, because we want to read from the client_fd, not the serverSocketFD
+        {
+            std::cout << BOLD_RED << "RECIEVING REQUEST ON SOCKET FD " << _events[i].data.fd << RESET << std::endl;
             handleData(_events[i].data.fd); // handle incoming request
+        }
         else if (_events[i].events & EPOLLOUT) // handle outgoing response
         {
             // std::cout << "Sending data" << std::endl;
+            std::cout << BOLD_RED << "SENDING RESPONSE ON SOCKET FD " << _events[i].data.fd << RESET << std::endl;
             send(_events[i].data.fd, _buffer.c_str(), _buffer.size(), 0);
             close(_events[i].data.fd);
             //std::cout << "Connection closed" << std::endl;
@@ -79,7 +92,7 @@ void Epoll::handleData(int client_fd)
 }
 
 
-void Epoll::handleConnection(int server_fd)
+void Epoll::handleConnection(int server_fd) // we add also the cliend fd to the interest list / set of fds to watch
 {
     while (true)
     {
@@ -92,6 +105,7 @@ void Epoll::handleConnection(int server_fd)
                 perror("accept");
             break;
         }
+        std::cout << "CLIENT FD: " << client_fd << std::endl;
         make_socket_non_blocking(client_fd);
         struct epoll_event client_event;
         client_event.data.fd = client_fd;
