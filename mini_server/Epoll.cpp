@@ -94,7 +94,7 @@ void Epoll::handleData(int client_fd)
 
 void Epoll::handleConnection(int server_fd) // we add also the cliend fd to the interest list / set of fds to watch
 {
-    while (true)
+    while (true) // why do we need to have accept in a loop?
     {
         int client_fd = accept(server_fd, NULL, NULL);
         if (client_fd == -1)
@@ -109,7 +109,7 @@ void Epoll::handleConnection(int server_fd) // we add also the cliend fd to the 
         make_socket_non_blocking(client_fd);
         struct epoll_event client_event;
         client_event.data.fd = client_fd;
-        client_event.events = EPOLLIN ;
+        client_event.events = EPOLLIN; // by default lvl triggered, so the client fds are all level triggered
         if (epoll_ctl(_epollFD, EPOLL_CTL_ADD, client_fd, &client_event) == -1)
         {
             close(client_fd);

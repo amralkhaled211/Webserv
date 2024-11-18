@@ -7,8 +7,8 @@ void RequestHandler::receiveData(int clientSocket)
 	if (bytesReceived < 0)
 		throw std::runtime_error("Receiving failed");
 	this->_buffer.assign(Buffer, bytesReceived); // this would copy only the data that was received
-	std::cout << BOLD_GREEN << "recieved request Buffer: \n" << RESET;
-	std::cout << BOLD_WHITE << _buffer << RESET << std::endl;
+	// std::cout << BOLD_GREEN << "recieved request Buffer: \n" << RESET;
+	// std::cout << BOLD_WHITE << _buffer << RESET << std::endl;
 }
 
 parser& RequestHandler::getRequest()

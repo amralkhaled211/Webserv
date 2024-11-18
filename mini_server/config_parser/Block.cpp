@@ -58,15 +58,16 @@ const std::vector<std::string>&	Block::getIndex() const { return this->_index; }
 const char&	Block::getAutoindex() const { return this->_autoindex; }
 
 
-static bool	isValidRedirCode(const std::string& code) {
+static void	isValidCode(const std::string& code, int directive) {
 	std::stringstream	ss(code.c_str());
 	int					statusCode;
 
 	if (ss.str().find_first_not_of("0123456789") != std::string::npos)
-			throw std::runtime_error("Invalid Return Directive Code");
-	if (!(ss >> statusCode) || !(statusCode >= 100 && statusCode <= 599))
-		throw std::runtime_error("Invalid Return Directive Code");
-	return true;
+			throw std::runtime_error("Invalid return Directive Code");
+	if (directive == RETURN && (!(ss >> statusCode) || !(statusCode >= 100 && statusCode <= 599)))
+		throw std::runtime_error("Invalid return Directive Code");
+	if (directive == ERROR_PAGE && (!(ss >> statusCode) || !(statusCode >= 300 && statusCode <= 599)))
+		throw std::runtime_error("Invalid error_page Directive Code");
 }
 
 /* static bool isValidRedirURLI(std::string& redir) { // URL URI check, (if comments -> remove)
@@ -75,21 +76,21 @@ static bool	isValidRedirCode(const std::string& code) {
 
 void		invalidReturnSyntax(std::vector<std::string>& valueArgs) {
 	if (valueArgs.empty() || valueArgs.size() > 2)
-		throw std::runtime_error("Invalid Return Directive");
+		throw std::runtime_error("Invalid return Directive");
 
 	if (valueArgs.size() == 1) { // accept either only a status code OR a link (not a location)
 		if (valueArgs[0][0] >= '0' && valueArgs[0][0] <= '9') // isdigit() is from c library
-			isValidRedirCode(valueArgs[0]);
+			isValidCode(valueArgs[0], RETURN);
 		else if (valueArgs[0][0] == '/') // is a relative path -> needs a status code
-			throw std::runtime_error("Invalid Return Directive Code");
+			throw std::runtime_error("Invalid return Directive Code");
 		// isValidRedirURLI(valueArgs[0]);
 	}
 	else if (valueArgs.size() == 2) {
-		isValidRedirCode(valueArgs[0]);
+		isValidCode(valueArgs[0], RETURN);
 		// isValidRedirURLI(valueArgs[1]);
 	}
 	else
-		throw std::runtime_error("Invalid Return Directive");
+		throw std::runtime_error("Invalid return Directive");
 }
 
 
@@ -146,6 +147,31 @@ static bool		invalidMeasurementPostfix(std::string& directiveValue) {
 	return false;
 }
 
+static void		checkValidErrorPage(std::vector<std::string> valueArgs) {
+	size_t amountArgs = valueArgs.size();
+	
+	if (amountArgs < 2)
+		throw std::runtime_error("Invalid Number of Args for error_page");
+
+	for (size_t i = 0; i < amountArgs; ++i) {
+		if (i != (amountArgs - 1)) {
+			isValidCode(valueArgs[i], ERROR_PAGE);
+		}
+		// is there any check needed for the error file?
+		// nginx accepts anything, even just a "/"
+	}
+}
+
+static void		checkValidIndex(std::vector<std::string> valueArgs) {
+	// nginx gives warning for absolute paths, if they are not the last one
+	for (size_t i = 0; i < valueArgs.size(); ++i) {
+		if (i != (valueArgs.size() - 1)) {
+			if (valueArgs[i][0] == '/')
+				throw std::runtime_error("only last index can be absolute path");
+		}
+	}
+}
+
 bool		Block::_addCommonDirective(const std::string& directiveKey, std::string& directiveValue) { // to add: invalid values
 	std::vector<std::string>	valueArgs(splitString(directiveValue));
 	size_t						amountArgs(valueArgs.size());
@@ -160,7 +186,7 @@ bool		Block::_addCommonDirective(const std::string& directiveKey, std::string& d
 		return true;
 	}
 	else if (directiveKey == "error_page") {
-		// ERROR HANDLING MISSING and remove excess slashes for the path
+		checkValidErrorPage(valueArgs);
 		this->_error_page.push_back(valueArgs);
 		return true;
 	}
@@ -174,7 +200,9 @@ bool		Block::_addCommonDirective(const std::string& directiveKey, std::string& d
 	else if (directiveKey == "index") { // requires new implementation, not handling some cases
 		if (!this->_index.empty())
 			throw std::runtime_error("Duplicate index Directive");
-		// ERROR HANDLING MISSING
+		if (valueArgs.size() < 1)
+			throw std::runtime_error("Invalid Number of Args for index");
+		checkValidIndex(valueArgs);
 		this->_index = valueArgs;
 		return true;
 	}

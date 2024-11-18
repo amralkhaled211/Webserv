@@ -195,7 +195,7 @@ std::string SendData::sendResponse(int clientSocket, std::vector<ServerBlock> &s
 			/* location.printLocationBlock(); */
 			if (location.getReturn().empty())
 			{
-				if (_isDir)
+				if (_isDir == true) // here we handle the directory
 				{
 					bool foundFile = findIndexFile(location.getIndex(), root, request);
 					if (!foundFile && location.getAutoindex() == ON) {
@@ -277,7 +277,8 @@ void SendData::saveBodyToFile(const std::string &filename, parser &request)
 	request.body.clear();
 }
 
-std::vector<std::pair<std::string, std::string> >	listDirectory(const std::string& path) {
+std::vector<std::pair<std::string, std::string> >	listDirectory(const std::string& path)
+{
 	std::vector<std::pair<std::string, std::string> >	elements;
 	DIR*	dir = opendir(path.c_str());
 	if (dir == NULL) {
@@ -305,8 +306,8 @@ std::vector<std::pair<std::string, std::string> >	listDirectory(const std::strin
 	return elements;
 }
 
-std::string escapeHtml(const std::string &input) {
-
+std::string escapeHtml(const std::string &input)
+{
 	std::string output;
 	
 	for (size_t i = 0; i < input.size(); ++i) {
@@ -329,7 +330,8 @@ std::string escapeHtml(const std::string &input) {
 }
 
 
-void		SendData::displayDir(const std::string& path, const std::string& requestPath) {
+void		SendData::displayDir(const std::string& path, const std::string& requestPath)
+{
 	// first pair-element is the element, second one is the full path, but with a '/' at the end for directories
 	std::vector<std::pair<std::string, std::string> >	dirElements(listDirectory(path));
 
@@ -392,14 +394,15 @@ std::string		getErrorPagePath(int code, const std::vector<std::vector<std::strin
 	return "";
 }
 
-void		SendData::createResponseHeader(int code, int bodySize, std::string contentTypes) {
+void		SendData::createResponseHeader(int code, int bodySize, std::string contentTypes)
+{
 	_response.status = "HTTP/1.1 " + intToString(code) + " " + _status._statusMsg[code][0] + "\r\n";
 	_response.contentType = "Content-Type: " + contentTypes + ";\r\n";
 	_response.contentLength = "Content-Length: " + intToString(bodySize) + "\r\n";
 }
 
-int		readFromErrorPage(std::string& errorPagePath, std::string& body) {
-
+int		readFromErrorPage(std::string& errorPagePath, std::string& body)
+{
 	struct stat		buffer;
 
 	if (stat(errorPagePath.c_str(), &buffer) != 0)
@@ -430,7 +433,8 @@ void		SendData::prepErrorResponse(int code, LocationBlock& location)
 
 	std::cout << "IN PREP ERROR RESPONSE\n";
 
-	if (!errorPagePath.empty()) { // need to create error response from errorPage
+	if (!errorPagePath.empty())
+	{ // need to create error response from errorPage
 		errorPagePath = location.getRoot() + location.getPrefix() + "/" + errorPagePath;
 		removeExcessSlashes(errorPagePath);
 		// std::cout << BOLD_RED << "errorPagePath: " << errorPagePath << RESET << "\n";

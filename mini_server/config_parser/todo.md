@@ -21,8 +21,8 @@
 
 
 - [ ] PARSER ERROR HANDLING FOR
-  - [ ] ERROR_PAGE - see below for details
-  - [ ] INDEX - only last can be absolute path
+  - [x] ERROR_PAGE - see below for details
+  - [x] INDEX - only last can be absolute path
   - [x] client_max_body_size -> accepted k,m,g as postfix, 0 means do not check size
   - [ ] cgi-ext and cgi-path
   - [ ] check range for ports

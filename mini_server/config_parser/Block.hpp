@@ -7,14 +7,17 @@
 #include <sstream>
 #include <iostream>
 
-#define OFF						0
-#define ON						1
-#define NOT_SET					2
+#define OFF					0
+#define ON					1
+#define NOT_SET				2
+
+#define	RETURN				1
+#define	ERROR_PAGE			2
 
 class Block // parent // the purpose of this is just to not have class with the same attibutes and methods, we won't do any Polymorphism, just Inheritence
 {
 	protected:
-		std::string							_blockType; // Server or Location
+		std::string								_blockType; // Server or Location
 
 		// all the directives, that are in both Server and Location
 		std::string								_root;

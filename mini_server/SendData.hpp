@@ -2,8 +2,8 @@
 #include "RequestHandler.hpp"
 #include "StatusMsg.hpp"
 
-#define	SD_OK	0
-#define	SD_NO_READ_PERM	-1
+#define	SD_OK				0
+#define	SD_NO_READ_PERM		-1
 #define	SD_NO_FILE			-2
 
 typedef struct Redirection

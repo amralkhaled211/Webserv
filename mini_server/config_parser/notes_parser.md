@@ -293,7 +293,7 @@ error happens with error_page directive in conf file,
 
 
 
-where should the error_page file be appended?
+where should the error_page file be appended to?
 	-->		take root from requested location, but add to it also the location's prefix
 
 
