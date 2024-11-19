@@ -38,17 +38,24 @@
     - [x] need to know about all the directive defaults
 - [ ] Edge Cases Parsing
   - [ ] Test and Handle nested locations
+
+
 - [ ] QUOTES
   - [ ] ask around how others implement quotes
     - [ ] Accept/Deny Quotes as Directive Key
     - [ ] Accept/Deny Quotes as Directive Value
         - [ ] adjust removal of comments '#'
-- [ ] error_page
-  - [ ] there must be always at least one code between 300 and 599, followed by a path (which will be appended to the root)
-  - [ ] accept multiple directives of error_page
+  
+
+- [x] error_page
+  - [x] there must be always at least one code between 300 and 599, followed by a path (which will be appended to the root)
+  - [x] accept multiple directives of error_page
+
 - [ ] return
-  - [ ] accepts multiple, but only uses the first one
-  - [ ] what is the accepted range? 0 - 999; note: client interprets 0 as 'Finished'
+  - [x] accepts multiple, but only uses the first one
+    - [x] we accept multiple, but don't store them, we make sure no errors, but will only store the first one
+  - [x] what is the accepted range? 0 - 999; note: client interprets 0 as 'Finished'
+    - [x] we only accept from 100 to 599
   - [x] if another location is redirected to, there must be a status code
   - [ ] if the same location is redirected to, a 404 error is thrown
 

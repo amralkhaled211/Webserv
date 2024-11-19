@@ -294,6 +294,7 @@ std::vector<std::pair<std::string, std::string> >	listDirectory(const std::strin
 		name = entry->d_name;
 		if (name != "." && (name == ".." || name[0] != '.')) { // not accepting hidden files, except of ".."
 			fullPath = path + '/' + name;
+			removeExcessSlashes(fullPath);
 			struct stat statbuf;
 			if (stat(fullPath.c_str(), &statbuf) == 0) {
 				if (S_ISDIR(statbuf.st_mode))
@@ -329,6 +330,7 @@ std::string escapeHtml(const std::string &input)
 	return output;
 }
 
+#include <ctime>
 
 void		SendData::displayDir(const std::string& path, const std::string& requestPath)
 {
@@ -347,15 +349,45 @@ void		SendData::displayDir(const std::string& path, const std::string& requestPa
 	html << "<h1>Index of " << escapeHtml(requestPath) << "</h1>";
 	html << "<ul>";
 
+	html << "<table border=\"1\">";
+	html << "<tr><th>File Name</th><th>Size (bytes)</th><th>Last Modified</th></tr>";
+
 	for (size_t i = 0; i < dirElements.size(); ++i) {
 		std::string displayName = dirElements[i].first;
 		std::string fullPath = requestPath;
 		if (!fullPath.empty() && fullPath[fullPath.size() - 1] != '/')
 			fullPath += '/';
 		fullPath += displayName;
-		// std::cout << "fullpath: " << fullPath << "\n";
-		html << "<li><a href=\"" << escapeHtml(fullPath) << "\">" << escapeHtml(displayName) << "</a></li>";
+
+		struct stat fileStat;
+		if (stat(dirElements[i].second.c_str(), &fileStat) == 0) {
+			// Get file size
+			off_t fileSize = fileStat.st_size;
+
+			// Get last modification time
+			std::time_t modTime = fileStat.st_mtime;
+			std::tm *tm = std::localtime(&modTime);
+			char timeBuffer[20];
+			std::strftime(timeBuffer, sizeof(timeBuffer), "%Y-%m-%d %H:%M:%S", tm);
+			std::string modTimeStr(timeBuffer);
+
+			// Include size and last modification date in the HTML output
+			std::stringstream htmlStream;
+			htmlStream << "<tr><td><a href=\"" << escapeHtml(fullPath) << "\">" << escapeHtml(displayName) << "</a></td>"
+					<< "<td>" << fileSize << "</td>"
+					<< "<td>" << modTimeStr << "</td></tr>";
+			html << htmlStream.str();
+		} else {
+			std::cout << "ERRNO: " << errno << std::endl;
+			// Handle error if stat() fails
+			std::stringstream htmlStream;
+			htmlStream << "<tr><td><a href=\"" << escapeHtml(fullPath) << "\">" << escapeHtml(displayName) << "</a></td>"
+					<< "<td colspan=\"2\">(unable to retrieve file information)</td></tr>";
+			html << htmlStream.str();
+		}
 	}
+
+	html << "</table>";
 
 	html << "</ul></body></html>";
 
@@ -435,7 +467,7 @@ void		SendData::prepErrorResponse(int code, LocationBlock& location)
 
 	if (!errorPagePath.empty())
 	{ // need to create error response from errorPage
-		errorPagePath = location.getRoot() + location.getPrefix() + "/" + errorPagePath;
+		// errorPagePath = location.getRoot() + location.getPrefix() + "/" + errorPagePath;
 		removeExcessSlashes(errorPagePath);
 		// std::cout << BOLD_RED << "errorPagePath: " << errorPagePath << RESET << "\n";
 

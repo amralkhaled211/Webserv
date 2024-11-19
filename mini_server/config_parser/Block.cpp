@@ -192,6 +192,8 @@ bool		Block::_addCommonDirective(const std::string& directiveKey, std::string& d
 	}
 	else if (directiveKey == "return") {
 		invalidReturnSyntax(valueArgs);
+		// TODO: check: locPrefix != redirection location
+		// cannot do it here, no access to location prefix
 		if (!this->_return.empty())// no duplicate check, nginx multiple but will only use the first, maybe we should do it different???
 			return true;
 		this->_return = valueArgs;
