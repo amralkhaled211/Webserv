@@ -22,6 +22,7 @@
 #include "RequestHandler.hpp"
 #include "SendData.hpp"
 #include "config_parser/Parser.hpp"
+#include "Client.hpp"
 
 #define MAX_EVENTS 10
 extern bool serverRunning ;
@@ -30,13 +31,15 @@ class Epoll
 {
 	private :
 		int _epollFD;
-		std::vector<int> _clientFDs;
+		// std::vector<int> _clientFDs;
 		RequestHandler requestHandle;
 		SendData sendData;
 		std::vector<ServerBlock>& _servers;
 		std::string _buffer;
 	public :
 		//getEpollFD() { return _epollFD; }
+		std::vector<Client> _clients;
+		void killClient(int clientSocket);
 		Epoll(const std::vector<int>& serverSockets, std::vector<ServerBlock>& servers);
 		~Epoll();
 		void acceptConnection(const std::vector<int>& serverSockets);
