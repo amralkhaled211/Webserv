@@ -22,6 +22,7 @@
 #include <sys/types.h>
 #include <iomanip>
 #include "config_parser/Parser.hpp"
+#include "Client.hpp"
 
 #define RESET_COLOR "\033[0m"
 #define RED_COLOR "\033[31m"
@@ -34,44 +35,30 @@
 
 extern std::map<std::string, std::string> mimeTypesMap_G;
 
-typedef struct parser
-{
-	std::string method;
-	std::string path;
-	std::string version;
-	std::string queryString;
-	std::map<std::string, std::string> headers;
-	std::string body;
-	std::string fileName;
-} parser;
 
 class RequestHandler
 {
-public:
-	RequestHandler();
-	bool parseRequest();
-	void parse_first_line();
-	bool parseHeadersAndBody();
-	void parseHeaders(std::string &Buffer);
-	void parseQueryString();
-	bool parse_body(std::string &body);
-	void receiveData(int clientSocket);
-	bool HandlChunk();
-	parser &getRequest();
-
-private:
-	std::string _buffer;
-	parser request;
-	bool _isChunked;
-	size_t _bytesRead;
-	size_t _targetBytes;
-	std::string _boundary;
+	public:
+		RequestHandler();
+		void receiveData(int clientSocket, std::vector<Client> &_clients);
+		void findClient(int clientSocket, std::vector<Client> &_clients);
+		Client findAllRecieved(std::vector<Client> clients);
+	
+	private:
+		std::string _buffer;
+		bool readytoSend;
 };
+
+
+
+
+
+
+
 
 // utility functions
 std::string intToString(int value);
 int stringToInt(const std::string &str);
-size_t stringToSizeT(const std::string& str);
 std::string deleteSpaces(std::string const &str);
 std::string get_file_extension(const std::string &file_path);
 std::string get_file_name(const std::string &file_path);

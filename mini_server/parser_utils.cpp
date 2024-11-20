@@ -1,4 +1,5 @@
 #include "RequestHandler.hpp"
+#include "Client.hpp"
 
 std::string get_file_extension(const std::string& file_path)
 {

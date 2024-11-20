@@ -253,6 +253,8 @@ std::string SendData::sendResponse(int clientSocket, std::vector<ServerBlock> &s
 	if (epoll_ctl(epollFD, EPOLL_CTL_MOD, clientSocket, &client_event) == -1)
     {
         close(clientSocket);
+		std::cout << BOLD_GREEN << "clientSocket Change mod : " << clientSocket << RESET << std::endl;
+		std::cout << "epoll_ctl failed" << std::endl;
         throw std::runtime_error("epoll_ctl");
     }
 	/* std::cout << BLUE_COLOR << "sending response " << RESET << std::endl;
