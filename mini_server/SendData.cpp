@@ -235,7 +235,7 @@ std::string SendData::sendResponse(int clientSocket, std::vector<ServerBlock> &s
 				}
 				else if (isCGI(request, location)) // might need to rethink this, eg. if resource for video.py is in cgi-bin it wont output the video beacuse it thinks its not an acceptable extension
 				{
-					std::cout << RED_COLOR << "In CGI" << RESET << std::endl;
+					//std::cout << RED_COLOR << "In CGI GET" << RESET << std::endl;
 					handleCGI(root, request, current_server, location);
 				}
 				else
@@ -267,7 +267,7 @@ std::string SendData::sendResponse(int clientSocket, std::vector<ServerBlock> &s
 
 		if (isCGI(request, location)) // might need to rethink this, eg. if resource for video.py is in cgi-bin it wont output the video beacuse it thinks its not an acceptable extension
 		{
-			std::cout << RED_COLOR << "In CGI POST" << RESET << std::endl;
+			//std::cout << RED_COLOR << "In CGI POST" << RESET << std::endl;
 			handleCGI(root, request, current_server, location);
 		}
 		else

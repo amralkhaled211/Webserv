@@ -90,10 +90,10 @@ void CGI::setEnv(ServerBlock server)
         _env["CONTENT_LENGTH"] = "0";
     }
 
-	std::cout << GREEN_COLOR << "POST CONTENT TYPE: " << _env["CONTENT_TYPE"] << std::endl;
+	/* std::cout << GREEN_COLOR << "POST CONTENT TYPE: " << _env["CONTENT_TYPE"] << std::endl;
 	std::cout << "POST CONTENT LENGTH: " << _env["CONTENT_LENGTH"] << std::endl;
-	std::cout << "POST BODY: " << _request.body << RESET <<std::endl;
-	
+	std::cout << "POST BODY: " << _request.body << RESET <<std::endl; */
+
 	bool first = true;
 
 	for (std::map<std::string, std::string>::iterator it = _request.headers.begin(); it != _request.headers.end(); ++it)
