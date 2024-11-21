@@ -77,14 +77,8 @@ void CGI::setEnv(ServerBlock server)
     _env["REMOTE_ADDR"] = remoteAddr;
     _env["REMOTE_HOST"] = remoteHost;
 	std::string file_extension = get_file_extension(_request.path);
-    if (mimeTypesMap_G.find(file_extension) != mimeTypesMap_G.end())
-    {
-        _env["CONTENT_TYPE"] = mimeTypesMap_G[file_extension];
-    }
-    else
-    {
-        _env["CONTENT_TYPE"] = "application/octet-stream"; // Default MIME type
-    }
+
+    _env["CONTENT_TYPE"] = _request.headers["Content-Type"];
 
     // Determine CONTENT_LENGTH based on request body size
     if (_request.method == "POST" && !_request.body.empty())
@@ -95,8 +89,11 @@ void CGI::setEnv(ServerBlock server)
     {
         _env["CONTENT_LENGTH"] = "0";
     }
-	//HERE WE WOULD NEED INFO FROM CONFIG FILE IF IT SPECIFIES SMTH FOR THE CGI
 
+	std::cout << GREEN_COLOR << "POST CONTENT TYPE: " << _env["CONTENT_TYPE"] << std::endl;
+	std::cout << "POST CONTENT LENGTH: " << _env["CONTENT_LENGTH"] << std::endl;
+	std::cout << "POST BODY: " << _request.body << RESET <<std::endl;
+	
 	bool first = true;
 
 	for (std::map<std::string, std::string>::iterator it = _request.headers.begin(); it != _request.headers.end(); ++it)
@@ -180,8 +177,8 @@ void CGI::executeScript()
         if (execve(_scriptPath.c_str(), arg, &envp[0]) == -1)
         {
             std::cerr << "Failed to execute CGI script: " << strerror(errno) << std::endl;
-            freeEnvp(envp);
 			throw std::runtime_error("Failed to execute CGI script");
+            freeEnvp(envp);
             exit(1);
         }
 	}
@@ -191,7 +188,11 @@ void CGI::executeScript()
 		close(outPipe[1]);
 		
 		if (_request.method == "POST" && !_request.body.empty())
+		{
+			/* std::cout << CYAN_COLOR << "Writing POST body to pipe: " <<std::endl;
+			std::cout << _request.body << RESET << std::endl; */	
 			write (inPipe[1], _request.body.c_str(), _request.body.size());
+		}
 		close(inPipe[1]);
 
 		fd_set readfds;
@@ -252,12 +253,7 @@ void CGI::generateResponse()
 	{
 		if (line.find("Content-Type:") != std::string::npos){
 			_typeSet = true;
-			size_t startPos = line.find("Content-Type:");
-			size_t endPos = line.find(";", startPos);
-			if (endPos != std::string::npos)
-				_contentType = line.substr(startPos, endPos - startPos + 1);
-			else
-				_contentType = line.substr(startPos);
+			_contentType = line;
 			continue;
 		}
 		/* if (line.find("Content-Length:") !=  std::string::npos){
