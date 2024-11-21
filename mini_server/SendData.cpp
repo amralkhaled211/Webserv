@@ -62,8 +62,12 @@ void SendData::handleCGI(const std::string &root, parser &request, ServerBlock s
 		_response.contentType = cgi.getContentType() + ";" + "\r\n";
 	else
 		_response.contentType = "Content-Type: text/html;\r\n";
+	std::cout << MAGENTA_COLOR <<  "CGI Status: " << _response.status << std::endl;
+	std::cout << "CGI Content type: " << _response.contentType << std::endl;
+
 	unsigned int content_len = _response.body.size();
 	_response.contentLength = "Content-Length: " + intToString(content_len) + "\r\n";
+	std::cout << "CGI Content length: " << _response.contentLength << RESET << std::endl;
 }
 
 std::vector<std::string>	possibleRequestedLoc(std::string uri) {
@@ -216,7 +220,7 @@ std::string SendData::sendResponse(int clientSocket, std::vector<ServerBlock> &s
 			LocationBlock location = findLocationBlock(current_server.getLocationVec(), request);
 			std::string root = location.getRoot() + request.path;
 			std::cout << MAGENTA_COLOR << "Root: " << root << std::endl << "Request path:" <<  request.path << RESET << std::endl;
-			/* location.printLocationBlock(); */
+			location.printLocationBlock(); 
 			if (location.getReturn().empty())
 			{
 				if (_isDir)
@@ -263,8 +267,15 @@ std::string SendData::sendResponse(int clientSocket, std::vector<ServerBlock> &s
 		_response.body = "<!DOCTYPE html><html><head><title>200 OK</title></head>";
 		_response.body += "<body><h1>200 OK</h1><p>file saved</p></body></html>";
 		_response.contentLength = "Content-Length: " + intToString(_response.body.size()) + "\r\n";
-		_response.body += "<body><h1>200 OK</h1><p>file saved</p></body></html>";
-		_response.contentLength = "Content-Length: " + intToString(_response.body.size()) + "\r\n";
+		/* LocationBlock location = findLocationBlock(current_server.getLocationVec(), request);
+		std::string root = location.getRoot() + request.path;
+		std::cout << MAGENTA_COLOR << "Root: " << root << std::endl << "Request path:" <<  request.path << std::endl << "Request method: " << request.method << RESET << std::endl;
+
+		if (isCGI(request, location)) // might need to rethink this, eg. if resource for video.py is in cgi-bin it wont output the video beacuse it thinks its not an acceptable extension
+		{
+			std::cout << RED_COLOR << "In CGI POST" << RESET << std::endl;
+			handleCGI(root, request, current_server, location);
+		} */
 	}
 
 	std::string resp;
@@ -284,6 +295,9 @@ std::string SendData::sendResponse(int clientSocket, std::vector<ServerBlock> &s
     }
 	/* std::cout << BLUE_COLOR << "sending response " << RESET << std::endl;
 	std::cout << resp << std::endl; */
+	std::cout << CYAN_COLOR <<"Response Status: " <<  _response.status << std::endl;
+	std::cout << "Content Type: "  << _response.contentType << std::endl;
+	std::cout << "Content Length: " << _response.contentLength << RESET << std::endl;
 	return resp;
 }
 

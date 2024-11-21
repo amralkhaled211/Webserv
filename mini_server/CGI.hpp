@@ -12,8 +12,12 @@ class CGI
 		std::string _scriptPath;
 		std::string _responseBody;
 		std::string _contentType;
+		/* std::string _contentLength;
+		std::string _responseStatus; */
 		parser _request;
 		bool 		_typeSet;
+		/* bool		_lengthSet;
+		bool		_statusSet; */
 		std::map<std::string, std::string> _env;
 		//Response		_response;
 
@@ -26,6 +30,8 @@ class CGI
 		std::string getResponse() const;
 		std::string getContentType() const;
 		bool getTypeSet() const;
+		/* bool getLengthSet() const;
+		bool getStatusSet() const; */
 
 		void setEnv(ServerBlock server);
 		void executeScript();

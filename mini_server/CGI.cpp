@@ -3,7 +3,7 @@
 
 CGI::CGI() {}
 
-CGI::CGI(const std::string &scriptPath, const parser &request) : _scriptPath(scriptPath) , _request(request), _typeSet(false)
+CGI::CGI(const std::string &scriptPath, const parser &request) : _scriptPath(scriptPath) , _request(request), _typeSet(false)/* , _statusSet(false), _lengthSet(false) */
 {}
 
 CGI::~CGI() {}
@@ -22,6 +22,16 @@ bool CGI::getTypeSet() const
 {
 	return _typeSet;
 }
+
+/* bool CGI::getLengthSet() const
+{
+	return _lengthSet;
+}
+
+bool CGI::getStatusSet() const
+{
+	return _statusSet;
+} */
 
 std::vector<char*> CGI::setUpEnvp()
 {
@@ -170,8 +180,8 @@ void CGI::executeScript()
         if (execve(_scriptPath.c_str(), arg, &envp[0]) == -1)
         {
             std::cerr << "Failed to execute CGI script: " << strerror(errno) << std::endl;
-			throw std::runtime_error("Failed to execute CGI script");
             freeEnvp(envp);
+			throw std::runtime_error("Failed to execute CGI script");
             exit(1);
         }
 	}
@@ -242,9 +252,24 @@ void CGI::generateResponse()
 	{
 		if (line.find("Content-Type:") != std::string::npos){
 			_typeSet = true;
-			_contentType = line;
+			size_t startPos = line.find("Content-Type:");
+			size_t endPos = line.find(";", startPos);
+			if (endPos != std::string::npos)
+				_contentType = line.substr(startPos, endPos - startPos + 1);
+			else
+				_contentType = line.substr(startPos);
 			continue;
 		}
+		/* if (line.find("Content-Length:") !=  std::string::npos){
+			_lengthSet = true;
+			_contentLength = line;
+			continue;
+		}
+		if (line.find("Status:") !=  std::string::npos){
+			_statusSet = true;
+			_responseStatus = line;
+			continue;
+		} */
 		if (ss.eof())
 			break;
 		body << line << "\n";
