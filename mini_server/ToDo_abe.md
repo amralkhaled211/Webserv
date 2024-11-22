@@ -1,5 +1,5 @@
 # TASKS
-- [ ] Implement POST handler for CGI
+- [ ] Handle different status codes coming form CGI
 - [ ] Integrate LocationBlock & ServerBlock attributes into CGI header and code
 - [ ] CGI Enviroment setup with correct values
 
@@ -10,10 +10,11 @@
 
 ### TESTS
 
-- [ ] Test with sh scripts
+- [ ] Test with php scripts
 
 #### DONE
 
+- [x] Implement POST handler for CGI
 - [x] Research new approach for CGI response instead of the cgi_output.html method
 - [x] Return an error when file extension is not allowed, error page here or not found page??
 - [x] Implement own response builder for CGI

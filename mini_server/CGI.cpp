@@ -18,12 +18,22 @@ std::string CGI::getContentType() const
 	return _contentType;
 }
 
+std::string CGI::getContentLength() const
+{
+	return _contentLength;
+}
+
+std::string CGI::getResponseStatus() const
+{
+	return _responseStatus;
+}
+
 bool CGI::getTypeSet() const
 {
 	return _typeSet;
 }
 
-/* bool CGI::getLengthSet() const
+bool CGI::getLengthSet() const
 {
 	return _lengthSet;
 }
@@ -31,7 +41,7 @@ bool CGI::getTypeSet() const
 bool CGI::getStatusSet() const
 {
 	return _statusSet;
-} */
+}
 
 std::vector<char*> CGI::setUpEnvp()
 {
@@ -253,19 +263,19 @@ void CGI::generateResponse()
 	{
 		if (line.find("Content-Type:") != std::string::npos){
 			_typeSet = true;
-			_contentType = line;
+			_contentType = line.substr(line.find("Content-Type:"));
 			continue;
 		}
-		/* if (line.find("Content-Length:") !=  std::string::npos){
+		if (line.find("Content-Length:") !=  std::string::npos){
 			_lengthSet = true;
-			_contentLength = line;
+			_contentLength = line.substr(line.find("Content-Length:"));
 			continue;
 		}
 		if (line.find("Status:") !=  std::string::npos){
 			_statusSet = true;
-			_responseStatus = line;
+			_responseStatus = "HTTP/1.1" + line.substr(line.find("Status:") + 7);
 			continue;
-		} */
+		}
 		if (ss.eof())
 			break;
 		body << line << "\n";

@@ -31,7 +31,7 @@ content_length = len(response_body)
 # Output the HTTP headers
 print("Content-Type: text/html")
 print(f"Content-Length: {content_length}")
-print("Status: 200 OK")
+print("HTTP/1.1 200 OK")
 print()
 
 # Output the response body
