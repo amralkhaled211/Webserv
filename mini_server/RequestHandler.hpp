@@ -42,7 +42,7 @@ class RequestHandler
 		RequestHandler();
 		void receiveData(int clientSocket, std::vector<Client> &_clients);
 		void findClient(int clientSocket, std::vector<Client> &_clients);
-		Client findAllRecieved(std::vector<Client> clients);
+		Client &findAllRecieved(std::vector<Client> clients);
 	
 	private:
 		std::string _buffer;

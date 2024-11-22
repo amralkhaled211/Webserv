@@ -38,6 +38,17 @@ void Epoll::killClient(int clientSocket)
 	}
 }
 
+Client& findClient(int clientFD, std::vector<Client>& clients) // careful, there is also a method of RequestHandler called findClient()
+{
+    size_t i;
+    for (i = 0; i < clients.size(); ++i)
+    {
+        if (clientFD == clients[i].getClientFD())
+            return clients[i];
+    }
+    return clients[--i]; // returning last one, should never happen!!
+}
+
 void Epoll::handleEpollEvents(const std::vector<int> &serverSockets)
 {
    // std::cout << "Waiting for events" << std::endl;
@@ -49,7 +60,7 @@ void Epoll::handleEpollEvents(const std::vector<int> &serverSockets)
             return;
         throw std::runtime_error("epoll_wait");
     }
-    std::cout << BOLD_YELLOW << "NEW ITERATION  --> ATTENTION: NUMBER OF FD WITH ACTIVE EVENTS: " << n << RESET << std::endl;
+    DEBUG_Y "NEW ITERATION  --> ATTENTION: NUMBER OF FD WITH ACTIVE EVENTS: " << n << RESET << std::endl;
     for (int i = 0; i < n; ++i) {
         std::cout << _events[i].data.fd << ", ";
     }
@@ -69,13 +80,47 @@ void Epoll::handleEpollEvents(const std::vector<int> &serverSockets)
             //continue;
             return;
         }
-        if (std::find(serverSockets.begin(), serverSockets.end(), _events[i].data.fd) != serverSockets.end())
+        if (std::find(serverSockets.begin(), serverSockets.end(), _events[i].data.fd) != serverSockets.end()) {
+			DEBUG_G "Found Event on Socket FD: " << _events[i].data.fd << RESET << std::endl;
             handleConnection(_events[i].data.fd);
-        else if (_events[i].events & EPOLLIN )
-            handleData(_events[i].data.fd);
+		}
+        else if (_events[i].events & EPOLLIN ) {
+			DEBUG_G "Found Event on Client FD: " << _events[i].data.fd << RESET << std::endl;
+            handleData(_events[i].data.fd); // recieve Data & prep response
+		}
         else if (_events[i].events & EPOLLOUT)
         {
-            send(_events[i].data.fd, _buffer.c_str(), _buffer.size(), 0);
+			DEBUG_G "Sending data to Client FD: " << _events[i].data.fd << RESET << std::endl;
+
+            Client &client = findClient(_events[i].data.fd, _clients);
+
+            std::string &remainingResBuffer = client.getResponseBuffer();
+            std::string sendNow;
+            if (remainingResBuffer.size() > SEND_CHUNK_SIZE)
+            {
+                sendNow = remainingResBuffer.substr(0, SEND_CHUNK_SIZE);
+                remainingResBuffer = remainingResBuffer.substr(SEND_CHUNK_SIZE);
+            }
+            else
+                sendNow = remainingResBuffer;
+
+			send(_events[i].data.fd, sendNow.c_str(), sendNow.size(), 0);
+
+            if (remainingResBuffer.size() > SEND_CHUNK_SIZE)
+            {
+                // set this fd again to EPOLLOUT, to make sure epoll_wait() triggers
+				struct epoll_event client_event;
+				client_event.data.fd = _events[i].data.fd;
+				client_event.events = EPOLLOUT;
+				if (epoll_ctl(_epollFD, EPOLL_CTL_MOD, _events[i].data.fd, &client_event) == -1)
+				{
+					close(_events[i].data.fd);
+					std::cout << BOLD_GREEN << "clientSocket Change mod : " << _events[i].data.fd << RESET << std::endl;
+					std::cout << "epoll_ctl failed" << std::endl;
+					throw std::runtime_error("epoll_ctl");
+				}
+                continue; // didn't send whole response, delay killing and closing
+            }
             killClient(_events[i].data.fd);
             close(_events[i].data.fd);
         }
@@ -86,16 +131,17 @@ void Epoll::handleData(int client_fd)
 {
     // std::cout << "Data received" << std::endl;
     requestHandle.receiveData(client_fd, _clients);
-    Client client = requestHandle.findAllRecieved(_clients);
-    if (client.getClientFD() != -1)
+    Client client = requestHandle.findAllRecieved(_clients); // we need the original
+    if (client.getClientFD() != -1) // we only go on here once we recieved the whole request
     {
-        parser request = client.getRequest();
-        _buffer = sendData.sendResponse(client.getClientFD(), _servers, client.getRequest(), _epollFD);
+        // parser request = client.getRequest();
+        std::string responseBuffer = sendData.sendResponse(client.getClientFD(), _servers, client.getRequest(), _epollFD); // return of this is the response
+        findClient(client.getClientFD(), _clients).setResponseBuffer(responseBuffer);
     }
 }
 
 
-void Epoll::handleConnection(int server_fd) // we add also the cliend fd to the interest list / set of fds to watch
+void Epoll::handleConnection(int server_fd) // we add additionally to the server_socket_fds also the cliend fd to the interest list (set of fds to watch)
 {
     while (true) // why do we need to have accept in a loop?
     {
@@ -120,8 +166,8 @@ void Epoll::handleConnection(int server_fd) // we add also the cliend fd to the 
             throw std::runtime_error("epoll_ctl");
         }
         Client newClient;
-        newClient.setClientFD(client_fd);
-        _clients.push_back(newClient);
+        newClient.setClientFD(client_fd);	// creating new Client Object for the new client
+        _clients.push_back(newClient);		// and adding it to the _clients vector
     }
 }
 

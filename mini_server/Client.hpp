@@ -57,9 +57,12 @@ class Client
 
 		parser &getRequest();
 
+		void setResponseBuffer(std::string resBuffer);
+		std::string& getResponseBuffer() { return _responseBuffer; }
 	
 	private:
-	std::string _buffer;
+	std::string _buffer;			// for storing and processing request header & body; more accurate name: _requestBuffer
+	std::string _responseBuffer;	// for storing and processing response header & body
 	int _clientFD;
 	parser request;
 	std::string _boundary;

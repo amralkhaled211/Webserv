@@ -247,6 +247,7 @@ std::string SendData::sendResponse(int clientSocket, std::vector<ServerBlock> &s
 	else
 		resp = _response.status + _response.contentType + _response.contentLength + "\r\n" + _response.body;
 
+	// this makes sure we are able to send() on the next epoll() iteration
 	struct epoll_event client_event;
     client_event.data.fd = clientSocket;
     client_event.events = EPOLLOUT;

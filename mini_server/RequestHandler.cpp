@@ -4,7 +4,7 @@ RequestHandler::RequestHandler()
 {
 }
 // i need here to check for the right client to send the buffer to
-void RequestHandler::findClient(int clientSocket, std::vector<Client> &Clients)
+void RequestHandler::findClient(int clientSocket, std::vector<Client> &Clients) // better name: setBufferForCorrectClient()
 {
 	for (std::vector<Client>::iterator it = Clients.begin(); it != Clients.end(); ++it)
 	{
@@ -24,10 +24,10 @@ void RequestHandler::receiveData(int clientSocket, std::vector<Client> &clients)
 	if (bytesReceived < 0)
 		throw std::runtime_error("Receiving failed");
 	this->_buffer.assign(Buffer, bytesReceived); // this buffer should go to the right client
-	findClient(clientSocket, clients);
+	this->findClient(clientSocket, clients);
 }
 
-Client RequestHandler::findAllRecieved(std::vector<Client> clients)
+Client &RequestHandler::findAllRecieved(std::vector<Client> clients)
 {
 	for (std::vector<Client>::iterator it = clients.begin(); it != clients.end(); ++it)
 	{
