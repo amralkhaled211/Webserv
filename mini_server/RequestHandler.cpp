@@ -13,6 +13,10 @@ void RequestHandler::findClient(int clientSocket, std::vector<Client> &Clients) 
 
 			it->setBuffer(this->_buffer);
 			it->allRecieved();
+			if (it->getIsChunked())
+				it->status = R_CHUNKS;
+			else
+				it->status = RECIEVING;
 			break;
 		}
 	}

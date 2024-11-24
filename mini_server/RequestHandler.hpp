@@ -24,6 +24,8 @@
 #include "config_parser/Parser.hpp"
 #include "Client.hpp"
 
+class Client;
+
 #define RESET_COLOR "\033[0m"
 #define RED_COLOR "\033[31m"
 #define GREEN_COLOR "\033[32m"

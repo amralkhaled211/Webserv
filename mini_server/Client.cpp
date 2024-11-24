@@ -4,6 +4,7 @@ Client::Client()
 {
 	isAllRecieved = false;
 	_isChunked = false;
+	_sentHeader = false;
 }
 
 

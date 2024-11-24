@@ -54,7 +54,7 @@ int Server::create_and_configure_socket()
 
     make_socket_non_blocking(serverSocket);
 
-    int opt = 1;
+    int opt = 1; // 1024 * 1024;
     if (setsockopt(serverSocket, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) < 0 ||
         setsockopt(serverSocket, SOL_SOCKET, SO_REUSEPORT, &opt, sizeof(opt)) < 0)
         throw std::runtime_error("setsockopt(SO_REUSEADDR) failed");

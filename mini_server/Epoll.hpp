@@ -20,8 +20,7 @@
 #include <csignal>
 #include <cstdlib>
 #include "RequestHandler.hpp"
-#include "SendData.hpp"
-#include "config_parser/Parser.hpp"
+// #include "config_parser/Parser.hpp"
 #include "Client.hpp"
 
 #define	DEBUG_Y	std::cout << BOLD_YELLOW <<
@@ -30,7 +29,7 @@
 
 #define	SEND_CHUNK_SIZE	1024
 
-#define MAX_EVENTS 10
+#define MAX_EVENTS 128
 extern bool serverRunning ;
 
 class Epoll

@@ -186,7 +186,7 @@ void CGI::executeScript()
 
 		fd_set readfds;
         struct timeval timeout;
-        timeout.tv_sec = 15; // Set timeout to 5 seconds
+        timeout.tv_sec = 5; // Set timeout to 5 seconds
         timeout.tv_usec = 0;
 
         FD_ZERO(&readfds);

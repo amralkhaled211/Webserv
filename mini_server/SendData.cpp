@@ -13,7 +13,12 @@ void SendData::notfound()
 
 bool SendData::read_file(std::string const &path, parser &request) // this already prepares the response
 {
-	std::string file_extension = get_file_extension(request.path);
+	std::string file_extension = get_file_extension(path);
+	std::cout << "-----------------------------------\n"
+	<<"file extention: " << file_extension << std::endl
+	<< "request path: " << request.path << "\n"
+	<< "path: " << path
+	<< "-----------------------------------\n" ;
 	std::ifstream file(path.c_str());
 	if (file.is_open())
 	{
@@ -23,13 +28,22 @@ bool SendData::read_file(std::string const &path, parser &request) // this alrea
 		{
 			_response.body += line + "\n";
 		}
-		_response.status = "HTTP/1.1 200 OK\r\n";
-		_response.contentType = "Content-Type: " + mimeTypesMap_G[file_extension] + ";" + "\r\n";
-		unsigned int content_len = _response.body.size();
-		_response.contentLength = "Content-Length: " + intToString(content_len) + "\r\n";
+		std::string contentType = mimeTypesMap_G[file_extension];
+		if (contentType == "")
+			contentType = "text/plain";
+
+		createResponseHeader(200, _response.body.size(), contentType);
+
+		// _response.status = "HTTP/1.1 200 OK\r\n";
+		// _response.contentType = "Content-Type: " + mimeTypesMap_G[file_extension] + ";" + "\r\n";
+		// unsigned int content_len = _response.body.size();
+		// _response.contentLength = "Content-Length: " + intToString(content_len) + "\r\n";
+
 		file.close();
 		return true;
 	}
+	if (!file.is_open())
+		std::cout << "COULDN'T OPEN FILE: " << path << std::endl;
 	return false;
 }
 
@@ -69,7 +83,6 @@ void SendData::handleCGI(const std::string &root, parser &request, ServerBlock s
 std::vector<std::string>	possibleRequestedLoc(std::string uri) {
 	std::vector<std::string>	possibleReqLoc;
 	size_t						lastSlash;
-	// remove excess slashes -> this should be done at the request parsing, to avoid repetitive work
 
 	removeExcessSlashes(uri);
 
@@ -130,6 +143,10 @@ ServerBlock SendData::findServerBlock(std::vector<ServerBlock> &servers, parser 
 			return server;
 	}
 	// this would be fixed later
+	std::cout << "       HOST: " << host << std::endl;
+	std::cout << "SERVER_NAME: " << server_name << std::endl;
+	std::cout << "       PORT: " << port << std::endl;
+	print_map(request.headers);
 	std::cout << "\033[1;31m" <<  "returning the first server?, This is a BUG " << "\033[0m" << std::endl;
 	return servers[0]; // return default
 }
@@ -163,7 +180,8 @@ bool SendData::findIndexFile(const std::vector<std::string> &files, std::string 
 	while (i < files.size())
 	{
 		std::string file = root + '/' + files[i];
-		std::cout << BOLD_GREEN << "FILE : " << file << RESET << std::endl;
+		removeExcessSlashes(file);
+		std::cout << BOLD_GREEN << "FILE from index: " << file << RESET << std::endl;
 		if (read_file(file, request))
 			return true;
 		i++;
@@ -179,7 +197,7 @@ bool SendData::isCGI(const parser &request, LocationBlock location)
 		return false;
 }
 
-std::string SendData::sendResponse(int clientSocket, std::vector<ServerBlock> &servers, parser &request, int epollFD)
+Response &SendData::sendResponse(int clientSocket, std::vector<ServerBlock> &servers, parser &request, int epollFD)
 {
 	_isReturn = false;
 
@@ -190,9 +208,12 @@ std::string SendData::sendResponse(int clientSocket, std::vector<ServerBlock> &s
 		try
 		{
 			LocationBlock location = findLocationBlock(current_server.getLocationVec(), request);
+
 			std::string root = location.getRoot() + request.path; // maybe a more suitable name: pathToFileToServe
+			
 			std::cout << MAGENTA_COLOR << "Root: " << root << std::endl << "Request path:" <<  request.path << RESET << std::endl;
 			/* location.printLocationBlock(); */
+			
 			if (location.getReturn().empty())
 			{
 				if (_isDir == true) // here we handle the directory
@@ -212,8 +233,10 @@ std::string SendData::sendResponse(int clientSocket, std::vector<ServerBlock> &s
 				}
 				else
 				{
-					if (!this->read_file(root, request))
+					if (!this->read_file(root, request)) {
+						DEBUG_R "sending 404 error!!" << RESET << std::endl;
 						prepErrorResponse(404, location);
+					}
 				}
 			}
 			else
@@ -240,27 +263,27 @@ std::string SendData::sendResponse(int clientSocket, std::vector<ServerBlock> &s
 		createResponseHeader(200, _response.body.size(), "text/html");
 	}
 
-	std::string resp;
+	// std::string resp;
 
-	if (_isReturn)
-		resp = _response.status + _response.location  + _response.contentType + _response.contentLength + "\r\n" + _response.body;
-	else
-		resp = _response.status + _response.contentType + _response.contentLength + "\r\n" + _response.body;
+	// if (_isReturn)
+	// 	resp = _response.status + _response.location  + _response.contentType + _response.transferEncoding + _response.contentLength + "\r\n" + _response.body;
+	// else
+	// 	resp = _response.status + _response.contentType + _response.transferEncoding + _response.contentLength + "\r\n" + _response.body;
 
 	// this makes sure we are able to send() on the next epoll() iteration
-	struct epoll_event client_event;
-    client_event.data.fd = clientSocket;
-    client_event.events = EPOLLOUT;
-	if (epoll_ctl(epollFD, EPOLL_CTL_MOD, clientSocket, &client_event) == -1)
-    {
-        close(clientSocket);
-		std::cout << BOLD_GREEN << "clientSocket Change mod : " << clientSocket << RESET << std::endl;
-		std::cout << "epoll_ctl failed" << std::endl;
-        throw std::runtime_error("epoll_ctl");
-    }
+	// struct epoll_event client_event;
+    // client_event.data.fd = clientSocket;
+    // client_event.events = EPOLLOUT;
+	// if (epoll_ctl(epollFD, EPOLL_CTL_MOD, clientSocket, &client_event) == -1)
+    // {
+    //     close(clientSocket);
+	// 	std::cout << BOLD_GREEN << "clientSocket Change mod : " << clientSocket << RESET << std::endl;
+	// 	std::cout << "epoll_ctl failed" << std::endl;
+    //     throw std::runtime_error("in sendResponse(): epoll_ctl while MODIFYING client FD " + intToString(clientSocket));
+    // }
 	/* std::cout << BLUE_COLOR << "sending response " << RESET << std::endl;
 	std::cout << resp << std::endl; */
-	return resp;
+	return _response;
 }
 
 
@@ -285,8 +308,8 @@ std::vector<std::pair<std::string, std::string> >	listDirectory(const std::strin
 	std::vector<std::pair<std::string, std::string> >	elements;
 	DIR*	dir = opendir(path.c_str());
 	if (dir == NULL) {
-		// handle error, should I throw exception?
 		// it can return NULL, if no permission to open directory!
+		// test this scenario with nginx, expected: 403 Permission Denied
 		return elements;
 	}
 
@@ -397,10 +420,11 @@ void		SendData::displayDir(const std::string& path, const std::string& requestPa
 	// embed created body inside response struct
 	_response.body = html.str();
 	// std::cerr << _response.body << std::endl;
-	_response.status = "HTTP/1.1 200 OK\r\n";
-	_response.contentType = "Content-Type: text/html;\r\n";
-	unsigned int content_len = _response.body.size();
-	_response.contentLength = "Content-Length: " + intToString(content_len) + "\r\n";
+	size_t content_len = _response.body.size();
+	createResponseHeader(200, content_len, "text/html");
+	// _response.status = "HTTP/1.1 200 OK\r\n";
+	// _response.contentType = "Content-Type: text/html;\r\n";
+	// _response.contentLength = "Content-Length: " + intToString(content_len) + "\r\n";
 }
 
 
@@ -429,11 +453,18 @@ std::string		getErrorPagePath(int code, const std::vector<std::vector<std::strin
 	return "";
 }
 
-void		SendData::createResponseHeader(int code, int bodySize, std::string contentTypes)
+void		SendData::createResponseHeader(int code, size_t bodySize, std::string contentTypes)
 {
 	_response.status = "HTTP/1.1 " + intToString(code) + " " + _status._statusMsg[code][0] + "\r\n";
 	_response.contentType = "Content-Type: " + contentTypes + ";\r\n";
-	_response.contentLength = "Content-Length: " + intToString(bodySize) + "\r\n";
+	if (bodySize > SEND_CHUNK_SIZE) {
+		_response.transferEncoding = "Transfer-Encoding: chunked\r\n";
+		_response.contentLength = "";
+	}
+	else {
+		_response.contentLength = "Content-Length: " + intToString(bodySize) + "\r\n";
+		_response.transferEncoding = "";
+	}
 }
 
 int		readFromErrorPage(std::string& errorPagePath, std::string& body)

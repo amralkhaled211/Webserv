@@ -301,3 +301,19 @@ where should the error_page file be appended to?
 Forbidden vs Not Found
 403: when location found, but file not mentioned in index
 404: when location not found
+
+
+sending/responding in chunks
+steps:
+procedure for chunked response
+1. send only the header
+2. send the body in a certain format
+	length\r\n
+	body_chunk\r\n
+1. avoid killing and closing the client fd for now
+2. epoll_wait() should report on this client again
+3. send the next body_chunk in the spcified format
+4. continue till the all body_chunks are sent
+5. signal to client all chunks were send, with this msg
+	0\r\n
+	\r\n

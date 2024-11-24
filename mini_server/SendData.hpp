@@ -1,10 +1,16 @@
 #pragma once
 #include "RequestHandler.hpp"
+#include "Client.hpp"
 #include "StatusMsg.hpp"
+#include "Response.hpp"
+
+struct parser;
+class Client;
 
 #define	SD_OK				0
 #define	SD_NO_READ_PERM		-1
 #define	SD_NO_FILE			-2
+
 
 typedef struct Redirection
 {
@@ -19,14 +25,15 @@ typedef struct Redirection
     }
 } Redirection;
 
-typedef struct Response
-{
-	std::string status;
-	std::string contentType;
-	std::string location;
-	std::string contentLength;
-	std::string body;
-} Response;
+// typedef struct Response
+// {
+// 	std::string status;
+// 	std::string contentType;
+// 	std::string location; // uri
+// 	std::string transferEncoding;
+// 	std::string contentLength;
+// 	std::string body;
+// } Response;
 
 class SendData
 {
@@ -54,9 +61,9 @@ class SendData
 	bool isCGI(const parser &request, LocationBlock location);
 	void redirect(LocationBlock& location);
 	void saveBodyToFile(const std::string &filename, parser &request);
-	std::string sendResponse(int clientSocket, std::vector<ServerBlock> &servers, parser &request, int epollFD);
+	Response &sendResponse(int clientSocket, std::vector<ServerBlock> &servers, parser &request, int epollFD);
 	void displayDir(const std::string& path, const std::string& requestPath);
 	void prepErrorResponse(int code, LocationBlock& locationBlock);
-	void createResponseHeader(int code, int bodySize, std::string contentTypes);
+	void createResponseHeader(int code, size_t bodySize, std::string contentTypes);
 	void createDfltResponseBody(int code, std::string&	contentType, std::string postFix = "html");
 };
