@@ -21,9 +21,9 @@ void Epoll::acceptConnection(const std::vector<int> &serverSockets)
 	init_epoll(serverSockets);
 	while (serverRunning)
 	{
-		DEBUG_Y "B<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>\n";
+		// DEBUG_Y "B<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>\n";
 		handleEpollEvents(serverSockets);
-		DEBUG_R "E<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>\n";
+		// DEBUG_R "E<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>\n";
 	}
 }
 
@@ -92,21 +92,27 @@ void Epoll::handleEpollEvents(const std::vector<int> &serverSockets)
 			return;
 		throw std::runtime_error("epoll_wait");
 	}
-	DEBUG_Y "NEW ITERATION  --> ATTENTION: NUMBER OF FD WITH ACTIVE EVENTS: " << n << RESET << std::endl;
-	for (int i = 0; i < n; ++i)
-	{
-		std::cout << _events[i].data.fd << ", ";
+
+	if (true) {
+		DEBUG_Y "NEW ITERATION  --> ATTENTION: NUMBER OF FD WITH ACTIVE EVENTS: " << n << RESET << std::endl;
+		for (int i = 0; i < n; ++i)
+		{
+			std::cout << _events[i].data.fd << ", ";
+		}
+		std::cout << std::endl;
 	}
-	std::cout << std::endl;
+	
 	for (int i = 0; i < n; ++i)
 	{
 		std::cout << "######################################################\n";
 
 		// info about the new client
-		try {
-			printClientInfo(_events[i].data.fd, _events[i].events, _clients);
-		} catch (std::exception &e) {
-			std::cerr << BOLD_RED << e.what() << RESET << std::endl;
+		if (E_DEBUG) {
+			try {
+				printClientInfo(_events[i].data.fd, _events[i].events, _clients);
+			} catch (std::exception &e) {
+				std::cerr << BOLD_RED << e.what() << RESET << std::endl;
+			}
 		}
 		if (_events[i].events & (EPOLLERR | EPOLLHUP | EPOLLRDHUP)) // what do these errors/flags mean?
 		{
@@ -132,30 +138,41 @@ void Epoll::handleEpollEvents(const std::vector<int> &serverSockets)
 		}
 		if (std::find(serverSockets.begin(), serverSockets.end(), _events[i].data.fd) != serverSockets.end())
 		{
-			std::cout << "---------------------------------------------------\n";
-			DEBUG_G "Found Event on Socket FD: " << _events[i].data.fd << RESET << std::endl;
+			if (E_DEBUG) {
+				std::cout << "---------------------------------------------------\n";
+				DEBUG_G "Found Event on Socket FD: " << _events[i].data.fd << RESET << std::endl;
+			}
+
 			handleConnection(_events[i].data.fd);
-			std::cout << "---------------------------------------------------\n";
+			
+			if (E_DEBUG) std::cout << "---------------------------------------------------\n";
 		}
 		else if (_events[i].events & EPOLLIN)
 		{
-			std::cout << "---------------------------------------------------\n";
-			DEBUG_G "Found Event/RECIEVING on Client FD: " << _events[i].data.fd << RESET << std::endl;
+			if (E_DEBUG) {
+				std::cout << "---------------------------------------------------\n";
+				DEBUG_G "Found Event/RECIEVING on Client FD: " << _events[i].data.fd << RESET << std::endl;
+			}
+
 			handleData(_events[i].data.fd); // recieve Data & prep response
-			std::cout << "---------------------------------------------------\n";
+			
+			if (E_DEBUG) std::cout << "---------------------------------------------------\n";
 		}
 		else if (_events[i].events & EPOLLOUT)
 		{
-			std::cout << "---------------------------------------------------\n";
-			DEBUG_G "Found Event/SENDING data to Client FD: " << _events[i].data.fd << RESET << std::endl;
+			if (E_DEBUG) {
+				std::cout << "---------------------------------------------------\n";
+				DEBUG_G "Found Event/SENDING data to Client FD: " << _events[i].data.fd << RESET << std::endl;
+			}
 
 			Client &client = findClient(_events[i].data.fd, _clients);
 
-			std::cout << "FIND RESULT: " << client.getResponseBuffer().find("Transfer-Encoding: chunked") << std::endl;
-			if (client.getResponseBuffer().find("Transfer-Encoding: chunked") != std::string::npos) std::cout << "SENDING IN CHUNKS\n";
-			else std::cout << "SENDING ALL AT ONCE\n";
-
-			std::cout << BOLD_WHITE << "RESPONDING FOR THIS PATH: " << client.getRequest().path << RESET << std::endl;
+			if (E_DEBUG) {
+				std::cout << "FIND RESULT: " << client.getResponseBuffer().find("Transfer-Encoding: chunked") << std::endl;
+				if (client.getResponseBuffer().find("Transfer-Encoding: chunked") != std::string::npos) std::cout << "SENDING IN CHUNKS\n";
+				else std::cout << "SENDING ALL AT ONCE\n";
+				std::cout << BOLD_WHITE << "RESPONDING FOR THIS PATH: " << client.getRequest().path << RESET << std::endl;
+			}
 
 			std::string &remainingResBuffer = client.getResponse().body;
 			std::string sendNow;
@@ -202,13 +219,15 @@ void Epoll::handleEpollEvents(const std::vector<int> &serverSockets)
 			killClient(_events[i].data.fd);
 			close(_events[i].data.fd);
 			
-			DEBUG_Y "END OF LIFE CYCLE OF CLIENT FD " << _events[i].data.fd << std::endl;
-			DEBUG_G "REMAINING CLIENT FDs ARE\n";
-			for (size_t j = 0; j < _clients.size(); ++j) {
-				printClientInfo(_clients[j].getClientFD(),_events[i].events, _clients);
-				std::cout << "\n" << RESET;
+			if (E_DEBUG) {
+				DEBUG_Y "END OF LIFE CYCLE OF CLIENT FD " << _events[i].data.fd << std::endl;
+				DEBUG_G "REMAINING CLIENT FDs ARE\n";
+				for (size_t j = 0; j < _clients.size(); ++j) {
+					printClientInfo(_clients[j].getClientFD(),_events[i].events, _clients);
+					std::cout << "\n" << RESET;
+				}
+				std::cout << "---------------------------------------------------\n";
 			}
-			std::cout << "---------------------------------------------------\n";
 		}
 		std::cout << "######################################################\n";
 	}
@@ -238,9 +257,10 @@ void Epoll::handleData(int client_fd)
 			std::cout << "epoll_ctl failed" << std::endl;
 			throw std::runtime_error("in sendResponse(): epoll_ctl while MODIFYING client FD " + intToString(client.getClientFD()));
 		}
-		DEBUG_G "AFTER EPOLL_CTL IN HANDLE DATA\n" << RESET;
-		printClientInfo(client_fd, client_event.events, _clients);
-
+		if (E_DEBUG) {
+			DEBUG_G "AFTER EPOLL_CTL IN HANDLE DATA\n" << RESET;
+			printClientInfo(client_fd, client_event.events, _clients);
+		}
 		clientB.status = SENDING;
 
 		// if (client.getResponse().location.empty())
