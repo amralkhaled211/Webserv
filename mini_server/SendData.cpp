@@ -277,9 +277,16 @@ std::string SendData::sendResponse(int clientSocket, std::vector<ServerBlock> &s
 		}
 		catch (const std::exception &e)
 		{
-			std::string error = e.what();
-			std::cout << RED_COLOR << "Error: " << error << RESET << std::endl;
+			std::string error = e.what(); // here we need to check what the error is and send notfound or error page accordingly
+			/* std::cout << RED_COLOR << "Error: " << error << RESET << std::endl;
+			std::cout << BOLD_YELLOW << "Response Status: " <<  _response.status << std::endl;
+			std::cout << "Content Type: "  << _response.contentType << std::endl;
+			std::cout << "Content Length: " << _response.contentLength << RESET << std::endl; */
 			// i should here send the right error for invalid locations
+			_response.body.clear();
+			_response.status.clear();
+			_response.contentType.clear();
+			_response.contentLength.clear();
 			notfound();
 		}
 	}
@@ -322,7 +329,7 @@ std::string SendData::sendResponse(int clientSocket, std::vector<ServerBlock> &s
     }
 	/* std::cout << BLUE_COLOR << "sending response " << RESET << std::endl;
 	std::cout << resp << std::endl; */
-	std::cout << CYAN_COLOR <<"Response Status: " <<  _response.status << std::endl;
+	std::cout << CYAN_COLOR << "Response Status: " <<  _response.status << std::endl;
 	std::cout << "Content Type: "  << _response.contentType << std::endl;
 	std::cout << "Content Length: " << _response.contentLength << RESET << std::endl;
 	return resp;
