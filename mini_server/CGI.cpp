@@ -177,9 +177,9 @@ void CGI::executeScript()
         if (execve(_scriptPath.c_str(), arg, &envp[0]) == -1)
         {
             std::cerr << "Failed to execute CGI script: " << strerror(errno) << std::endl;
-			throw std::runtime_error("Failed to execute CGI script");
             freeEnvp(envp);
             exit(1);
+			throw std::runtime_error("Failed to execute CGI script");
         }
 	}
 	else //PARENT
