@@ -3,7 +3,7 @@
 
 CGI::CGI() {}
 
-CGI::CGI(const std::string &scriptPath, const parser &request) : _scriptPath(scriptPath) , _request(request), _typeSet(false)/* , _statusSet(false), _lengthSet(false) */
+CGI::CGI(const std::string &scriptPath, const parser &request) : _scriptPath(scriptPath) , _request(request), _typeSet(false), _statusSet(false), _lengthSet(false)
 {}
 
 CGI::~CGI() {}
@@ -18,12 +18,22 @@ std::string CGI::getContentType() const
 	return _contentType;
 }
 
+std::string CGI::getContentLength() const
+{
+	return _contentLength;
+}
+
+std::string CGI::getResponseStatus() const
+{
+	return _responseStatus;
+}
+
 bool CGI::getTypeSet() const
 {
 	return _typeSet;
 }
 
-/* bool CGI::getLengthSet() const
+bool CGI::getLengthSet() const
 {
 	return _lengthSet;
 }
@@ -31,7 +41,7 @@ bool CGI::getTypeSet() const
 bool CGI::getStatusSet() const
 {
 	return _statusSet;
-} */
+}
 
 std::vector<char*> CGI::setUpEnvp()
 {
@@ -178,6 +188,7 @@ void CGI::executeScript()
         {
             std::cerr << "Failed to execute CGI script: " << strerror(errno) << std::endl;
             freeEnvp(envp);
+			
             exit(1);
 			throw std::runtime_error("Failed to execute CGI script");
         }
@@ -187,6 +198,15 @@ void CGI::executeScript()
 		close(inPipe[0]);
 		close(outPipe[1]);
 		
+		int status;
+		waitpid(pid, &status, 0);
+		if (WIFEXITED(status) && WEXITSTATUS(status) != 0)
+		{
+			std::cout << "CGI exited " << WEXITSTATUS(status) << std::endl;
+			close(outPipe[0]);
+			throw std::runtime_error("CGI script exited with an error");
+		}
+
 		if (_request.method == "POST" && !_request.body.empty())
 		{
 			/* std::cout << CYAN_COLOR << "Writing POST body to pipe: " <<std::endl;
@@ -216,8 +236,15 @@ void CGI::executeScript()
             sleep(1); // Give the child process some time to terminate
             kill(pid, SIGKILL); // Send SIGKILL if the child process is still running
             close(outPipe[0]);
+			/* _responseBody.clear(); */
+			/* std::cout << BOLD_YELLOW << "CGI script execution timed out" << std::endl;
+			std::cout << "CGI Status: " << _responseStatus << std::endl;
+			std::cout << "CGI Content type: " << _contentType << std::endl;
+			std::cout << "CGI Content length: " << _contentLength << RESET << std::endl;
+			std::cout << "CGI Body: " << _responseBody << std::endl; */
             throw std::runtime_error("CGI script execution timed out");
         }
+		
 
 		char buffer[1024];
 		std::ostringstream output;
@@ -225,9 +252,6 @@ void CGI::executeScript()
 		while ((bytesRead = read(outPipe[0], buffer,sizeof(buffer))) > 0)
 			output.write(buffer, bytesRead);
 		close(outPipe[0]);
-
-		int status;
-		waitpid(pid, &status, 0);
 
 		_responseBody = output.str();
 	}
@@ -253,19 +277,19 @@ void CGI::generateResponse()
 	{
 		if (line.find("Content-Type:") != std::string::npos){
 			_typeSet = true;
-			_contentType = line;
+			_contentType = line.substr(line.find("Content-Type:"));
 			continue;
 		}
-		/* if (line.find("Content-Length:") !=  std::string::npos){
+		if (line.find("Content-Length:") !=  std::string::npos){
 			_lengthSet = true;
-			_contentLength = line;
+			_contentLength = line.substr(line.find("Content-Length:"));
 			continue;
 		}
 		if (line.find("Status:") !=  std::string::npos){
 			_statusSet = true;
-			_responseStatus = line;
+			_responseStatus = "HTTP/1.1" + line.substr(line.find("Status:") + 7);
 			continue;
-		} */
+		}
 		if (ss.eof())
 			break;
 		body << line << "\n";
@@ -273,7 +297,7 @@ void CGI::generateResponse()
 	_responseBody = body.str();
 }
 
-void CGI::createhtml()
+/* void CGI::createhtml()
 {
 	std::ofstream html("cgi_output.html");
 	if (!html.is_open())
@@ -283,4 +307,4 @@ void CGI::createhtml()
 	}
 	html << _responseBody;
 	html.close();
-}
+} */
