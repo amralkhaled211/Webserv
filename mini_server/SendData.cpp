@@ -58,8 +58,6 @@ void SendData::handleCGI(const std::string &root, parser &request, ServerBlock s
 	cgi.executeScript();
 	cgi.generateResponse();
 
-
-	_response.status = "HTTP/1.1 200 OK\r\n";
 	_response.body = cgi.getResponse();
 
 	file_extension = get_file_extension(request.path);

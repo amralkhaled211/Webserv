@@ -198,14 +198,7 @@ void CGI::executeScript()
 		close(inPipe[0]);
 		close(outPipe[1]);
 		
-		int status;
-		waitpid(pid, &status, 0);
-		if (WIFEXITED(status) && WEXITSTATUS(status) != 0)
-		{
-			std::cout << "CGI exited " << WEXITSTATUS(status) << std::endl;
-			close(outPipe[0]);
-			throw std::runtime_error("CGI script exited with an error");
-		}
+		
 
 		if (_request.method == "POST" && !_request.body.empty())
 		{
@@ -252,6 +245,9 @@ void CGI::executeScript()
 		while ((bytesRead = read(outPipe[0], buffer,sizeof(buffer))) > 0)
 			output.write(buffer, bytesRead);
 		close(outPipe[0]);
+		
+		int status;
+		waitpid(pid, &status, 0);
 
 		_responseBody = output.str();
 	}
