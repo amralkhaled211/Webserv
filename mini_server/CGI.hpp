@@ -4,6 +4,7 @@
 #include "RequestHandler.hpp"
 #include "config_parser/LocationBlock.hpp"
 #include <sys/wait.h>
+#define ERROR_MARKER "ERROR_MARKER"
 
 class CGI
 {

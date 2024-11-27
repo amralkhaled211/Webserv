@@ -52,45 +52,53 @@ void SendData::handleCGI(const std::string &root, parser &request, ServerBlock s
 		throw std::runtime_error("CGI extension not allowed");
 	}
 
-
-	CGI cgi(root, request);
-	cgi.setEnv(server);
-	cgi.executeScript();
-	cgi.generateResponse();
-
-	_response.body = cgi.getResponse();
-
-	file_extension = get_file_extension(request.path);
-
-	if (cgi.getStatusSet())
+	try 
 	{
-		std::cout << MAGENTA_COLOR << "Status set" << RESET << std::endl;
-		_response.status = cgi.getResponseStatus() + "\r\n";
+		CGI cgi(root, request);
+		cgi.setEnv(server);
+		cgi.executeScript();
+		cgi.generateResponse();
+
+		_response.body = cgi.getResponse();
+
+		file_extension = get_file_extension(request.path);
+
+		if (cgi.getStatusSet())
+		{
+			//std::cout << MAGENTA_COLOR << "Status set" << RESET << std::endl;
+			_response.status = cgi.getResponseStatus() + "\r\n";
+		}
+		else
+			_response.status = "HTTP/1.1 200 OK\r\n";
+
+		if (cgi.getTypeSet())
+		{
+			//std::cout << MAGENTA_COLOR << "Content type set" << RESET << std::endl;
+			_response.contentType = cgi.getContentType() + ";" + "\r\n";
+		}
+		else
+			_response.contentType = "Content-Type: text/html;\r\n";
+		
+		if (cgi.getLengthSet())
+		{
+			//std::cout << MAGENTA_COLOR << "Content length set" << RESET << std::endl;
+			_response.contentLength = cgi.getContentLength() + "\r\n";
+		}
+		else
+		{
+			unsigned int content_len = _response.body.size();
+			_response.contentLength = "Content-Length: " + intToString(content_len) + "\r\n";
+		}
 	}
-	else
-		_response.status = "HTTP/1.1 200 OK\r\n";
-	
-	if (cgi.getTypeSet())
+	catch (const std::exception &e)
 	{
-		std::cout << MAGENTA_COLOR << "Content type set" << RESET << std::endl;
-		_response.contentType = cgi.getContentType() + ";" + "\r\n";
-	}
-	else
-		_response.contentType = "Content-Type: text/html;\r\n";
-	if (cgi.getLengthSet())
-	{
-		std::cout << MAGENTA_COLOR << "Content length set" << RESET << std::endl;
-		_response.contentLength = cgi.getContentLength() + "\r\n";
-	}
-	else
-	{
-		unsigned int content_len = _response.body.size();
-		_response.contentLength = "Content-Length: " + intToString(content_len) + "\r\n";
+		//std::cout << RED_COLOR << "Error: " << e.what() << RESET << std::endl;
+		throw std::runtime_error("CGI execution failed");
 	}
 
-	std::cout << MAGENTA_COLOR << "CGI Status: " << _response.status << std::endl;
+	/* std::cout << MAGENTA_COLOR << "CGI Status: " << _response.status << std::endl;
 	std::cout << "CGI Content type: " << _response.contentType << std::endl;
-	std::cout << "CGI Content length: " << _response.contentLength << RESET << std::endl;
+	std::cout << "CGI Content length: " << _response.contentLength << RESET << std::endl; */
 }
 
 std::vector<std::string>	possibleRequestedLoc(std::string uri) {
@@ -276,15 +284,16 @@ std::string SendData::sendResponse(int clientSocket, std::vector<ServerBlock> &s
 		catch (const std::exception &e)
 		{
 			std::string error = e.what(); // here we need to check what the error is and send notfound or error page accordingly
-			/* std::cout << RED_COLOR << "Error: " << error << RESET << std::endl;
-			std::cout << BOLD_YELLOW << "Response Status: " <<  _response.status << std::endl;
+			std::cout << RED_COLOR << "Error: " << error << RESET << std::endl; 
+			/* std::cout << BOLD_YELLOW << "Response Status: " <<  _response.status << std::endl;
 			std::cout << "Content Type: "  << _response.contentType << std::endl;
 			std::cout << "Content Length: " << _response.contentLength << RESET << std::endl; */
-			// i should here send the right error for invalid locations
+			// i should here send the right error for invalid locatio
 			_response.body.clear();
 			_response.status.clear();
 			_response.contentType.clear();
 			_response.contentLength.clear();
+			std::cout << YELLOW << "Sending 404" << RESET << std::endl;
 			notfound();
 		}
 	}
@@ -327,9 +336,9 @@ std::string SendData::sendResponse(int clientSocket, std::vector<ServerBlock> &s
     }
 	/* std::cout << BLUE_COLOR << "sending response " << RESET << std::endl;
 	std::cout << resp << std::endl; */
-	std::cout << CYAN_COLOR << "Response Status: " <<  _response.status << std::endl;
+	/* std::cout << CYAN_COLOR << "Response Status: " <<  _response.status << std::endl;
 	std::cout << "Content Type: "  << _response.contentType << std::endl;
-	std::cout << "Content Length: " << _response.contentLength << RESET << std::endl;
+	std::cout << "Content Length: " << _response.contentLength << RESET << std::endl; */
 	return resp;
 }
 

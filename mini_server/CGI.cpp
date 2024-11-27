@@ -188,9 +188,9 @@ void CGI::executeScript()
         {
             std::cerr << "Failed to execute CGI script: " << strerror(errno) << std::endl;
             freeEnvp(envp);
-			
-            exit(1);
-			throw std::runtime_error("Failed to execute CGI script");
+            //exit(1);
+			std::cout << ERROR_MARKER << std::endl;
+			return ;
         }
 	}
 	else //PARENT
@@ -198,8 +198,6 @@ void CGI::executeScript()
 		close(inPipe[0]);
 		close(outPipe[1]);
 		
-		
-
 		if (_request.method == "POST" && !_request.body.empty())
 		{
 			/* std::cout << CYAN_COLOR << "Writing POST body to pipe: " <<std::endl;
@@ -240,14 +238,41 @@ void CGI::executeScript()
 		
 
 		char buffer[1024];
+		bool eof = false;
 		std::ostringstream output;
 		ssize_t bytesRead;
 		while ((bytesRead = read(outPipe[0], buffer,sizeof(buffer))) > 0)
+		{
+			//std::cout << "In read loop" << std::endl;
+			for (int i = 0; i < bytesRead; i++)
+			{
+				//std::cout << YELLOW_COLOR << buffer[i] << RESET;
+				if (strncmp(buffer + i, ERROR_MARKER, strlen(ERROR_MARKER)) == 0)
+				{
+					std::cout << "ERROR_MARKER found" << std::endl;
+					kill(pid, SIGTERM);
+        			sleep(1);
+        			kill(pid, SIGKILL);
+					eof = true;
+					break;
+				}
+			}
+			if (eof)
+				break;
 			output.write(buffer, bytesRead);
+		}
+
 		close(outPipe[0]);
+
+		if (eof)
+		{
+			_responseBody.clear();
+			std::cout << "Throwing error exception" << std::endl;
+			throw std::runtime_error("CGI execution failed");
+		}
 		
-		int status;
-		waitpid(pid, &status, 0);
+		/* int status;
+		waitpid(pid, &status, 0); */
 
 		_responseBody = output.str();
 	}
