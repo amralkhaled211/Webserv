@@ -51,51 +51,45 @@ void SendData::handleCGI(const std::string &root, parser &request, ServerBlock s
 	{
 		throw std::runtime_error("CGI extension not allowed");
 	}
-
-	try 
+	CGI cgi(root, request);
+	cgi.setEnv(server);
+	if (cgi.executeScript() != true)
 	{
-		CGI cgi(root, request);
-		cgi.setEnv(server);
-		cgi.executeScript();
-		cgi.generateResponse();
-
-		_response.body = cgi.getResponse();
-
-		file_extension = get_file_extension(request.path);
-
-		if (cgi.getStatusSet())
-		{
-			//std::cout << MAGENTA_COLOR << "Status set" << RESET << std::endl;
-			_response.status = cgi.getResponseStatus() + "\r\n";
-		}
-		else
-			_response.status = "HTTP/1.1 200 OK\r\n";
-
-		if (cgi.getTypeSet())
-		{
-			//std::cout << MAGENTA_COLOR << "Content type set" << RESET << std::endl;
-			_response.contentType = cgi.getContentType() + ";" + "\r\n";
-		}
-		else
-			_response.contentType = "Content-Type: text/html;\r\n";
-		
-		if (cgi.getLengthSet())
-		{
-			//std::cout << MAGENTA_COLOR << "Content length set" << RESET << std::endl;
-			_response.contentLength = cgi.getContentLength() + "\r\n";
-		}
-		else
-		{
-			unsigned int content_len = _response.body.size();
-			_response.contentLength = "Content-Length: " + intToString(content_len) + "\r\n";
-		}
-	}
-	catch (const std::exception &e)
-	{
-		//std::cout << RED_COLOR << "Error: " << e.what() << RESET << std::endl;
+		//std::cout << RED_COLOR << "CGI execution failed" << RESET << std::endl;
 		throw std::runtime_error("CGI execution failed");
 	}
+	cgi.generateResponse();
 
+	_response.body = cgi.getResponse();
+
+	file_extension = get_file_extension(request.path);
+
+	if (cgi.getStatusSet())
+	{
+		//std::cout << MAGENTA_COLOR << "Status set" << RESET << std::endl;
+		_response.status = cgi.getResponseStatus() + "\r\n";
+	}
+	else
+		_response.status = "HTTP/1.1 200 OK\r\n";
+
+	if (cgi.getTypeSet())
+	{
+		//std::cout << MAGENTA_COLOR << "Content type set" << RESET << std::endl;
+		_response.contentType = cgi.getContentType() + ";" + "\r\n";
+	}
+	else
+		_response.contentType = "Content-Type: text/html;\r\n";
+		
+	if (cgi.getLengthSet())
+	{
+		//std::cout << MAGENTA_COLOR << "Content length set" << RESET << std::endl;
+		_response.contentLength = cgi.getContentLength() + "\r\n";
+	}
+	else
+	{
+		unsigned int content_len = _response.body.size();
+		_response.contentLength = "Content-Length: " + intToString(content_len) + "\r\n";
+	}
 	/* std::cout << MAGENTA_COLOR << "CGI Status: " << _response.status << std::endl;
 	std::cout << "CGI Content type: " << _response.contentType << std::endl;
 	std::cout << "CGI Content length: " << _response.contentLength << RESET << std::endl; */

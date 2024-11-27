@@ -148,7 +148,7 @@ void CGI::printEnv()
 	}	
 }
 
-void CGI::executeScript()
+bool CGI::executeScript()
 {
 	int inPipe[2];
 	int outPipe[2];
@@ -190,7 +190,7 @@ void CGI::executeScript()
             freeEnvp(envp);
             //exit(1);
 			std::cout << ERROR_MARKER << std::endl;
-			return ;
+			return false;
         }
 	}
 	else //PARENT
@@ -267,15 +267,15 @@ void CGI::executeScript()
 		if (eof)
 		{
 			_responseBody.clear();
-			std::cout << "Throwing error exception" << std::endl;
-			throw std::runtime_error("CGI execution failed");
+			return false;
 		}
 		
-		/* int status;
-		waitpid(pid, &status, 0); */
+		int status;
+		waitpid(pid, &status, 0);
 
 		_responseBody = output.str();
 	}
+	return true;
 }
 
 /* std::string trimNewline(const std::string &str)
