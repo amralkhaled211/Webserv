@@ -80,16 +80,8 @@ void SendData::handleCGI(const std::string &root, parser &request, ServerBlock s
 	else
 		_response.contentType = "Content-Type: text/html;\r\n";
 		
-	if (cgi.getLengthSet())
-	{
-		//std::cout << MAGENTA_COLOR << "Content length set" << RESET << std::endl;
-		_response.contentLength = cgi.getContentLength() + "\r\n";
-	}
-	else
-	{
-		unsigned int content_len = _response.body.size();
+	unsigned int content_len = _response.body.size();
 		_response.contentLength = "Content-Length: " + intToString(content_len) + "\r\n";
-	}
 	/* std::cout << MAGENTA_COLOR << "CGI Status: " << _response.status << std::endl;
 	std::cout << "CGI Content type: " << _response.contentType << std::endl;
 	std::cout << "CGI Content length: " << _response.contentLength << RESET << std::endl; */

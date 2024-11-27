@@ -3,7 +3,7 @@
 
 CGI::CGI() {}
 
-CGI::CGI(const std::string &scriptPath, const parser &request) : _scriptPath(scriptPath) , _request(request), _typeSet(false), _statusSet(false), _lengthSet(false)
+CGI::CGI(const std::string &scriptPath, const parser &request) : _scriptPath(scriptPath) , _request(request), _typeSet(false), _statusSet(false)/* _lengthSet(false) */
 {}
 
 CGI::~CGI() {}
@@ -33,10 +33,10 @@ bool CGI::getTypeSet() const
 	return _typeSet;
 }
 
-bool CGI::getLengthSet() const
+/* bool CGI::getLengthSet() const
 {
 	return _lengthSet;
-}
+} */
 
 bool CGI::getStatusSet() const
 {
@@ -301,11 +301,11 @@ void CGI::generateResponse()
 			_contentType = line.substr(line.find("Content-Type:"));
 			continue;
 		}
-		if (line.find("Content-Length:") !=  std::string::npos){
+		/* if (line.find("Content-Length:") !=  std::string::npos){
 			_lengthSet = true;
 			_contentLength = line.substr(line.find("Content-Length:"));
 			continue;
-		}
+		} */
 		if (line.find("Status:") !=  std::string::npos){
 			_statusSet = true;
 			_responseStatus = "HTTP/1.1" + line.substr(line.find("Status:") + 7);
