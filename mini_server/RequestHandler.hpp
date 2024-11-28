@@ -24,6 +24,8 @@
 #include "config_parser/Parser.hpp"
 #include "Client.hpp"
 
+class Client;
+
 #define RESET_COLOR "\033[0m"
 #define RED_COLOR "\033[31m"
 #define GREEN_COLOR "\033[32m"
@@ -42,7 +44,7 @@ class RequestHandler
 		RequestHandler();
 		void receiveData(int clientSocket, std::vector<Client> &_clients);
 		void findClient(int clientSocket, std::vector<Client> &_clients);
-		Client findAllRecieved(std::vector<Client> clients);
+		Client &findAllRecieved(std::vector<Client> clients);
 	
 	private:
 		std::string _buffer;

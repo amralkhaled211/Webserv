@@ -4,12 +4,18 @@ Client::Client()
 {
 	isAllRecieved = false;
 	_isChunked = false;
+	_sentHeader = false;
 }
 
 
 void Client::setBuffer(const std::string& buffer)
 {
     _buffer = buffer;
+}
+
+void Client::setResponseBuffer(std::string resBuffer)
+{
+	this->_responseBuffer = resBuffer;
 }
 
 parser &Client::getRequest()

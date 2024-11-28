@@ -22,7 +22,12 @@
 #include <sys/types.h>
 #include <iomanip>
 #include "config_parser/Parser.hpp"
+#include "SendData.hpp"
+#include "Response.hpp"
 
+
+struct Response;
+class SendData;
 
 typedef struct parser
 {
@@ -34,8 +39,14 @@ typedef struct parser
 	std::string body;
 	std::string fileName;
 
-} parser;
+} parser; // better name: requestParser
 
+#define	NEW				0
+#define RECIEVING		1
+#define	R_CHUNKS		2
+#define	RECIEVED		3
+#define	SENDING			4
+#define	S_CHUNKS		5
 
 class Client
 {
@@ -57,9 +68,19 @@ class Client
 
 		parser &getRequest();
 
+		void setResponseBuffer(std::string resBuffer);
+		std::string& getResponseBuffer() { return _responseBuffer; }
+		bool getSentHeader() { return _sentHeader; }
+		void setSentHeader(bool value) { _sentHeader = value; }
+		void setResponse(Response &response) { _response = response; }
+		Response &getResponse() { return _response; }
+
+		int status;
+		bool getIsChunked() { return _isChunked; }
 	
 	private:
-	std::string _buffer;
+	std::string _buffer;			// for storing and processing request header & body; more accurate name: _requestBuffer
+	std::string _responseBuffer;	// for storing and processing response header & body
 	int _clientFD;
 	parser request;
 	std::string _boundary;
@@ -67,6 +88,8 @@ class Client
 	size_t _targetBytes;
 	size_t _bytesRead;
 	bool isAllRecieved;
+	bool _sentHeader; // for response in chunks
+	Response _response;
 };
 
 

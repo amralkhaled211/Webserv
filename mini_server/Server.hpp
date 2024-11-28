@@ -1,6 +1,6 @@
 #pragma once 
 #include "Epoll.hpp"
-#define MAX_EVENTS 10
+// #define MAX_EVENTS 10
 class Server
 {
 public:

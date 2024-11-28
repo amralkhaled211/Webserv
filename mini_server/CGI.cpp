@@ -1,15 +1,26 @@
 #include "CGI.hpp"
+#include <signal.h>
 
 CGI::CGI() {}
 
-CGI::CGI(const std::string &scriptPath, const parser &request) : _scriptPath(scriptPath) , _request(request)
+CGI::CGI(const std::string &scriptPath, const parser &request) : _scriptPath(scriptPath) , _request(request), _typeSet(false)
 {}
 
 CGI::~CGI() {}
 
-Response CGI::getResponse() const
+std::string CGI::getResponse() const
 {
-	return _response;
+	return _responseBody;
+}
+
+std::string CGI::getContentType() const
+{
+	return _contentType;
+}
+
+bool CGI::getTypeSet() const
+{
+	return _typeSet;
 }
 
 std::vector<char*> CGI::setUpEnvp()
@@ -29,14 +40,26 @@ std::vector<char*> CGI::setUpEnvp()
     return envp;
 }
 
-void CGI::setEnv()
+std::string join(const std::vector<std::string>& vec, const std::string& delimiter)
+{
+    std::ostringstream oss;
+    for (size_t i = 0; i < vec.size(); ++i)
+    {
+        if (i != 0)
+            oss << delimiter;
+        oss << vec[i];
+    }
+    return oss.str();
+}
+
+void CGI::setEnv(ServerBlock server)
 {
 	_env["REQUEST_METHOD"] = _request.method;
 	_env["QUERY_STRING"] = _request.queryString;
 	_env["SCRIPT_NAME"] = _scriptPath;
 	_env["PATH_INFO"] = _request.path;
 	_env["PATH_TRANSLATED"] = "/translated/path" + _request.path;
-	_env["SERVER_NAME"] = "localhost";
+	_env["SERVER_NAME"] = join(server.getServerName(), ", ");//replace with actual host name etc THIS  IS HARDCODED RN
 	_env["SERVER_PORT"] = "8080";
 	_env["SERVER_PROTOCOL"] = "HTTP/1.1";
 	std::string remoteAddr = "127.0.0.1"; // Replace with actual method to get remote address
@@ -124,7 +147,6 @@ void CGI::executeScript()
 	{
 		dup2(inPipe[0], STDIN_FILENO);
 		dup2(outPipe[1], STDOUT_FILENO);
-		/* dup2(outPipe[1], STDERR_FILENO); */
 
 		close(inPipe[1]);
         close(outPipe[0]);
@@ -148,6 +170,7 @@ void CGI::executeScript()
         if (execve(_scriptPath.c_str(), arg, &envp[0]) == -1)
         {
             std::cerr << "Failed to execute CGI script: " << strerror(errno) << std::endl;
+			throw std::runtime_error("Failed to execute CGI script");
             freeEnvp(envp);
             exit(1);
         }
@@ -156,14 +179,35 @@ void CGI::executeScript()
 	{
 		close(inPipe[0]);
 		close(outPipe[1]);
-
-		/* make_socket_non_blocking(inPipe[1]);
-		make_socket_non_blocking(outPipe[0]); */
 		
 		if (_request.method == "POST" && !_request.body.empty())
 			write (inPipe[1], _request.body.c_str(), _request.body.size());
 		close(inPipe[1]);
-		
+
+		fd_set readfds;
+        struct timeval timeout;
+        timeout.tv_sec = 5; // Set timeout to 5 seconds
+        timeout.tv_usec = 0;
+
+        FD_ZERO(&readfds);
+        FD_SET(outPipe[0], &readfds);
+
+        int selectResult = select(outPipe[0] + 1, &readfds, NULL, NULL, &timeout);
+        if (selectResult == -1)
+        {
+            close(outPipe[0]);
+            throw std::runtime_error("select() failed");
+        }
+        else if (selectResult == 0)
+        {
+            // Timeout occurred
+            kill(pid, SIGTERM); // Send SIGTERM to the child process
+            sleep(1); // Give the child process some time to terminate
+            kill(pid, SIGKILL); // Send SIGKILL if the child process is still running
+            close(outPipe[0]);
+            throw std::runtime_error("CGI script execution timed out");
+        }
+
 		char buffer[1024];
 		std::ostringstream output;
 		ssize_t bytesRead;
@@ -174,61 +218,38 @@ void CGI::executeScript()
 		int status;
 		waitpid(pid, &status, 0);
 
-		/* std::cout << "Exited child process, returning response.." << std::endl;
-		std::cout << "Output from child: " << output.str() << std::endl; */
-		_response.body = output.str();
+		_responseBody = output.str();
 	}
 }
 
-std::string trimNewline(const std::string &str)
+/* std::string trimNewline(const std::string &str)
 {
 	size_t end = str.find_first_of("\r\n");
 	if (end == std::string::npos)
 		return str;
 	return str.substr(0, end);
-}
+} */
 
 void CGI::generateResponse()
 {
-	std::istringstream ss(_response.body);
-	_response.body.clear();
+	std::istringstream ss(_responseBody);
+	_responseBody.clear();
 	std::string file_extension = get_file_extension(_request.path);
 	std::string line;
 
-	_response.status = "HTPP/1.1 200 OK\r\n"; //Default status
-	//_response.contentType = "Content-Type: " + mimeTypesMap_G[file_extension] + ";" + "\r\n";
-
 	std::ostringstream body;
-	bool lengthSet = false;
-	bool typeSet = false;
 	while (std::getline(ss, line))
 	{
 		if (line.find("Content-Type:") != std::string::npos){
-			typeSet = true;
-			_response.contentType = trimNewline(line);
-			continue;
-		}
-		if (line.find("Content-Length:") != std::string::npos){
-			lengthSet = true;
-			_response.contentLength = "Content-Length:" + line.substr(15);
+			_typeSet = true;
+			_contentType = line;
 			continue;
 		}
 		if (ss.eof())
 			break;
 		body << line << "\n";
 	}
-	_response.body = body.str();
-	if (typeSet == false){
-		_response.contentType = "Content-Type: text/html;\r\n";
-	}
-	else{
-		_response.contentType += ";";
-		_response.contentType += "\r\n";
-	}
-	if (lengthSet == false){
-	unsigned int content_len = _response.body.size();
-		_response.contentLength = "Content-Length: " + intToString(content_len) + "\r\n";
-	}
+	_responseBody = body.str();
 }
 
 void CGI::createhtml()
@@ -239,6 +260,6 @@ void CGI::createhtml()
 		std::cerr << "Failed to open html file" << std::endl;
 		exit(1);
 	}
-	html << _response.body;
+	html << _responseBody;
 	html.close();
 }
