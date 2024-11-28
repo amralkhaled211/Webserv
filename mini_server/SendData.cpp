@@ -114,15 +114,17 @@ ServerBlock SendData::findServerBlock(std::vector<ServerBlock> &servers, parser 
 			return server;
 	}
 	// this would be fixed later
+	// std::cout << "reques:::" << request.headers["Host"] << std::endl;
 	std::cout << "\033[1;31m" <<  "returning the first server?, This is a BUG " << "\033[0m" << std::endl;
 	return servers[0]; // return default
 }
 
-void SendData::redirect(LocationBlock& location) // so far handling url redirection, relative will be handled soon
+void SendData::redirect(LocationBlock& location, parser &request) // so far handling url redirection, relative will be handled soon
 {
 	std::vector<std::string> returnVec = location.getReturn();
 	std::string code;
 	std::string url;
+	bool isExternal = false;
 	if (returnVec.size() > 1)
 	{
 		code = returnVec[0];
@@ -133,11 +135,28 @@ void SendData::redirect(LocationBlock& location) // so far handling url redirect
 		code = "307";
 		url = returnVec[0];
 	}
-	_response.status = "HTTP/1.1 " + code + " " + _redir.CodeToMessage[code] + "\r\n";
-	_response.location = "Location: " + url + "\r\n";
-	_response.contentType = "Content-Type: text/html;\r\n";
-	_response.contentLength = "Content-Length: 0\r\n";
-	_response.body = "";
+	if (url.find("http://") == 0 || url.find("https://") == 0)
+	{
+	    isExternal = true;
+	}
+	if (isExternal)
+	{
+	    // Handle external URL redirection
+	    _response.status = "HTTP/1.1 " + code + " " + _redir.CodeToMessage[code] + "\r\n";
+	    _response.location = "Location: " + url + "\r\n";
+	    _response.contentType = "Content-Type: text/html;\r\n";
+	    _response.contentLength = "Content-Length: 0\r\n";
+	    _response.body = "";
+	}
+	else
+	{
+	    // Handle internal redirection
+	    _response.status = "HTTP/1.1 " + code + " " + _redir.CodeToMessage[code] + "\r\n";
+	    _response.location = "Location: http://" + request.headers["Host"] + url + "\r\n";
+	    _response.contentType = "Content-Type: text/html;\r\n";
+	    _response.contentLength = "Content-Length: 0\r\n";
+	    _response.body = ""; // You may want to set the body to the content of the internal page
+	}
 }
 
 bool SendData::findIndexFile(const std::vector<std::string> &files, std::string &root, parser &request) // if found will also prepare response, else return false
@@ -198,7 +217,7 @@ std::string SendData::sendResponse(int clientSocket, std::vector<ServerBlock> &s
 			}
 			else
 			{
-				redirect(location);
+				redirect(location, request);
 				_isReturn = true;
 			}
 		}
