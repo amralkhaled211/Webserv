@@ -1,21 +1,22 @@
 #include "StatusMsg.hpp"
 
-StatusMsg::StatusMsg() {
+StatusMsg::StatusMsg()
+{
 
 	// better names later
 	_oneHunderds();
-	_twoHunderds(); // successful
+	_twoHunderds();	  // successful
 	_threeHunderds(); // redirection
-	_fourHunderds(); // error occures
+	_fourHunderds();  // error occures
 	_fiveHunderds();
 }
 
-StatusMsg::~StatusMsg() {
-
+StatusMsg::~StatusMsg()
+{
 }
 
-
-void	StatusMsg::_oneHunderds() {
+void StatusMsg::_oneHunderds()
+{
 	std::vector<std::string> msg;
 
 	// 100 Continue
@@ -31,7 +32,8 @@ void	StatusMsg::_oneHunderds() {
 	msg.clear();
 }
 
-void	StatusMsg::_twoHunderds() {
+void StatusMsg::_twoHunderds()
+{
 	std::vector<std::string> msg;
 
 	// 200 OK
@@ -46,9 +48,51 @@ void	StatusMsg::_twoHunderds() {
 	_statusMsg[201] = msg;
 	msg.clear();
 
+	// 203 Non-Authoritative Information
+    msg.push_back("Non-Authoritative Information");
+    msg.push_back("The request was successful but the enclosed payload has been modified from that of the origin server's 200 OK response by a transforming proxy.");
+    _statusMsg[203] = msg;
+    msg.clear();
+
+    // 204 No Content
+    msg.push_back("No Content");
+    msg.push_back("The server successfully processed the request and is not returning any content.");
+    _statusMsg[204] = msg;
+    msg.clear();
+
+    // 205 Reset Content
+    msg.push_back("Reset Content");
+    msg.push_back("The server successfully processed the request, but is not returning any content and requires that the requester reset the document view.");
+    _statusMsg[205] = msg;
+    msg.clear();
+
+    // 206 Partial Content
+    msg.push_back("Partial Content");
+    msg.push_back("The server is delivering only part of the resource due to a range header sent by the client.");
+    _statusMsg[206] = msg;
+    msg.clear();
+
+    // 207 Multi-Status (WebDAV)
+    msg.push_back("Multi-Status");
+    msg.push_back("The message body that follows is an XML message and can contain a number of separate response codes, depending on how many sub-requests were made.");
+    _statusMsg[207] = msg;
+    msg.clear();
+
+    // 208 Already Reported (WebDAV)
+    msg.push_back("Already Reported");
+    msg.push_back("The members of a DAV binding have already been enumerated in a previous reply to this request, and are not being included again.");
+    _statusMsg[208] = msg;
+    msg.clear();
+
+    // 226 IM Used (HTTP Delta encoding)
+    msg.push_back("IM Used");
+    msg.push_back("The server has fulfilled a request for the resource, and the response is a representation of the result of one or more instance-manipulations applied to the current instance.");
+    _statusMsg[226] = msg;
+    msg.clear();
 }
 
-void	StatusMsg::_threeHunderds() {
+void StatusMsg::_threeHunderds()
+{
 	std::vector<std::string> msg;
 
 	// 300 Multiple Choices
@@ -94,7 +138,8 @@ void	StatusMsg::_threeHunderds() {
 	msg.clear();
 }
 
-void	StatusMsg::_fourHunderds() {
+void StatusMsg::_fourHunderds()
+{
 	std::vector<std::string> msg;
 
 	// 400 Bad Request
@@ -122,7 +167,8 @@ void	StatusMsg::_fourHunderds() {
 	msg.clear();
 }
 
-void	StatusMsg::_fiveHunderds() {
+void StatusMsg::_fiveHunderds()
+{
 	std::vector<std::string> msg;
 
 	// 500 Internal Server Error

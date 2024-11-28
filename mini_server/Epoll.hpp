@@ -27,8 +27,9 @@
 #define	DEBUG_R	std::cout << BOLD_RED <<
 #define	DEBUG_G	std::cout << BOLD_GREEN <<
 #define E_DEBUG 0
+#define E_DEBUG2 0
 
-#define	SEND_CHUNK_SIZE	1024
+#define	SEND_CHUNK_SIZE	64000
 
 #define MAX_EVENTS 128
 extern bool serverRunning ;
@@ -45,6 +46,7 @@ class Epoll
 	public :
 		//getEpollFD() { return _epollFD; }
 		std::vector<Client> _clients;
+		std::vector<int> _clFDs;
 		void killClient(int clientSocket);
 		Epoll(const std::vector<int>& serverSockets, std::vector<ServerBlock>& servers);
 		~Epoll();
@@ -53,5 +55,6 @@ class Epoll
 		void handleEpollEvents(const std::vector<int>& serverSockets);
 		void handleConnection(int server_fd);
 		void handleData(int client_fd);
+		void removeFD(int fd);
 };
 int make_socket_non_blocking(int sockfd);

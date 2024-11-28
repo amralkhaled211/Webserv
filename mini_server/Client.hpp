@@ -44,8 +44,9 @@ typedef struct parser
 #define	NEW				0
 #define RECIEVING		1
 #define	R_CHUNKS		2
-#define	SENDING			3
-#define	S_CHUNKS		4
+#define	RECIEVED		3
+#define	SENDING			4
+#define	S_CHUNKS		5
 
 class Client
 {
