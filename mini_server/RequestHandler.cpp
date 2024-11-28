@@ -23,7 +23,7 @@ void RequestHandler::findClient(int clientSocket, std::vector<Client> &Clients) 
 }
 void RequestHandler::receiveData(int clientSocket, std::vector<Client> &clients)
 {
-	char Buffer[60000] = {0};
+	char Buffer[READ_CHUNK_SIZE] = {0};
 	int bytesReceived = recv(clientSocket, Buffer, sizeof(Buffer), 0);
 	if (bytesReceived < 0)
 		throw std::runtime_error("Receiving failed");

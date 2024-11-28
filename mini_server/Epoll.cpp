@@ -22,9 +22,9 @@ void Epoll::acceptConnection(const std::vector<int> &serverSockets)
 	init_epoll(serverSockets);
 	while (serverRunning)
 	{
-		DEBUG_Y "B<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>\n";
+		// DEBUG_Y "B<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>\n";
 		handleEpollEvents(serverSockets);
-		DEBUG_R "E<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>\n";
+		// DEBUG_R "E<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>\n";
 	}
 }
 
@@ -60,12 +60,6 @@ Client &findClient(int clientFD, std::vector<Client> &clients) // careful, there
 	throw std::runtime_error("THIS MUST BE A NEW CLIENT OR A SERVER SOCKET");
 	std::cout << "RETURNING LAST CLIENT\n";
 	return clients[--i]; // returning last one, should never happen!!
-}
-
-std::string sizeTToHexString(size_t value) {
-	std::stringstream ss;
-	ss << std::hex << value;
-	return ss.str();
 }
 
 #include <sys/ioctl.h>
@@ -109,49 +103,19 @@ void Epoll::removeFD(int fd) {
     _clFDs.erase(std::remove(_clFDs.begin(), _clFDs.end(), fd), _clFDs.end()); // Remove from the list
 }
 
-std::vector<struct epoll_event> _events(MAX_EVENTS);
-
-
-int n;
-
 void Epoll::handleEpollEvents(const std::vector<int> &serverSockets)
 {
-	std::cout << "Waiting for events" << std::endl;
+	// std::cout << "Waiting for events" << std::endl;
 	
 	// std::cout << "FDs in the epoll instance right now: \n";
 	// for (size_t i = 0; i < _clFDs.size(); ++i) {
 	// 	std::cout << _clFDs[i] << ", ";
 	// }
-	
-	std::cout << std::endl;
-
-	// for (size_t i = 0; i < n; ++i)
-	// {
-	// 	std::cout << "here" << std::endl;
-	// 	for (size_t j = 0; j < _clients.size(); ++j)
-	// 	{
-	// 		std::cout << "there" << std::endl;
-	// 		std::cout << _clients[j].getClientFD() << "\t" << _events[i].data.fd << std::endl;
-	// 		if (_clients[j].getClientFD() == _events[i].data.fd)
-	// 			printClientInfo(_clients[j].getClientFD(), _events[i].events, _clients);
-	// 	}
-	// }
-
-	// for (size_t i = 0; i < _clFDs.size(); ++i) {
-	// 	for (size_t j = 0; j < _events.size(); ++j) {
-	// 	if (_clFDs[i] == _events[j].data.fd) {
-	// 		try {
-	// 			printClientInfo(_clFDs[i], _events[j].events, _clients);
-	// 		} catch (std::exception &e) {
-	// 			std::cerr << "did't find in client vector" << std::endl;
-	// 			}
-	// 		}
-	// 	}
-	// }
+	// std::cout << std::endl;
 
 
-	// std::vector<struct epoll_event> _events(MAX_EVENTS);
-	n = epoll_wait(_epollFD, _events.data(), MAX_EVENTS, -1); // waits for I/O events, blocks the calling thread if no events are currently available
+	std::vector<struct epoll_event> _events(MAX_EVENTS);
+	int n = epoll_wait(_epollFD, _events.data(), MAX_EVENTS, -1); // waits for I/O events, blocks the calling thread if no events are currently available
 	if (n == -1)
 	{
 		if (errno == EINTR)
@@ -170,7 +134,7 @@ void Epoll::handleEpollEvents(const std::vector<int> &serverSockets)
 	
 	for (int i = 0; i < n; ++i)
 	{
-		std::cout << "######################################################\n";
+		// std::cout << "######################################################\n";
 
 		// info about the new client
 		if (E_DEBUG) {
@@ -204,7 +168,7 @@ void Epoll::handleEpollEvents(const std::vector<int> &serverSockets)
 			close(_events[i].data.fd);
 			// std::cout << "Connection closed" << std::endl;
 			// continue;
-			std::cout << "---------------------------------------------------\n";
+			// std::cout << "---------------------------------------------------\n";
 			// return ; // why return here? if we keep serving for the others, wouldn't continue be better?
 			continue;
 		}
@@ -254,8 +218,8 @@ void Epoll::handleEpollEvents(const std::vector<int> &serverSockets)
 				{
 					client.status = S_CHUNKS;
 					sendNow = client.getResponse().status + client.getResponse().location + client.getResponse().contentType + client.getResponse().transferEncoding + "\r\n";
-					std::cout << BOLD_WHITE << "sending HEADER from chunked response\n"
-							  << sendNow << RESET << std::endl;
+					// std::cout << BOLD_WHITE << "sending HEADER from chunked response\n"
+					// 		  << sendNow << RESET << std::endl;
 					client.setSentHeader(true);
 				}
 				else
@@ -281,7 +245,7 @@ void Epoll::handleEpollEvents(const std::vector<int> &serverSockets)
 			// 		  << BOLD_WHITE << sendNow << RESET << std::endl;
 			
 			ssize_t s = send(_events[i].data.fd, sendNow.c_str(), sendNow.size(), 0);
-			std::cout << "how much we sent : " << s << std::endl; 
+
 			if (client.getResponseBuffer().find("Transfer-Encoding: chunked") != std::string::npos && sendNow != "0\r\n\r\n")
 			{
 				std::cout << "---------------------------------------------------\n";
@@ -301,7 +265,7 @@ void Epoll::handleEpollEvents(const std::vector<int> &serverSockets)
 				std::cout << "---------------------------------------------------\n";
 			}
 		}
-		std::cout << "######################################################\n";
+		// std::cout << "######################################################\n";
 	}
 }
 
@@ -314,12 +278,9 @@ void Epoll::handleData(int client_fd)
 	// Client client = requestHandle.findAllRecieved(_clients); // we need the original
 	Client &clientB = findClient(client_fd, _clients);
 
-	std::cout << "<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n";
-	DEBUG_R "BEFORE if condition in handle: " << client_fd << std::endl;
 
 	if (clientB.getIsAllRecieved())							 // we only go on here once we recieved the whole request
 	{
-		DEBUG_R "IN if condition in handle: " << client_fd << std::endl;
 		// parser request = client.getRequest();
 		// Client clientB = findClient(client.getClientFD(), _clients);
 		clientB.setResponse(sendData.sendResponse(clientB.getClientFD(), _servers, clientB.getRequest(), _epollFD));
@@ -355,7 +316,6 @@ void Epoll::handleData(int client_fd)
 		clientB.setResponseBuffer(responseBuffer);
 		// std::cout << BOLD_GREEN << "Client Response Buffer: " << clientB.getResponseBuffer() << RESET << std::endl;
 	}
-	std::cout << "<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n" << RESET;
 }
 
 void Epoll::handleConnection(int server_fd) // we add additionally to the server_socket_fds also the cliend fd to the interest list (set of fds to watch)
@@ -371,7 +331,7 @@ void Epoll::handleConnection(int server_fd) // we add additionally to the server
 				perror("accept");
 			break;
 		}
-		// std::cout << "CLIENT FD: " << client_fd << std::endl;
+
 		make_socket_non_blocking(client_fd);
 		struct epoll_event client_event;
 		client_event.data.fd = client_fd;
@@ -386,7 +346,7 @@ void Epoll::handleConnection(int server_fd) // we add additionally to the server
 		newClient.setClientFD(client_fd); // creating new Client Object for the new client
 		newClient.status = NEW;
 		_clients.push_back(newClient);	  // and adding it to the _clients vector
-		DEBUG_G "ACCEPTED CLIENT FD " << client_fd << RESET << std::endl;
+		if (E_DEBUG) DEBUG_G "ACCEPTED CLIENT FD " << client_fd << RESET << std::endl;
 	}
 }
 

@@ -40,15 +40,6 @@ int stringToInt(const std::string& str) // issue: value gets not initialized, if
 }
 
 
-/* size_t stringToSizeT(const std::string& str)
-{
-	std::stringstream ss(str);
-	size_t value;
-	ss >> value;
-	return value;
-} */
-
-
 size_t stringToSizeT(const std::string& str)
 {
 	std::stringstream ss(str);
@@ -83,6 +74,12 @@ std::vector<std::string> split(const std::string& str, char delimiter)
 	if (tokens.empty())
 	    	tokens.push_back("/");
 	return tokens;
+}
+
+std::string sizeTToHexString(size_t value) {
+	std::stringstream ss;
+	ss << std::hex << value;
+	return ss.str();
 }
 
 

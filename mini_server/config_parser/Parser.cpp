@@ -92,21 +92,11 @@ void		Parser::_parser() {
 	this->_configToContent();
 	this->_removeExcessSpace();
 
-	// this->_syntaxError();
-
-	// parsing
 	this->_fillBlocks();
 
-	// std::cout << BOLD_GREEN<< "BEFORE SETUP DEFAULT\n" << RESET;
-	// this->_printServerVec();
-
-	// setup defaults
 	this->_setupDefaults();
 
-	// errors after parsing
 	this->_errorsAfterParsing();
-	// std::cout << BOLD_GREEN << "AFTER SETUP DEFAULT\n" << RESET;
-	// this->_printServerVec();
 }
 
 /*			PREP FOR PARSING			*/
@@ -142,6 +132,9 @@ void		Parser::_configToContent() {
 		do {
 			if (line.empty() || line.find_first_not_of(WHITESPACE) == std::string::npos)
 				continue;
+
+			if (line.find_first_of("\"") != std::string::npos)
+				throw std::runtime_error("Quotes Not Allowed");
 
 			while (line.find('\t') != std::string::npos)
 				line.replace(line.find('\t'), 1, " ");
@@ -197,29 +190,6 @@ void		Parser::_removeExcessSpace() {
 	_content = newContent;
 }
 
-/*			SYNTAX ERRORS		*/
-
-void		Parser::_syntaxError() {
-
-	// if (std::count(_content.begin(), _content.end(), '{')
-	// 	!= std::count(_content.begin(), _content.end(), '}'))
-	// 	throw std::runtime_error("Invalid amount of Braces");
-
-	// if (_content.find('{') == std::string::npos)
-	// 	throw std::runtime_error("Missing Opening Brace");
-
-	// if (_content.find('}') == std::string::npos)
-	// 	throw std::runtime_error("Missing Closing Brace");
-
-	// if (_content.find(';') == std::string::npos)
-	// 	throw std::runtime_error("Missing Semicolon");
-
-	// if (_content[_content.find(";") + 1] == ';')
-	// 	throw std::runtime_error("Semicolons in Series");
-
-	// if (_content[_content.find("{") + 1] == '{')
-	// 	throw std::runtime_error("Opening Braces in Series");
-}
 
 /*			PARSING			*/
 
