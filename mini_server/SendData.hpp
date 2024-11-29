@@ -66,4 +66,5 @@ class SendData
 	void prepErrorResponse(int code, LocationBlock& locationBlock);
 	void createResponseHeader(int code, size_t bodySize, std::string contentTypes);
 	void createDfltResponseBody(int code, std::string&	contentType, std::string postFix = "html");
+	void codeErrorResponse(int code);
 };

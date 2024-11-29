@@ -471,6 +471,13 @@ int		readFromErrorPage(std::string& errorPagePath, std::string& body)
 	return SD_OK;
 }
 
+void		SendData::codeErrorResponse(int code)
+{
+	std::string contentType;
+	createDfltResponseBody(code, contentType);
+	createResponseHeader(code, _response.body.size(), contentType);
+}
+
 
 void		SendData::prepErrorResponse(int code, LocationBlock& location)
 {
