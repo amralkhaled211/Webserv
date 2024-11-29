@@ -67,17 +67,38 @@ void SendData::handleCGI(const std::string &root, parser &request, ServerBlock s
 	}
 	CGI cgi(root, request);
 	cgi.setEnv(server);
-	cgi.executeScript();
+	if (cgi.executeScript() != true)
+	{
+		//std::cout << RED_COLOR << "CGI execution failed" << RESET << std::endl;
+		throw std::runtime_error("CGI execution failed");
+	}
 	cgi.generateResponse();
+
 	_response.body = cgi.getResponse();
-	_response.status = "HTTP/1.1 200 OK\r\n";
+
 	file_extension = get_file_extension(request.path);
+
+	if (cgi.getStatusSet())
+	{
+		//std::cout << MAGENTA_COLOR << "Status set" << RESET << std::endl;
+		_response.status = cgi.getResponseStatus() + "\r\n";
+	}
+	else
+		_response.status = "HTTP/1.1 200 OK\r\n";
+
 	if (cgi.getTypeSet())
+	{
+		//std::cout << MAGENTA_COLOR << "Content type set" << RESET << std::endl;
 		_response.contentType = cgi.getContentType() + ";" + "\r\n";
+	}
 	else
 		_response.contentType = "Content-Type: text/html;\r\n";
+		
 	unsigned int content_len = _response.body.size();
-	_response.contentLength = "Content-Length: " + intToString(content_len) + "\r\n";
+		_response.contentLength = "Content-Length: " + intToString(content_len) + "\r\n";
+	/* std::cout << MAGENTA_COLOR << "CGI Status: " << _response.status << std::endl;
+	std::cout << "CGI Content type: " << _response.contentType << std::endl;
+	std::cout << "CGI Content length: " << _response.contentLength << RESET << std::endl; */
 }
 
 std::vector<std::string>	possibleRequestedLoc(std::string uri) {
@@ -228,7 +249,7 @@ Response &SendData::sendResponse(int clientSocket, std::vector<ServerBlock> &ser
 				}
 				else if (isCGI(request, location)) // might need to rethink this, eg. if resource for video.py is in cgi-bin it wont output the video beacuse it thinks its not an acceptable extension
 				{
-					std::cout << RED_COLOR << "In CGI" << RESET << std::endl;
+					//std::cout << RED_COLOR << "In CGI GET" << RESET << std::endl;
 					handleCGI(root, request, current_server, location);
 				}
 				else
@@ -247,20 +268,40 @@ Response &SendData::sendResponse(int clientSocket, std::vector<ServerBlock> &ser
 		}
 		catch (const std::exception &e) // what kind of error do we expect here?
 		{
-			std::string error = e.what();
-			std::cout << RED_COLOR << "Error: " << error << RESET << std::endl;
-			// i should here send the right error for invalid locations
+			std::string error = e.what(); // here we need to check what the error is and send notfound or error page accordingly
+			std::cout << RED_COLOR << "Error: " << error << RESET << std::endl; 
+			/* std::cout << BOLD_YELLOW << "Response Status: " <<  _response.status << std::endl;
+			std::cout << "Content Type: "  << _response.contentType << std::endl;
+			std::cout << "Content Length: " << _response.contentLength << RESET << std::endl; */
+			// i should here send the right error for invalid locatio
+			_response.body.clear();
+			_response.status.clear();
+			_response.contentType.clear();
+			_response.contentLength.clear();
+			std::cout << YELLOW << "Sending 404" << RESET << std::endl;
 			notfound();
 		}
 	}
 	if (request.method == "POST")
 	{
-		//std::cout << "this body :" << request.body << std::endl;
-		saveBodyToFile("../website/upload/" + request.fileName, request);
-		// we should have a function that creates responses, based on the Code and body, file type
-		_response.body = "<!DOCTYPE html><html><head><title>200 OK</title></head>";
-		_response.body += "<body><h1>200 OK</h1><p>file saved</p></body></html>";
-		createResponseHeader(200, _response.body.size(), "text/html");
+		LocationBlock location = findLocationBlock(current_server.getLocationVec(), request);
+		std::string root = location.getRoot() + request.path;
+		//std::cout << MAGENTA_COLOR << "Root: " << root << std::endl << "Request path:" <<  request.path << std::endl << "Request method: " << request.method << RESET << std::endl;
+
+		if (isCGI(request, location)) // might need to rethink this, eg. if resource for video.py is in cgi-bin it wont output the video beacuse it thinks its not an acceptable extension
+		{
+			//std::cout << RED_COLOR << "In CGI POST" << RESET << std::endl;
+			handleCGI(root, request, current_server, location);
+		}
+		else
+		{
+			saveBodyToFile("../website/upload/" + request.fileName, request);
+			_response.status = "HTTP/1.1 200 OK\r\n";
+			_response.contentType = "Content-Type: text/html;\r\n";
+			_response.body = "<!DOCTYPE html><html><head><title>200 OK</title></head>";
+			_response.body += "<body><h1>200 OK</h1><p>file saved</p></body></html>";
+			_response.contentLength = "Content-Length: " + intToString(_response.body.size()) + "\r\n";
+		}
 	}
 
 	// std::string resp;

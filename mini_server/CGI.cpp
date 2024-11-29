@@ -3,7 +3,7 @@
 
 CGI::CGI() {}
 
-CGI::CGI(const std::string &scriptPath, const parser &request) : _scriptPath(scriptPath) , _request(request), _typeSet(false)
+CGI::CGI(const std::string &scriptPath, const parser &request) : _scriptPath(scriptPath) , _request(request), _typeSet(false), _statusSet(false)/* _lengthSet(false) */
 {}
 
 CGI::~CGI() {}
@@ -18,9 +18,29 @@ std::string CGI::getContentType() const
 	return _contentType;
 }
 
+std::string CGI::getContentLength() const
+{
+	return _contentLength;
+}
+
+std::string CGI::getResponseStatus() const
+{
+	return _responseStatus;
+}
+
 bool CGI::getTypeSet() const
 {
 	return _typeSet;
+}
+
+/* bool CGI::getLengthSet() const
+{
+	return _lengthSet;
+} */
+
+bool CGI::getStatusSet() const
+{
+	return _statusSet;
 }
 
 std::vector<char*> CGI::setUpEnvp()
@@ -67,14 +87,8 @@ void CGI::setEnv(ServerBlock server)
     _env["REMOTE_ADDR"] = remoteAddr;
     _env["REMOTE_HOST"] = remoteHost;
 	std::string file_extension = get_file_extension(_request.path);
-    if (mimeTypesMap_G.find(file_extension) != mimeTypesMap_G.end())
-    {
-        _env["CONTENT_TYPE"] = mimeTypesMap_G[file_extension];
-    }
-    else
-    {
-        _env["CONTENT_TYPE"] = "application/octet-stream"; // Default MIME type
-    }
+
+    _env["CONTENT_TYPE"] = _request.headers["Content-Type"];
 
     // Determine CONTENT_LENGTH based on request body size
     if (_request.method == "POST" && !_request.body.empty())
@@ -85,7 +99,10 @@ void CGI::setEnv(ServerBlock server)
     {
         _env["CONTENT_LENGTH"] = "0";
     }
-	//HERE WE WOULD NEED INFO FROM CONFIG FILE IF IT SPECIFIES SMTH FOR THE CGI
+
+	/* std::cout << GREEN_COLOR << "POST CONTENT TYPE: " << _env["CONTENT_TYPE"] << std::endl;
+	std::cout << "POST CONTENT LENGTH: " << _env["CONTENT_LENGTH"] << std::endl;
+	std::cout << "POST BODY: " << _request.body << RESET <<std::endl; */
 
 	bool first = true;
 
@@ -131,7 +148,7 @@ void CGI::printEnv()
 	}	
 }
 
-void CGI::executeScript()
+bool CGI::executeScript()
 {
 	int inPipe[2];
 	int outPipe[2];
@@ -170,9 +187,10 @@ void CGI::executeScript()
         if (execve(_scriptPath.c_str(), arg, &envp[0]) == -1)
         {
             std::cerr << "Failed to execute CGI script: " << strerror(errno) << std::endl;
-			throw std::runtime_error("Failed to execute CGI script");
             freeEnvp(envp);
-            exit(1);
+            //exit(1);
+			std::cout << ERROR_MARKER << std::endl;
+			return false;
         }
 	}
 	else //PARENT
@@ -181,7 +199,11 @@ void CGI::executeScript()
 		close(outPipe[1]);
 		
 		if (_request.method == "POST" && !_request.body.empty())
+		{
+			/* std::cout << CYAN_COLOR << "Writing POST body to pipe: " <<std::endl;
+			std::cout << _request.body << RESET << std::endl; */	
 			write (inPipe[1], _request.body.c_str(), _request.body.size());
+		}
 		close(inPipe[1]);
 
 		fd_set readfds;
@@ -205,21 +227,55 @@ void CGI::executeScript()
             sleep(1); // Give the child process some time to terminate
             kill(pid, SIGKILL); // Send SIGKILL if the child process is still running
             close(outPipe[0]);
+			/* _responseBody.clear(); */
+			/* std::cout << BOLD_YELLOW << "CGI script execution timed out" << std::endl;
+			std::cout << "CGI Status: " << _responseStatus << std::endl;
+			std::cout << "CGI Content type: " << _contentType << std::endl;
+			std::cout << "CGI Content length: " << _contentLength << RESET << std::endl;
+			std::cout << "CGI Body: " << _responseBody << std::endl; */
             throw std::runtime_error("CGI script execution timed out");
         }
+		
 
 		char buffer[1024];
+		bool eof = false;
 		std::ostringstream output;
 		ssize_t bytesRead;
 		while ((bytesRead = read(outPipe[0], buffer,sizeof(buffer))) > 0)
+		{
+			//std::cout << "In read loop" << std::endl;
+			for (int i = 0; i < bytesRead; i++)
+			{
+				//std::cout << YELLOW_COLOR << buffer[i] << RESET;
+				if (strncmp(buffer + i, ERROR_MARKER, strlen(ERROR_MARKER)) == 0)
+				{
+					std::cout << "ERROR_MARKER found" << std::endl;
+					kill(pid, SIGTERM);
+        			sleep(1);
+        			kill(pid, SIGKILL);
+					eof = true;
+					break;
+				}
+			}
+			if (eof)
+				break;
 			output.write(buffer, bytesRead);
+		}
+
 		close(outPipe[0]);
 
+		if (eof)
+		{
+			_responseBody.clear();
+			return false;
+		}
+		
 		int status;
 		waitpid(pid, &status, 0);
 
 		_responseBody = output.str();
 	}
+	return true;
 }
 
 /* std::string trimNewline(const std::string &str)
@@ -242,7 +298,17 @@ void CGI::generateResponse()
 	{
 		if (line.find("Content-Type:") != std::string::npos){
 			_typeSet = true;
-			_contentType = line;
+			_contentType = line.substr(line.find("Content-Type:"));
+			continue;
+		}
+		/* if (line.find("Content-Length:") !=  std::string::npos){
+			_lengthSet = true;
+			_contentLength = line.substr(line.find("Content-Length:"));
+			continue;
+		} */
+		if (line.find("Status:") !=  std::string::npos){
+			_statusSet = true;
+			_responseStatus = "HTTP/1.1" + line.substr(line.find("Status:") + 7);
 			continue;
 		}
 		if (ss.eof())
@@ -252,7 +318,7 @@ void CGI::generateResponse()
 	_responseBody = body.str();
 }
 
-void CGI::createhtml()
+/* void CGI::createhtml()
 {
 	std::ofstream html("cgi_output.html");
 	if (!html.is_open())
@@ -262,4 +328,4 @@ void CGI::createhtml()
 	}
 	html << _responseBody;
 	html.close();
-}
+} */

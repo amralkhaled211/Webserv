@@ -1,5 +1,6 @@
 # TASKS
-- [ ] Implement POST handler for CGI
+- [ ] Fix child leak -> dont pass location and serverblock to CGI maybe
+- [ ] Handle different status codes coming form CGI
 - [ ] Integrate LocationBlock & ServerBlock attributes into CGI header and code
 - [ ] CGI Enviroment setup with correct values
 
@@ -10,10 +11,12 @@
 
 ### TESTS
 
-- [ ] Test with sh scripts
+- [ ] Test with php scripts
 
 #### DONE
 
+- [x] Fix error 1
+- [x] Implement POST handler for CGI
 - [x] Research new approach for CGI response instead of the cgi_output.html method
 - [x] Return an error when file extension is not allowed, error page here or not found page??
 - [x] Implement own response builder for CGI
@@ -23,3 +26,32 @@
 - [x] Check for allowed extensions -> compare request path extension with allowed ones
 - [x] Check for a CGI request a better way
 - [x] Test with images and vids
+
+##### ERRORS
+
+------    1    -------
+
+
+./Server config_parser/conf_files/example.conf
+Port: http://localhost:8080
+Port: http://localhost:8282
+Failed to execute CGI script: Exec format error
+^CStatus set
+Content type set
+Content length set
+CGI Status: HTTP/1.1 HTTP/1.1 404 Not Found
+
+;GI Content type: Content-Type: text/html;
+
+CGI Content length: Content-Length: 155
+
+Response Status: HTTP/1.1 HTTP/1.1 404 Not Found
+
+;ontent Type: Content-Type: text/html;
+
+Content Length: Content-Length: 155
+
+Server shutting down
+
+
+-------    2    -------
