@@ -74,7 +74,7 @@ bool Client::parse_body(std::string& body)
         	    request.body.resize(pos);
 		if (!request.body.empty() && request.body[request.body.size() - 1] == '\n')
                 request.body.erase(request.body.size() - 2);
-		std::cout << "end of body  dont read anymore " << std::endl;
+		//std::cout << "end of body  dont read anymore " << std::endl;
 		return true;
 	}
 	return false;
@@ -103,7 +103,7 @@ bool Client::HandlChunk()
         	    request.body.resize(pos);
 			if (!request.body.empty() && request.body[request.body.size() - 1] == '\n')
                 request.body.erase(request.body.size() - 2);
-			std::cout << "end of body  dont read anymore " << std::endl;
+			//std::cout << "end of body  dont read anymore " << std::endl;
 			return true;
 		}
 	}

@@ -237,7 +237,7 @@ bool CGI::executeScript()
         }
 		
 
-		char buffer[1024];
+		char buffer[1024] = {0};
 		bool eof = false;
 		std::ostringstream output;
 		ssize_t bytesRead;

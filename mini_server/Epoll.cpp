@@ -58,7 +58,7 @@ Client &findClient(int clientFD, std::vector<Client> &clients) // careful, there
 			return clients[i];
 	}
 	throw std::runtime_error("THIS MUST BE A NEW CLIENT OR A SERVER SOCKET");
-	std::cout << "RETURNING LAST CLIENT\n";
+	//std::cout << "RETURNING LAST CLIENT\n";
 	return clients[--i]; // returning last one, should never happen!!
 }
 
@@ -123,7 +123,7 @@ void Epoll::handleEpollEvents(const std::vector<int> &serverSockets)
 		throw std::runtime_error("epoll_wait");
 	}
 
-	if (true) {
+	if (E_DEBUG) {
 		DEBUG_Y "NEW ITERATION  --> ATTENTION: NUMBER OF FD WITH ACTIVE EVENTS: " << n << RESET << std::endl;
 		for (int i = 0; i < n; ++i)
 		{
@@ -152,7 +152,7 @@ void Epoll::handleEpollEvents(const std::vector<int> &serverSockets)
 		
 		if (_events[i].events & (EPOLLERR | EPOLLHUP | EPOLLRDHUP)) // what do these errors/flags mean?
 		{
-			std::cout << "---------------------------------------------------\n";
+			//std::cout << "---------------------------------------------------\n";
 			std::cerr << "Error on fd " << _events[i].data.fd << ": \n";
 			if (_events[i].events & EPOLLERR)
 				std::cerr << YELLOW_COLOR << "EPOLLERR\n" << RESET_COLOR;
@@ -235,7 +235,7 @@ void Epoll::handleEpollEvents(const std::vector<int> &serverSockets)
 			}
 			else if (client.getResponseBuffer().find("Transfer-Encoding: chunked") != std::string::npos && !remainingResBuffer.size())
 			{
-				std::cout << "SENDING LAST CHUNK\n";
+				//std::cout << "SENDING LAST CHUNK\n";
 				sendNow = "0\r\n\r\n";
 			}
 			else
@@ -248,10 +248,10 @@ void Epoll::handleEpollEvents(const std::vector<int> &serverSockets)
 
 			if (client.getResponseBuffer().find("Transfer-Encoding: chunked") != std::string::npos && sendNow != "0\r\n\r\n")
 			{
-				std::cout << "---------------------------------------------------\n";
+				//std::cout << "---------------------------------------------------\n";
 				continue; // didn't send whole response, delay killing and closing
 			}
-			std::cout << "killing and closing the client fd " << _events[i].data.fd << "\n";
+			//std::cout << "killing and closing the client fd " << _events[i].data.fd << "\n";
 			killClient(_events[i].data.fd);
 			close(_events[i].data.fd);
 			
@@ -262,7 +262,7 @@ void Epoll::handleEpollEvents(const std::vector<int> &serverSockets)
 					printClientInfo(_clients[j].getClientFD(),_events[i].events, _clients);
 					std::cout << "\n" << RESET;
 				}
-				std::cout << "---------------------------------------------------\n";
+				//std::cout << "---------------------------------------------------\n";
 			}
 		}
 		// std::cout << "######################################################\n";
@@ -285,7 +285,7 @@ void Epoll::handleData(int client_fd)
 		// Client clientB = findClient(client.getClientFD(), _clients);
 		clientB.setResponse(sendData.sendResponse(clientB.getClientFD(), _servers, clientB.getRequest(), _epollFD));
 
-		std::cout << "Content of the body: " << clientB.getResponse().body.size() << std::endl;
+		//std::cout << "Content of the body: " << clientB.getResponse().body.size() << std::endl;
 
 		clientB.status = RECIEVED;
 		

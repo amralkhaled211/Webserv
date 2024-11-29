@@ -14,11 +14,11 @@ void SendData::notfound()
 bool SendData::read_file(std::string const &path, parser &request) // this already prepares the response
 {
 	std::string file_extension = get_file_extension(path);
-	std::cout << "-----------------------------------\n"
+	/* std::cout << "-----------------------------------\n"
 	<<"file extention: " << file_extension << std::endl
 	<< "request path: " << request.path << "\n"
 	<< "path: " << path
-	<< "-----------------------------------\n" ;
+	<< "-----------------------------------\n" ; */
 	std::ifstream file(path.c_str());
 	if (file.is_open())
 	{
@@ -42,8 +42,8 @@ bool SendData::read_file(std::string const &path, parser &request) // this alrea
 		file.close();
 		return true;
 	}
-	if (!file.is_open())
-		std::cout << "COULDN'T OPEN FILE: " << path << std::endl;
+	/* if (!file.is_open())
+		std::cout << "COULDN'T OPEN FILE: " << path << std::endl; */
 	return false;
 }
 
@@ -164,11 +164,11 @@ ServerBlock SendData::findServerBlock(std::vector<ServerBlock> &servers, parser 
 			return server;
 	}
 	// this would be fixed later
-	std::cout << "       HOST: " << host << std::endl;
+	/* std::cout << "       HOST: " << host << std::endl;
 	std::cout << "SERVER_NAME: " << server_name << std::endl;
 	std::cout << "       PORT: " << port << std::endl;
-	print_map(request.headers);
-	std::cout << "\033[1;31m" <<  "returning the first server?, This is a BUG " << "\033[0m" << std::endl;
+	print_map(request.headers); */
+	//std::cout << "\033[1;31m" <<  "returning the first server?, This is a BUG " << "\033[0m" << std::endl;
 	return servers[0]; // return default
 }
 
@@ -202,7 +202,7 @@ bool SendData::findIndexFile(const std::vector<std::string> &files, std::string 
 	{
 		std::string file = root + '/' + files[i];
 		removeExcessSlashes(file);
-		std::cout << BOLD_GREEN << "FILE from index: " << file << RESET << std::endl;
+		//std::cout << BOLD_GREEN << "FILE from index: " << file << RESET << std::endl;
 		if (read_file(file, request))
 			return true;
 		i++;
@@ -232,7 +232,7 @@ Response &SendData::sendResponse(int clientSocket, std::vector<ServerBlock> &ser
 
 			std::string root = location.getRoot() + request.path; // maybe a more suitable name: pathToFileToServe
 			
-			std::cout << MAGENTA_COLOR << "Root: " << root << std::endl << "Request path:" <<  request.path << RESET << std::endl;
+			//std::cout << MAGENTA_COLOR << "Root: " << root << std::endl << "Request path:" <<  request.path << RESET << std::endl;
 			/* location.printLocationBlock(); */
 			
 			if (location.getReturn().empty())
