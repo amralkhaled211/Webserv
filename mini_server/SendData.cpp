@@ -14,11 +14,11 @@ void SendData::notfound()
 bool SendData::read_file(std::string const &path, parser &request) // this already prepares the response
 {
 	std::string file_extension = get_file_extension(path);
-	std::cout << "-----------------------------------\n"
-	<<"file extention: " << file_extension << std::endl
-	<< "request path: " << request.path << "\n"
-	<< "path: " << path
-	<< "-----------------------------------\n" ;
+	//std::cout << "-----------------------------------\n"
+	//<<"file extention: " << file_extension << std::endl
+	//<< "request path: " << request.path << "\n"
+	//<< "path: " << path
+	//<< "-----------------------------------\n" ;
 	std::ifstream file(path.c_str());
 	if (file.is_open())
 	{
@@ -156,18 +156,8 @@ void SendData::redirect(LocationBlock& location, parser &request) // so far hand
 	bool isExternal = false;
 	code = returnVec[0];
 	url = returnVec[1];
-	// if (returnVec.size() > 1)
-	// {
-	// }
-	// else
-	// {
-	// 	code = "307";
-	// 	url = returnVec[0];
-	// }
 	if (url.find("http://") == 0 || url.find("https://") == 0)
-	{
 	    isExternal = true;
-	}
 	if (isExternal)
 	{
 	    // Handle external URL redirection
@@ -271,41 +261,17 @@ Response &SendData::sendResponse(int clientSocket, std::vector<ServerBlock> &ser
 	}
 	if (request.method == "POST")
 	{
-		//std::cout << "this body :" << request.body << std::endl;
-		saveBodyToFile("../website/upload/" + request.fileName, request);
-		// we should have a function that creates responses, based on the Code and body, file type
 		_response.body = "<!DOCTYPE html><html><head><title>200 OK</title></head>";
 		_response.body += "<body><h1>200 OK</h1><p>file saved</p></body></html>";
 		createResponseHeader(200, _response.body.size(), "text/html");
 	}
-
-	// std::string resp;
-
-	// if (_isReturn)
-	// 	resp = _response.status + _response.location  + _response.contentType + _response.transferEncoding + _response.contentLength + "\r\n" + _response.body;
-	// else
-	// 	resp = _response.status + _response.contentType + _response.transferEncoding + _response.contentLength + "\r\n" + _response.body;
-
-	// this makes sure we are able to send() on the next epoll() iteration
-	// struct epoll_event client_event;
-    // client_event.data.fd = clientSocket;
-    // client_event.events = EPOLLOUT;
-	// if (epoll_ctl(epollFD, EPOLL_CTL_MOD, clientSocket, &client_event) == -1)
-    // {
-    //     close(clientSocket);
-	// 	std::cout << BOLD_GREEN << "clientSocket Change mod : " << clientSocket << RESET << std::endl;
-	// 	std::cout << "epoll_ctl failed" << std::endl;
-    //     throw std::runtime_error("in sendResponse(): epoll_ctl while MODIFYING client FD " + intToString(clientSocket));
-    // }
-	/* std::cout << BLUE_COLOR << "sending response " << RESET << std::endl;
-	std::cout << resp << std::endl; */
 	return _response;
 }
 
 
 void SendData::saveBodyToFile(const std::string &filename, parser &request)
 {
-    std::ofstream outFile(filename.c_str(), std::ios::binary);
+    std::ofstream outFile(filename.c_str(), std::ios::binary);//| std::ios::app
     if (outFile.is_open())
     {
         outFile.write(request.body.c_str(), request.body.size());

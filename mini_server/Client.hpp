@@ -24,6 +24,7 @@
 #include "config_parser/Parser.hpp"
 #include "SendData.hpp"
 #include "Response.hpp"
+#include <ctime>
 
 
 struct Response;
@@ -77,8 +78,12 @@ class Client
 
 		int status;
 		bool getIsChunked() { return _isChunked; }
+		void setClientTime(std::time_t initTime) {_timeOut = initTime;}
+		std::time_t getClientTime(){return _timeOut;}
+		void saveBodyToFile();
 	
 	private:
+	std::time_t _timeOut;
 	std::string _buffer;			// for storing and processing request header & body; more accurate name: _requestBuffer
 	std::string _responseBuffer;	// for storing and processing response header & body
 	int _clientFD;

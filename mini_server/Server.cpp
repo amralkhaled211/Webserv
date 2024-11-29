@@ -100,10 +100,10 @@ void Server::createSocket()
     {
         bindNamesWithPorts(_servers[i].getServerName(), _servers[i].getListen());
     }
-    std::cout << BOLD_GREEN << "ALL THE CREATED SOCKETS: ";
-    for (size_t i = 0; i < this->_serverSockets.size(); ++i) {
-        std::cout << _serverSockets[i] << ", ";
-    }
+    //std::cout << BOLD_GREEN << "ALL THE CREATED SOCKETS: ";
+    //for (size_t i = 0; i < this->_serverSockets.size(); ++i) {
+    //    std::cout << _serverSockets[i] << ", ";
+    //}
     std::cout << std::endl;
     Epoll epoll(_serverSockets, _servers); // maybe we should start "everything" in run(), not in createSocket()
 }

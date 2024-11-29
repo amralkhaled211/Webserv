@@ -179,9 +179,45 @@ void Client::allRecieved()
 		_bytesRead = 0;
 		size_t _targetBytes = 0;
 		isAllRecieved = true;
+		if (request.body.size() > 0)
+		{
+			saveBodyToFile();
+		}
 		return;
 	}
 	isAllRecieved = false;
+	if (request.body.size() > 0)
+	{
+		saveBodyToFile();
+	}
+}
+
+
+void Client::saveBodyToFile()
+{
+	std::string filePath = "../website/upload/" + request.fileName;
+
+	//check if file already exists
+    std::ifstream infile(filePath.c_str());
+    if (infile.good())
+    {
+		//we might want to handle this differently like an error page or something
+        std::cout << "File already exists: " << filePath << std::endl;
+	}
+	infile.close();
+
+    std::ofstream outFile(filePath.c_str(), std::ios::binary | std::ios::app);
+    if (outFile.is_open())
+    {
+        outFile.write(request.body.c_str(), request.body.size());
+        outFile.close();
+    }
+    else
+    {
+        // Handle error opening file
+        std::cerr << "Error opening file for writing: " << filePath << std::endl;
+    }
+	request.body.clear();
 }
 
 
