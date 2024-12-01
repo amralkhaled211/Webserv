@@ -6,6 +6,7 @@ Client::Client()
 	_isChunked = false;
 	_headersIsChunked = false;
 	_sentHeader = false;
+	_newLineChecked = false;
 	request.statusError = 0;
 }
 
@@ -142,7 +143,6 @@ bool Client::headersValidate(std::string &buffer, std::string method)
 {
 	if (method == "GET")
 	{
-		std::cout << "GET request" << std::endl;
 		std::istringstream headerStream(this->_buffer);
 		std::string line;
 		while (std::getline(headerStream, line))
@@ -161,7 +161,101 @@ bool Client::headersValidate(std::string &buffer, std::string method)
 			}
     	}
 	}
+	if (method == "POST")
+	{
+		std::istringstream headerStream(this->_buffer);
+		std::string line;
+		while (std::getline(headerStream, line))
+    	{
+    	    if (line == "\r" && request.headers.find("Host") != request.headers.end() && !request.headers["Host"].empty() &&
+					request.headers.find("Content-Length") != request.headers.end() && !request.headers["Content-Length"].empty() &&
+					request.headers.find("Content-Type") != request.headers.end() && !request.headers["Content-Type"].empty()) // Check for the end of headers
+			{
+				std::cout << "end of headers" << std::endl;
+				request.statusError = 0;
+				return true;
+			}
+			else if (line == "\r" && request.headers.find("Host") == request.headers.end() &&
+						request.headers.find("Content-Length") == request.headers.end() &&
+						request.headers.find("Content-Type") == request.headers.end())
+			{
+				std::cerr << "Error: Bad request 400" << std::endl;
+				request.statusError = 400;
+				return true;
+			}
+    	}
+	}
 	return false;
+}
+
+
+bool Client::handlingBody(std::string &body)
+{
+	std::map<std::string, std::string>::iterator it = request.headers.find("Content-Type");
+	if (it != request.headers.end() && it->second.find("multipart/form-data") != std::string::npos)
+	{
+		_boundary = "--" + it->second.substr(it->second.find("boundary=") + 9);
+	}
+
+	if (body.size() > 0)// this is if the body comes with the headers in one chunk
+	{
+		if (!_boundary.empty())//that would mean we would have to upload a file 
+		{
+			if (parse_body(body))
+				return true;
+		}
+		else
+			request.body = body;
+	}
+
+	_bytesRead = body.size();
+	_targetBytes = stringToSizeT(request.headers["Content-Length"]);
+
+	if (_bytesRead < _targetBytes)
+	{
+		_isChunked = true;
+		return false;
+	}
+	else if (_bytesRead == _targetBytes)
+		return true;
+	
+	return false;
+}
+
+bool Client::bodyValidate(std::string &Buffer)
+{
+
+	std::istringstream headerStream(Buffer);
+	std::string line;
+	// std::cout << "request.body.size() " << request.body.size() << std::endl;
+	if (request.body.empty() && !_newLineChecked)
+	{
+		std::getline(headerStream, line);
+		std::cout << "skip the new line :"  << std::endl;
+		if (line == "\r")
+		{
+			_newLineChecked = true;
+			return false;	
+		}
+	}
+	request.body = Buffer;
+	std::cout << "request.body=====> ;" << request.body << std::endl;
+	while (std::getline(headerStream, line))
+    {
+        if (line == "\r" && !request.body.empty()) // Check for the end of headers
+		{
+			std::cout << "end of body" << std::endl;
+			request.statusError = 0;
+			return true;
+		}
+		else if ((line == "\r" && request.body.empty()))
+		{
+			std::cerr << "Error: Bad request 400" << std::endl;
+			request.statusError = 400;
+			return true;
+		}
+    }
+	return false; // this mean we still expecting more chunks
 }
 
 bool Client::parseHeadersAndBody()
@@ -174,44 +268,41 @@ bool Client::parseHeadersAndBody()
 	else if (request.method == "POST")
 	{
 		size_t headerEndPos = this->_buffer.find("\r\n\r\n");
-		if (headerEndPos == std::string::npos)
+		if (headerEndPos == std::string::npos) // this would be an indcation that the headers would be on chunks 
 		{
 			std::cout << "headerEndPos not found" << std::endl;
+			parseHeaders(this->_buffer);
+			if (headersValidate(this->_buffer, request.method)) // if this true that means we have the headers and now we ganna do the same thing for the body
+			{
+				if (request.statusError == 0) // this mean we are expecting a body if we dont have on then its not valid and we send a message
+				{
+					std::cout << "i am ready for the body : " << std::endl;
+					if (bodyValidate(this->_buffer))
+						return true;
+					else
+						return false;
+				}
+				else
+					return true;
+			}
+			else
+			{
+				_headersIsChunked = true;
+				return false;
+			}
 		}
 		std::string body = this->_buffer.substr(headerEndPos + 4);
 		std::string headerSection = this->_buffer.substr(0, headerEndPos);
 		parseHeaders(headerSection);
-
-		std::map<std::string, std::string>::iterator it = request.headers.find("Content-Type");
-		if (it != request.headers.end() && it->second.find("multipart/form-data") != std::string::npos)
-		{
-			_boundary = "--" + it->second.substr(it->second.find("boundary=") + 9);
-		}
-
-		if (body.size() > 0)// this is if the body comes with the headers in one chunk
-		{
-			if (!_boundary.empty())//that would mean we would have to upload a file 
-			{
-				if (parse_body(body))
-					return true;
-			}
-			else
-				request.body = body;
-		}
-		_bytesRead = body.size();
-		_targetBytes = stringToSizeT(request.headers["Content-Length"]);
-		if (_bytesRead < _targetBytes)
-		{
-			_isChunked = true;
-			return false;
-		}
-		else if (_bytesRead == _targetBytes)
+		if (handlingBody(body))
 			return true;
+		else
+			return false;
 	}
 	else /// this will be for the GET request
 	{
 		parseHeaders(this->_buffer);
-		if (headersValidate(this->_buffer, "GET"))
+		if (headersValidate(this->_buffer, request.method))
 			return true; // this would mean the headers are not chunked 
 		else 
 			_headersIsChunked = true;
@@ -233,10 +324,14 @@ void Client::allRecieved()
 	parseQueryString();
 	if (parseHeadersAndBody())
 	{
+		// this would reset values
 		_isChunked = false;
 		_headersIsChunked = false;
 		_bytesRead = 0;
-		size_t _targetBytes = 0;
+		_targetBytes = 0;
+		_newLineChecked = false;
+
+
 		isAllRecieved = true;
 		if (request.body.size() > 0)
 		{
@@ -254,7 +349,13 @@ void Client::allRecieved()
 
 void Client::saveBodyToFile()
 {
-	std::string filePath = "../website/upload/" + request.fileName;
+	std::string filePath;
+	if (!request.fileName.empty())
+	{
+		filePath = "../website/upload/" + request.fileName;
+	}
+	else 
+		filePath = "../website/upload/data.txt";
 
 	//check if file already exists
     std::ifstream infile(filePath.c_str());

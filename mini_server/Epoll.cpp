@@ -231,9 +231,7 @@ void Epoll::handleData(int client_fd)
 
 	if (clientB.getIsAllRecieved())							 // we only go on here once we recieved the whole request
 	{
-		clientB.setResponse(sendData.sendResponse(clientB.getClientFD(), _servers, clientB.getRequest(), _epollFD));
-		std::cout << "coming here" << std::endl;
-		
+		clientB.setResponse(sendData.sendResponse(clientB.getClientFD(), _servers, clientB.getRequest(), _epollFD));		
 		clientB.status = RECIEVED;
 		struct epoll_event client_event;
 		client_event.data.fd = clientB.getClientFD();

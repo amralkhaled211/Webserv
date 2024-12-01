@@ -57,6 +57,8 @@ class Client
 		bool parse_first_line();
 		void parseHeaders(std::string &Buffer);
 		bool headersValidate(std::string &Buffer, std::string method);
+		bool bodyValidate(std::string &Buffer);
+		bool handlingBody(std::string &body);
 		bool parse_body(std::string &body);
 		bool HandlChunk();
 		bool parseHeadersAndBody();
@@ -92,6 +94,7 @@ class Client
 	std::string _boundary;
 	bool _isChunked;
 	bool _headersIsChunked;
+	bool _newLineChecked;
 	size_t _targetBytes;
 	size_t _bytesRead;
 	bool isAllRecieved;
