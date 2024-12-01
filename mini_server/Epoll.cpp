@@ -125,28 +125,32 @@ void Epoll::handleEpollEvents(const std::vector<int> &serverSockets)
 			return;
 		throw std::runtime_error("epoll_wait");
 	}
-	if (n == 0)//here is the logic of the ime out 
-	{
-		std::time_t now = std::time(NULL);
-		std::cout << "now : " << now << std::endl;
-		std::cout << "is timing out !!!!!!!" << std::endl;
-		std::cout << "the size of clintes: " << _clients.size() << std::endl;
-		for (std::vector<Client>::iterator it = _clients.begin(); it != _clients.end();)
-		{
-			std::cout << "ClientFD : " << it->getClientFD() << " and the time stamp of it : " << it->getClientTime() << std::endl;
-			int clientTimeOut = now - it->getClientTime();
-			std::cout << "clientTimeOut : " << clientTimeOut << std::endl;
 
-			if (clientTimeOut > CLIENT_TIMEOUT / 1000)
-			{
-				std::cout << "client : " << it->getClientFD() << " timed out " << std::endl;
-				killClient(it->getClientFD());
-				close(it->getClientFD());
-			}
-			else
-				++it;
-		}
-	}
+
+
+	//this the time out logic
+	//if (n == 0)//here is the logic of the ime out 
+	//{
+	//	std::time_t now = std::time(NULL);
+	//	//std::cout << "now : " << now << std::endl;
+	//	//std::cout << "is timing out !!!!!!!" << std::endl;
+	//	//std::cout << "the size of clintes: " << _clients.size() << std::endl;
+	//	for (std::vector<Client>::iterator it = _clients.begin(); it != _clients.end();)
+	//	{
+	//		//std::cout << "ClientFD : " << it->getClientFD() << " and the time stamp of it : " << it->getClientTime() << std::endl;
+	//		int clientTimeOut = now - it->getClientTime();
+	//		//std::cout << "clientTimeOut : " << clientTimeOut << std::endl;
+//
+	//		if (clientTimeOut > CLIENT_TIMEOUT / 1000)
+	//		{
+	//			std::cout << "client : " << it->getClientFD() << " timed out " << std::endl;
+	//			killClient(it->getClientFD());
+	//			close(it->getClientFD());
+	//		}
+	//		else
+	//			++it;
+	//	}
+	//}
 	
 	for (int i = 0; i < n; ++i)
 	{
@@ -228,6 +232,8 @@ void Epoll::handleData(int client_fd)
 	if (clientB.getIsAllRecieved())							 // we only go on here once we recieved the whole request
 	{
 		clientB.setResponse(sendData.sendResponse(clientB.getClientFD(), _servers, clientB.getRequest(), _epollFD));
+		std::cout << "coming here" << std::endl;
+		
 		clientB.status = RECIEVED;
 		struct epoll_event client_event;
 		client_event.data.fd = clientB.getClientFD();

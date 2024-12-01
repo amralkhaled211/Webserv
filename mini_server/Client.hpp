@@ -39,7 +39,7 @@ typedef struct parser
 	std::map<std::string, std::string> headers;
 	std::string body;
 	std::string fileName;
-
+	int statusError ;
 } parser; // better name: requestParser
 
 #define	NEW				0
@@ -54,8 +54,9 @@ class Client
 	public:
 		Client();
 		//~Client();
-		void parse_first_line();
+		bool parse_first_line();
 		void parseHeaders(std::string &Buffer);
+		bool headersValidate(std::string &Buffer, std::string method);
 		bool parse_body(std::string &body);
 		bool HandlChunk();
 		bool parseHeadersAndBody();
@@ -90,6 +91,7 @@ class Client
 	parser request;
 	std::string _boundary;
 	bool _isChunked;
+	bool _headersIsChunked;
 	size_t _targetBytes;
 	size_t _bytesRead;
 	bool isAllRecieved;

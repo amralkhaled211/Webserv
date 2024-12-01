@@ -187,7 +187,7 @@ bool SendData::findIndexFile(const std::vector<std::string> &files, std::string 
 	{
 		std::string file = root + '/' + files[i];
 		removeExcessSlashes(file);
-		std::cout << BOLD_GREEN << "FILE from index: " << file << RESET << std::endl;
+		//std::cout << BOLD_GREEN << "FILE from index: " << file << RESET << std::endl;
 		if (read_file(file, request))
 			return true;
 		i++;
@@ -205,8 +205,15 @@ bool SendData::isCGI(const parser &request, LocationBlock location)
 
 Response &SendData::sendResponse(int clientSocket, std::vector<ServerBlock> &servers, parser &request, int epollFD)
 {
-	_isReturn = false;
 
+	//here  i would serve the errpr pages if the request is not valid
+	if (request.statusError != 0)
+	{
+		codeErrorResponse(request.statusError);
+		return _response;
+	}
+	
+	_isReturn = false;
 	ServerBlock current_server = findServerBlock(servers, request);
 
 	if (request.method == "GET")
@@ -217,7 +224,7 @@ Response &SendData::sendResponse(int clientSocket, std::vector<ServerBlock> &ser
 
 			std::string root = location.getRoot() + request.path; // maybe a more suitable name: pathToFileToServe
 			
-			std::cout << MAGENTA_COLOR << "Root: " << root << std::endl << "Request path:" <<  request.path << RESET << std::endl;
+			// std::cout << MAGENTA_COLOR << "Root: " << root << std::endl << "Request path:" <<  request.path << RESET << std::endl;
 			/* location.printLocationBlock(); */
 			
 			if (location.getReturn().empty())

@@ -4,7 +4,9 @@ Client::Client()
 {
 	isAllRecieved = false;
 	_isChunked = false;
+	_headersIsChunked = false;
 	_sentHeader = false;
+	request.statusError = 0;
 }
 
 
@@ -23,17 +25,36 @@ parser &Client::getRequest()
 	return request;
 }
 
-void Client::parse_first_line()
+bool Client::parse_first_line()
 {
 	size_t start = 0;
 	size_t end = this->_buffer.find(' ', start);
-	request.method = this->_buffer.substr(start, end - start);
+	request.method = deleteSpaces(this->_buffer.substr(start, end - start));
+	if (request.method != "GET" && request.method != "POST" && request.method != "DELETE")
+	{
+	    std::cerr << "Error: bad request method" << std::endl;
+	    request.statusError = 400;
+	    return false;
+	}
 	start = end + 1;
 	end = this->_buffer.find(' ', start);
-	request.path = this->_buffer.substr(start, end - start);
+	request.path = deleteSpaces (this->_buffer.substr(start, end - start));
+	if (request.path.empty())
+	{
+		std::cerr << "Error: bad request path" << std::endl;
+		request.statusError = 400;
+		return false;
+	}
 	start = end + 1;
 	end = this->_buffer.find("\r\n", start);
-	request.version = this->_buffer.substr(start, end - start);
+	request.version = deleteSpaces(this->_buffer.substr(start, end - start));
+	if (request.version != "HTTP/1.1") // if it does not exist we should serve default page. (HTTP/1.1 only accepted)
+	{
+		std::cerr << "Error: bad request version" << std::endl;
+		request.statusError = 400;
+		return false;
+	}
+	return true;
 }
 
 void Client::parseHeaders(std::string &Buffer)
@@ -42,12 +63,12 @@ void Client::parseHeaders(std::string &Buffer)
     std::string line;
     while (std::getline(headerStream, line) && !line.empty())
 	{
-        size_t delimiterPos = line.find(": ");
+        size_t delimiterPos = line.find(":");
         if (delimiterPos != std::string::npos)
 		{
             std::string headerName = line.substr(0, delimiterPos);
-            std::string headerValue = line.substr(delimiterPos + 2);
-            request.headers[headerName] = headerValue;
+            std::string headerValue = line.substr(delimiterPos + 1);
+            request.headers[headerName] = deleteSpaces(headerValue);
         }
     }
 }
@@ -117,9 +138,35 @@ bool Client::HandlChunk()
 	return false;
 }
 
+bool Client::headersValidate(std::string &buffer, std::string method)
+{
+	if (method == "GET")
+	{
+		std::cout << "GET request" << std::endl;
+		std::istringstream headerStream(this->_buffer);
+		std::string line;
+		while (std::getline(headerStream, line))
+    	{
+    	    if (line == "\r" && request.headers.find("Host") != request.headers.end() && !request.headers["Host"].empty()) // Check for the end of headers
+			{
+				std::cout << "end of headers" << std::endl;
+				request.statusError = 0;
+				return true;
+			}
+			else if (line == "\r" && request.headers.find("Host") == request.headers.end())
+			{
+				std::cerr << "Error: Bad request 400" << std::endl;
+				request.statusError = 400;
+				return true;
+			}
+    	}
+	}
+	return false;
+}
+
 bool Client::parseHeadersAndBody()
 {
-	if (_isChunked)
+	if (_isChunked )
 	{
 		if (HandlChunk())
 			return true;
@@ -127,6 +174,10 @@ bool Client::parseHeadersAndBody()
 	else if (request.method == "POST")
 	{
 		size_t headerEndPos = this->_buffer.find("\r\n\r\n");
+		if (headerEndPos == std::string::npos)
+		{
+			std::cout << "headerEndPos not found" << std::endl;
+		}
 		std::string body = this->_buffer.substr(headerEndPos + 4);
 		std::string headerSection = this->_buffer.substr(0, headerEndPos);
 		parseHeaders(headerSection);
@@ -157,10 +208,13 @@ bool Client::parseHeadersAndBody()
 		else if (_bytesRead == _targetBytes)
 			return true;
 	}
-	else
+	else /// this will be for the GET request
 	{
 		parseHeaders(this->_buffer);
-		return true;
+		if (headersValidate(this->_buffer, "GET"))
+			return true; // this would mean the headers are not chunked 
+		else 
+			_headersIsChunked = true;
 	}
 	return false;
 }
@@ -168,14 +222,19 @@ bool Client::parseHeadersAndBody()
 
 void Client::allRecieved()
 {
-	if (!_isChunked)
+	if (!_isChunked && !_headersIsChunked)
 	{
-		parse_first_line();
+		if (!parse_first_line())
+		{
+			isAllRecieved = true;
+			return;
+		}
 	}
 	parseQueryString();
 	if (parseHeadersAndBody())
 	{
 		_isChunked = false;
+		_headersIsChunked = false;
 		_bytesRead = 0;
 		size_t _targetBytes = 0;
 		isAllRecieved = true;
