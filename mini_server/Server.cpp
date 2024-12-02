@@ -62,7 +62,7 @@ int Server::create_and_configure_socket()
     return serverSocket;
 }
 
-void Server::bindNamesWithPorts(std::vector<std::string>& serverName, std::vector<int> serverPort)
+void Server::bindNamesWithPorts(std::vector<std::string>& serverName, std::vector<int> serverPort, ServerBlock &currServer)
 {
     if (serverName.size() == 0)
         serverName.push_back("localhost");
@@ -87,6 +87,9 @@ void Server::bindNamesWithPorts(std::vector<std::string>& serverName, std::vecto
 
 	        if (listen(serverSocket, 5) < 0)
 	        	throw std::runtime_error("Listening failed");
+            
+            currServer.setHostInMap(serverSocket, name + ":" + intToString(port));
+
             _serverSockets.push_back(serverSocket);
         }
     }
@@ -98,7 +101,7 @@ void Server::createSocket()
     //std::cout << "size of serverBlock :" << _servers.size() << std::endl;
     for(int i = 0; i < _servers.size(); i++)
     {
-        bindNamesWithPorts(_servers[i].getServerName(), _servers[i].getListen());
+        bindNamesWithPorts(_servers[i].getServerName(), _servers[i].getListen(), _servers[i]);
     }
     std::cout << BOLD_GREEN << "ALL THE CREATED SOCKETS: ";
     for (size_t i = 0; i < this->_serverSockets.size(); ++i) {

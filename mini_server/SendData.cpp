@@ -1,6 +1,5 @@
 #include "SendData.hpp"
 #include "CGI.hpp"
-#include "CGI.hpp"
 
 void SendData::notfound()
 {

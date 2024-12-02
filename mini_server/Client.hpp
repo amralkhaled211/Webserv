@@ -72,6 +72,8 @@ class Client
 		void setSentHeader(bool value) { _sentHeader = value; }
 		void setResponse(Response &response) { _response = response; }
 		Response &getResponse() { return _response; }
+		void setHostPort(std::string hostPort) { _hostPort = hostPort; }
+		std::string getHostPort(std::string hostPort) { return _hostPort; }
 
 		int status;
 		bool getIsChunked() { return _isChunked; }
@@ -88,6 +90,7 @@ class Client
 	bool isAllRecieved;
 	bool _sentHeader; // for response in chunks
 	Response _response;
+	std::string _hostPort;
 };
 
 

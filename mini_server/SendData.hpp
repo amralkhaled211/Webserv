@@ -3,6 +3,7 @@
 #include "Client.hpp"
 #include "StatusMsg.hpp"
 #include "Response.hpp"
+// #include "CGI.hpp"
 
 struct parser;
 class Client;
@@ -108,3 +109,6 @@ class SendData
 		createResponseHeader(code, _response.body.size(), contentType);
 	}
 };
+
+
+// #include "ErrorTemplate.tpp"

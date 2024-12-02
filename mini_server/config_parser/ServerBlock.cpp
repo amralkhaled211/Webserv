@@ -59,6 +59,10 @@ void		ServerBlock::setDirective(const std::string& directiveKey, std::string& di
 }
 
 
+std::string						ServerBlock::getHostFromMap(int socketFD) { return _socketFD_host[socketFD]; }
+
+void							ServerBlock::setHostInMap(int socketFD, std::string hostPort) { _socketFD_host[socketFD] = hostPort; }
+
 std::vector<LocationBlock>&		ServerBlock::getLocationVec() { return this->_locationVec; }
 
 LocationBlock&					ServerBlock::getLocationVecBack() {
@@ -142,6 +146,20 @@ void							ServerBlock::contextError() { // checkDupLocation()
 			if (tmpPrefix == _locationVec[j].getPrefix())
 				throw std::runtime_error("Duplicate location Defintion");
 		}
+		// if (!_locationVec[i].getCgiExt().empty()) { // is cgi
+		// 	std::vector<std::string> cgiExt = _locationVec[i].getCgiExt();
+		// 	std::vector<std::string> cgiIndex = _locationVec[i].getIndex();
+		// 	for (size_t k = 0; k < cgiExt.size(); ++k) {
+		// 		std::string currCgiExt = cgiExt[k];
+		// 		bool		isCorrectExt = false;
+		// 		for (size_t l = 0; l < cgiIndex.size(); ++l) {
+		// 			if (currCgiExt == (cgiIndex[l]))
+		// 				isCorrectExt = true;
+		// 		}
+		// 		if (!isCorrectExt)
+		// 			throw std::runtime_error("Index File Extension doesn't match CGI Extension");
+		// 	}
+		// }
 	}
 
 	// more checks to follow

@@ -19,9 +19,8 @@
 #include <vector>
 #include <csignal>
 #include <cstdlib>
-#include "RequestHandler.hpp"
-// #include "config_parser/Parser.hpp"
-#include "Client.hpp"
+// #include "RequestHandler.hpp"
+// #include "Client.hpp"
 #include "SendData.hpp"
 
 #define	DEBUG_Y	std::cout << BOLD_YELLOW <<
@@ -58,5 +57,6 @@ class Epoll
 		void handleData(int client_fd);
 		void handleResponse(int clientToSend);
 		void removeFD(int fd);
+		std::string getCurrentServerHost(int socketFD);
 };
 int make_socket_non_blocking(int sockfd);

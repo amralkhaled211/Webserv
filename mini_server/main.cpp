@@ -1,6 +1,4 @@
 #include "Server.hpp"
-#include "SendData.hpp"
-#include "RequestHandler.hpp"
 
 #define DFLT_CONF_FILE  "conf_files/ali.conf"
 

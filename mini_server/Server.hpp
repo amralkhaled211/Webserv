@@ -13,7 +13,7 @@ private:
 	std::vector<int> _serverSockets;
 	void createSocket();
 	int create_and_configure_socket();
-	void bindNamesWithPorts(std::vector<std::string>& serverName, std::vector<int> serverPort);
+	void bindNamesWithPorts(std::vector<std::string>& serverName, std::vector<int> serverPort, ServerBlock& currServer);
 };
 
 

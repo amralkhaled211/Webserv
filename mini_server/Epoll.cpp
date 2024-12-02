@@ -331,6 +331,16 @@ void addToEpoll(int client_fd, int epollFD)
 	}
 }
 
+std::string Epoll::getCurrentServerHost(int socketFD)
+{
+	std::string	hostPort("");
+	for (size_t i = 0; i < _servers.size(); ++i)
+	{
+		hostPort = _servers[i].getHostFromMap(socketFD);
+	}
+	return hostPort;
+}
+
 void Epoll::handleConnection(int server_fd) // we add additionally to the server_socket_fds also the client fd to the interest list (set of fds to watch)
 {
 	while (true)
@@ -357,8 +367,11 @@ void Epoll::handleConnection(int server_fd) // we add additionally to the server
 		// 	throw std::runtime_error(err_msg);
 		// }
 
+		std::string currentServerHost = getCurrentServerHost(server_fd);
+
 		Client newClient;
 		newClient.setClientFD(client_fd); // creating new Client Object for the new client
+		newClient.setHostPort(currentServerHost);
 		newClient.status = NEW;
 		_clients.push_back(newClient);	  // and adding it to the _clients vector
 		if (E_DEBUG) DEBUG_G "ACCEPTED CLIENT FD " << client_fd << RESET << std::endl;
