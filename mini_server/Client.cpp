@@ -268,22 +268,29 @@ bool Client::parseHeadersAndBody()
 	else if (request.method == "POST")
 	{
 		size_t headerEndPos = this->_buffer.find("\r\n\r\n");
-		if (headerEndPos == std::string::npos) // this would be an indcation that the headers would be on chunks 
+		if (headerEndPos == std::string::npos || _newLineChecked) // this would be an indcation that the headers would be on chunks 
 		{
 			std::cout << "headerEndPos not found" << std::endl;
+			std::cout << "this-> buffer =====> : " << this->_buffer << std::endl;
 			parseHeaders(this->_buffer);
+			std::cout << "content length : " << request.headers["Content-Length"] << std::endl;
 			if (headersValidate(this->_buffer, request.method)) // if this true that means we have the headers and now we ganna do the same thing for the body
 			{
+				std::cout << "i am inside the header vaildatio :: " << std::endl;
 				if (request.statusError == 0) // this mean we are expecting a body if we dont have on then its not valid and we send a message
 				{
 					std::cout << "i am ready for the body : " << std::endl;
 					if (bodyValidate(this->_buffer))
 						return true;
 					else
+				    {
 						return false;
+					}
 				}
 				else
+				{
 					return true;
+				}
 			}
 			else
 			{
@@ -291,22 +298,34 @@ bool Client::parseHeadersAndBody()
 				return false;
 			}
 		}
-		std::string body = this->_buffer.substr(headerEndPos + 4);
-		std::string headerSection = this->_buffer.substr(0, headerEndPos);
-		parseHeaders(headerSection);
-		if (handlingBody(body))
-			return true;
-		else
-			return false;
+		else 
+		{
+			std::cout << "i am going to the else " << std::endl;
+			std::string body = this->_buffer.substr(headerEndPos + 4);
+			std::string headerSection = this->_buffer.substr(0, headerEndPos);
+			parseHeaders(headerSection);
+			if (handlingBody(body))
+			{
+				std::cout << "i am going to the else true" << std::endl;
+				return true;
+			}
+			else
+			{
+				std::cout << "i am going to the else false" << std::endl;
+				return false;
+			}
+		}
 	}
 	else /// this will be for the GET request
 	{
+		std::cout << "coming to the get validation " << std::endl;
 		parseHeaders(this->_buffer);
 		if (headersValidate(this->_buffer, request.method))
 			return true; // this would mean the headers are not chunked 
 		else 
 			_headersIsChunked = true;
 	}
+	std::cout << "we throwing this ::: " << std::endl;	
 	return false;
 }
 
@@ -342,6 +361,7 @@ void Client::allRecieved()
 	isAllRecieved = false;
 	if (request.body.size() > 0)
 	{
+		std::cout << "i Am reading chuncked file " << std::endl;
 		saveBodyToFile();
 	}
 }
