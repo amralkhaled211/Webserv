@@ -10,7 +10,6 @@ void RequestHandler::findClient(int clientSocket, std::vector<Client> &Clients) 
 	{
 		if (it->getClientFD() == clientSocket)
 		{
-
 			it->setBuffer(this->_buffer);
 			it->allRecieved();
 			if (it->getIsChunked())
@@ -21,6 +20,7 @@ void RequestHandler::findClient(int clientSocket, std::vector<Client> &Clients) 
 		}
 	}
 }
+
 void RequestHandler::receiveData(int clientSocket, std::vector<Client> &clients)
 {
 	char Buffer[READ_CHUNK_SIZE] = {0};
@@ -28,7 +28,7 @@ void RequestHandler::receiveData(int clientSocket, std::vector<Client> &clients)
 	if (bytesReceived < 0)
 		throw std::runtime_error("Receiving failed");
 	this->_buffer.assign(Buffer, bytesReceived); // this buffer should go to the right client
-	this->findClient(clientSocket, clients);
+	this->findClient(clientSocket, clients); // must rename
 }
 
 Client &RequestHandler::findAllRecieved(std::vector<Client> clients)

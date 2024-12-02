@@ -114,16 +114,6 @@ void		Parser::_configToContent() {
 	std::string		line;
 	size_t			beginOfComment;
 
-	// size_t			openingQ = std::string::npos;
-	// size_t			closingQ = std::string::npos;
-
-	// IF WE HANDLE QUOTES
-		// counter, which dicteated whether we are inside of a quote or not
-		// we base on that , whether we should remove the '#' or not
-		// NEXT: we need to have a function to limit the use of quotes
-			// e.g. no spaces between quotes, no quotes in the middle of a word
-			// 
-
 	try
 	{
 		if (!std::getline(infileConfig, line))
@@ -133,20 +123,8 @@ void		Parser::_configToContent() {
 			if (line.empty() || line.find_first_not_of(WHITESPACE) == std::string::npos)
 				continue;
 
-			if (line.find_first_of("\"") != std::string::npos)
-				throw std::runtime_error("Quotes Not Allowed");
-
 			while (line.find('\t') != std::string::npos)
 				line.replace(line.find('\t'), 1, " ");
-
-			/* for (size_t i = 0; i < line.size(); i++) {
-				if (line[i] == '"') {
-					if (openingQ == std::string::npos)
-						openingQ = i;
-					else if (closingQ == std::string::npos)
-						closingQ = i;
-				}
-			} */
 
 			beginOfComment = line.find_first_of('#'); // need to also check whether inside of quote
 
@@ -156,6 +134,10 @@ void		Parser::_configToContent() {
 				_content.append(line.substr(amountBegSpaces(line)));
 
 			_content.append(" "); // separate lines with Spaces, excess space will be removed later
+			
+			if (_content.find_first_of("\"") != std::string::npos)
+				throw std::runtime_error("Quotes Not Allowed");
+
 		} while (std::getline(infileConfig, line));
 
 		if (_content.size() < 6) // define this minimum later more accurate
@@ -190,7 +172,6 @@ void		Parser::_removeExcessSpace() {
 	_content = newContent;
 }
 
-
 /*			PARSING			*/
 
 void		Parser::_fillBlocks() {
@@ -203,7 +184,7 @@ void		Parser::_fillBlocks() {
 		throw std::runtime_error("Missing Valid http Block");
 
 	while (std::getline(ss, token, '{')) { // till the next condition check, I  should handle the server Block, then the next will start
-		
+
 		if (DEBUG)
 			std::cerr << "H Token before: >" << token << "<" << std::endl;
 
@@ -214,7 +195,6 @@ void		Parser::_fillBlocks() {
 
 		if (ss.fail())
 			ss.clear();
-		// need to handle the end properly
 		int	pos = ss.tellg();
 		if (DEBUG) {
 			std::cerr << "H Token after: >" << token << "<" << std::endl;
@@ -311,10 +291,10 @@ void		Parser::_locationBlock(std::stringstream& ss) { // this is gonna be recurc
 	_serverVec.back().addLocationBlock();
 
 	while (ss.get(ch)) {
-		if (token == "location") {
-			_locationBlock(ss); // this should return/finish only when ss is finished with this specific location
-			continue;
-		}
+		// if (token == "location") {
+		// 	_locationBlock(ss); // this should return/finish only when ss is finished with this specific location
+		// 	continue;
+		// }
 
 		if (deliSet.find(ch) != std::string::npos) {
 			if (ch == ' ')

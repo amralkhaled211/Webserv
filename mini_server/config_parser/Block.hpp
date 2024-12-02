@@ -50,7 +50,6 @@ class Block // parent // the purpose of this is just to not have class with the 
 
 		bool				_addCommonDirective(const std::string& directiveKey, std::string& directiveValue);
 
-		virtual void		addLocationBlock() = 0;
 		virtual void		setDirective(const std::string& directiveKey, std::string& directiveValue) = 0;
 
 };

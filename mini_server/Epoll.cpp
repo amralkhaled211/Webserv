@@ -196,65 +196,7 @@ void Epoll::handleEpollEvents(const std::vector<int> &serverSockets)
 		}
 		else if (_events[i].events & EPOLLOUT)
 		{
-			if (E_DEBUG || E_DEBUG2) {
-				std::cout << "---------------------------------------------------\n";
-				DEBUG_G "Found Event/SENDING data to Client FD: " << _events[i].data.fd << RESET << std::endl;
-			}
-
-			Client &client = findClient(_events[i].data.fd, _clients);
-
-			if (E_DEBUG) {
-				std::cout << "FIND RESULT: " << client.getResponseBuffer().find("Transfer-Encoding: chunked") << std::endl;
-				if (client.getResponseBuffer().find("Transfer-Encoding: chunked") != std::string::npos) std::cout << "SENDING IN CHUNKS\n";
-				else std::cout << "SENDING ALL AT ONCE\n";
-				std::cout << BOLD_WHITE << "RESPONDING FOR THIS PATH: " << client.getRequest().path << RESET << std::endl;
-			}
-
-			std::string &remainingResBuffer = client.getResponse().body;
-			std::string sendNow;
-			if (client.getResponseBuffer().find("Transfer-Encoding: chunked") != std::string::npos && remainingResBuffer.size())
-			{
-				if (!client.getSentHeader())
-				{
-					client.status = S_CHUNKS;
-					sendNow = client.getResponse().status + client.getResponse().location + client.getResponse().contentType + client.getResponse().transferEncoding + "\r\n";
-					// std::cout << BOLD_WHITE << "sending HEADER from chunked response\n"
-					// 		  << sendNow << RESET << std::endl;
-					client.setSentHeader(true);
-				}
-				else
-				{
-					// std::cout << BOLD_WHITE << "sending A CHUNK from chunked response\n"
-					// 		  << sendNow << RESET << std::endl;
-
-					size_t chunkSize = std::min((size_t)SEND_CHUNK_SIZE, remainingResBuffer.size());
-					std::string chunk = remainingResBuffer.substr(0, chunkSize);
-					sendNow = sizeTToHexString(chunkSize) + "\r\n" + chunk + "\r\n";
-					remainingResBuffer = remainingResBuffer.substr(chunkSize);
-				}
-			}
-			else if (client.getResponseBuffer().find("Transfer-Encoding: chunked") != std::string::npos && !remainingResBuffer.size())
-			{
-				std::cout << "SENDING LAST CHUNK\n";
-				sendNow = "0\r\n\r\n";
-			}
-			else
-				sendNow = client.getResponseBuffer();
-
-			// std::cout << "sending response:\n"
-			// 		  << BOLD_WHITE << sendNow << RESET << std::endl;
-			
-			ssize_t s = send(_events[i].data.fd, sendNow.c_str(), sendNow.size(), 0);
-
-			if (client.getResponseBuffer().find("Transfer-Encoding: chunked") != std::string::npos && sendNow != "0\r\n\r\n")
-			{
-				std::cout << "---------------------------------------------------\n";
-				continue; // didn't send whole response, delay killing and closing
-			}
-			std::cout << "killing and closing the client fd " << _events[i].data.fd << "\n";
-			killClient(_events[i].data.fd);
-			close(_events[i].data.fd);
-			
+			handleResponse(_events[i].data.fd); // send Data
 			if (E_DEBUG || E_DEBUG2) {
 				DEBUG_Y "END OF LIFE CYCLE OF CLIENT FD " << _events[i].data.fd << std::endl;
 				DEBUG_G "REMAINING CLIENT FDs ARE\n";
@@ -269,46 +211,103 @@ void Epoll::handleEpollEvents(const std::vector<int> &serverSockets)
 	}
 }
 
-// issue right now is that epoll_wait() doesn't report on a some of client fds, depending on chunk size, more or less of them
+void Epoll::handleResponse(int clientToSend)
+{
+	if (E_DEBUG || E_DEBUG2) {
+		std::cout << "---------------------------------------------------\n";
+		DEBUG_G "Found Event/SENDING data to Client FD: " << clientToSend << RESET << std::endl;
+	}
+
+	Client &currClient = findClient(clientToSend, _clients);
+
+	if (E_DEBUG) {
+		std::cout << "FIND RESULT: " << currClient.getResponseBuffer().find("Transfer-Encoding: chunked") << std::endl;
+		if (currClient.getResponseBuffer().find("Transfer-Encoding: chunked") != std::string::npos) std::cout << "SENDING IN CHUNKS\n";
+		else std::cout << "SENDING ALL AT ONCE\n";
+		std::cout << BOLD_WHITE << "RESPONDING FOR THIS PATH: " << currClient.getRequest().path << RESET << std::endl;
+	}
+
+	bool	isChunkedResponse = currClient.getResponseBuffer().find("Transfer-Encoding: chunked") != std::string::npos;
+
+	std::string &remainingResBuffer = currClient.getResponse().body;
+	std::string sendNow;
+	if (isChunkedResponse && remainingResBuffer.size())
+	{
+		if (!currClient.getSentHeader())
+		{
+			currClient.status = S_CHUNKS;
+			sendNow = currClient.getResponse().status + currClient.getResponse().location
+					+ currClient.getResponse().contentType + currClient.getResponse().transferEncoding + "\r\n";
+			currClient.setSentHeader(true);
+		}
+		else
+		{
+			size_t chunkSize = std::min((size_t)SEND_CHUNK_SIZE, remainingResBuffer.size());
+			std::string chunk = remainingResBuffer.substr(0, chunkSize);
+			sendNow = sizeTToHexString(chunkSize) + "\r\n" + chunk + "\r\n";
+			remainingResBuffer = remainingResBuffer.substr(chunkSize);
+		}
+	}
+	else if (isChunkedResponse && !remainingResBuffer.size())
+	{
+		std::cout << "SENDING LAST CHUNK\n";
+		sendNow = "0\r\n\r\n";
+	}
+	else
+		sendNow = currClient.getResponseBuffer();
+	
+	ssize_t s = send(clientToSend, sendNow.c_str(), sendNow.size(), 0);
+
+	if (isChunkedResponse && sendNow != "0\r\n\r\n") {
+		return ; // didn't send whole response, delay killing and closing
+	}
+	std::cout << "killing and closing the client fd " << clientToSend << "\n";
+	killClient(clientToSend);
+	close(clientToSend);
+}
+
+void modClientFDToSend(int client_fd, int epollFD)
+{
+	struct epoll_event client_event;
+	client_event.data.fd = client_fd;
+	client_event.events = EPOLLOUT;
+	if (epoll_ctl(epollFD, EPOLL_CTL_MOD, client_fd, &client_event) == -1)
+	{
+		close(client_fd);
+		std::cout << BOLD_GREEN << "client.getClientFD() Change mod : " << client_fd << RESET << std::endl;
+		std::cout << "epoll_ctl failed" << std::endl;
+		throw std::runtime_error("in sendResponse(): epoll_ctl while MODIFYING client FD " + intToString(client_fd));
+	}
+}
 
 void Epoll::handleData(int client_fd)
 {
 	// std::cout << "Data received" << std::endl;
 	requestHandle.receiveData(client_fd, _clients);
-	// Client client = requestHandle.findAllRecieved(_clients); // we need the original
 	Client &clientB = findClient(client_fd, _clients);
 
-
-	if (clientB.getIsAllRecieved())							 // we only go on here once we recieved the whole request
+	if (clientB.getIsAllRecieved()) // we only go on here once we recieved the whole request
 	{
-		// parser request = client.getRequest();
-		// Client clientB = findClient(client.getClientFD(), _clients);
 		clientB.setResponse(sendData.sendResponse(clientB.getClientFD(), _servers, clientB.getRequest(), _epollFD));
 
-		std::cout << "Content of the body: " << clientB.getResponse().body.size() << std::endl;
-
 		clientB.status = RECIEVED;
-		
-		struct epoll_event client_event;
-		client_event.data.fd = clientB.getClientFD();
-		client_event.events = EPOLLOUT;
-		if (epoll_ctl(_epollFD, EPOLL_CTL_MOD, clientB.getClientFD(), &client_event) == -1)
-		{
-			close(clientB.getClientFD());
-			std::cout << BOLD_GREEN << "client.getClientFD() Change mod : " << clientB.getClientFD() << RESET << std::endl;
-			std::cout << "epoll_ctl failed" << std::endl;
-			throw std::runtime_error("in sendResponse(): epoll_ctl while MODIFYING client FD " + intToString(clientB.getClientFD()));
-		}
-		if (E_DEBUG || E_DEBUG2) {
-			DEBUG_G "AFTER EPOLL_CTL IN HANDLE DATA, so have the response ready\n" << RESET;
-			printClientInfo(client_fd, client_event.events, _clients);
-		}
-		clientB.status = SENDING;
 
-		// if (client.getResponse().location.empty())
-		// 	responseBuffer = client.getResponse().status + client.getResponse().location + client.getResponse().contentType + client.getResponse().transferEncoding + client.getResponse().contentLength + "\r\n" + client.getResponse().body;
-		// else
-		// 	responseBuffer = client.getResponse().status + client.getResponse().contentType + client.getResponse().transferEncoding + client.getResponse().contentLength + "\r\n" + client.getResponse().body;
+		modClientFDToSend(client_fd, _epollFD);
+		// struct epoll_event client_event;
+		// client_event.data.fd = clientB.getClientFD();
+		// client_event.events = EPOLLOUT;
+		// if (epoll_ctl(_epollFD, EPOLL_CTL_MOD, clientB.getClientFD(), &client_event) == -1)
+		// {
+		// 	close(clientB.getClientFD());
+		// 	std::cout << BOLD_GREEN << "client.getClientFD() Change mod : " << clientB.getClientFD() << RESET << std::endl;
+		// 	std::cout << "epoll_ctl failed" << std::endl;
+		// 	throw std::runtime_error("in sendResponse(): epoll_ctl while MODIFYING client FD " + intToString(clientB.getClientFD()));
+		// }
+		// if (E_DEBUG || E_DEBUG2) {
+		// 	DEBUG_G "AFTER EPOLL_CTL IN HANDLE DATA, so have the response ready\n" << RESET;
+		// 	printClientInfo(client_fd, client_event.events, _clients);
+		// }
+		clientB.status = SENDING;
 
 		std::string responseBuffer;
 		responseBuffer = clientB.getResponse().status + clientB.getResponse().location + clientB.getResponse().contentType + clientB.getResponse().transferEncoding + clientB.getResponse().contentLength + "\r\n" + clientB.getResponse().body;
@@ -318,7 +317,21 @@ void Epoll::handleData(int client_fd)
 	}
 }
 
-void Epoll::handleConnection(int server_fd) // we add additionally to the server_socket_fds also the cliend fd to the interest list (set of fds to watch)
+void addToEpoll(int client_fd, int epollFD)
+{
+	make_socket_non_blocking(client_fd);
+	struct epoll_event client_event;
+	client_event.data.fd = client_fd;
+	client_event.events = EPOLLIN; // by default lvl triggered, so the client fds are all level triggered
+	if (epoll_ctl(epollFD, EPOLL_CTL_ADD, client_fd, &client_event) == -1)
+	{
+		close(client_fd);
+		std::string err_msg("in handleConnection(): epoll_ctl() FAILED when ADDING client fd " + intToString(client_fd));
+		throw std::runtime_error(err_msg);
+	}
+}
+
+void Epoll::handleConnection(int server_fd) // we add additionally to the server_socket_fds also the client fd to the interest list (set of fds to watch)
 {
 	while (true)
 	{
@@ -332,16 +345,18 @@ void Epoll::handleConnection(int server_fd) // we add additionally to the server
 			break;
 		}
 
-		make_socket_non_blocking(client_fd);
-		struct epoll_event client_event;
-		client_event.data.fd = client_fd;
-		client_event.events = EPOLLIN; // by default lvl triggered, so the client fds are all level triggered
-		if (epoll_ctl(_epollFD, EPOLL_CTL_ADD, client_fd, &client_event) == -1)
-		{
-			close(client_fd);
-			std::string err_msg("in handleConnection(): epoll_ctl() FAILED when ADDING client fd " + intToString(client_fd));
-			throw std::runtime_error(err_msg);
-		}
+		addToEpoll(client_fd, _epollFD);
+		// make_socket_non_blocking(client_fd);
+		// struct epoll_event client_event;
+		// client_event.data.fd = client_fd;
+		// client_event.events = EPOLLIN; // by default lvl triggered, so the client fds are all level triggered
+		// if (epoll_ctl(_epollFD, EPOLL_CTL_ADD, client_fd, &client_event) == -1)
+		// {
+		// 	close(client_fd);
+		// 	std::string err_msg("in handleConnection(): epoll_ctl() FAILED when ADDING client fd " + intToString(client_fd));
+		// 	throw std::runtime_error(err_msg);
+		// }
+
 		Client newClient;
 		newClient.setClientFD(client_fd); // creating new Client Object for the new client
 		newClient.status = NEW;

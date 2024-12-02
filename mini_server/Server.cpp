@@ -12,29 +12,29 @@ Server::~Server()
         close(_serverSockets[i]);
 }
 
-bool isValidIPAddress(const std::string& ipAddress) // we use forbidden c functions here!
+bool isValidIPAddress(const std::string& ipAddress) // we use c functions here!
 {
     int num, dots = 0;
     char *ptr;
     char ipCopy[16];
-    strncpy(ipCopy, ipAddress.c_str(), 16);
+    std::strncpy(ipCopy, ipAddress.c_str(), 16);
     ipCopy[15] = '\0';
 
     if (ipAddress.empty())
         return false;
 
-    ptr = strtok(ipCopy, ".");
+    ptr = std::strtok(ipCopy, ".");
     if (ptr == NULL)
         return false;
 
     while (ptr)
     {
-        if (!isdigit(*ptr))
+        if (!std::isdigit(*ptr))
             return false;
-        num = atoi(ptr);
+        num = std::atoi(ptr);
         if (num >= 0 && num <= 255)
         {
-            ptr = strtok(NULL, ".");
+            ptr = std::strtok(NULL, ".");
             if (ptr != NULL)
                 dots++;
         }

@@ -22,6 +22,7 @@
 #include "RequestHandler.hpp"
 // #include "config_parser/Parser.hpp"
 #include "Client.hpp"
+#include "SendData.hpp"
 
 #define	DEBUG_Y	std::cout << BOLD_YELLOW <<
 #define	DEBUG_R	std::cout << BOLD_RED <<
@@ -55,6 +56,7 @@ class Epoll
 		void handleEpollEvents(const std::vector<int>& serverSockets);
 		void handleConnection(int server_fd);
 		void handleData(int client_fd);
+		void handleResponse(int clientToSend);
 		void removeFD(int fd);
 };
 int make_socket_non_blocking(int sockfd);

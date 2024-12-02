@@ -14,11 +14,6 @@ void SendData::notfound()
 bool SendData::read_file(std::string const &path, parser &request) // this already prepares the response
 {
 	std::string file_extension = get_file_extension(path);
-	std::cout << "-----------------------------------\n"
-	<<"file extention: " << file_extension << std::endl
-	<< "request path: " << request.path << "\n"
-	<< "path: " << path
-	<< "-----------------------------------\n" ;
 	std::ifstream file(path.c_str());
 	if (file.is_open())
 	{
@@ -33,11 +28,6 @@ bool SendData::read_file(std::string const &path, parser &request) // this alrea
 			contentType = "text/plain";
 
 		createResponseHeader(200, _response.body.size(), contentType);
-
-		// _response.status = "HTTP/1.1 200 OK\r\n";
-		// _response.contentType = "Content-Type: " + mimeTypesMap_G[file_extension] + ";" + "\r\n";
-		// unsigned int content_len = _response.body.size();
-		// _response.contentLength = "Content-Length: " + intToString(content_len) + "\r\n";
 
 		file.close();
 		return true;
@@ -245,7 +235,7 @@ Response &SendData::sendResponse(int clientSocket, std::vector<ServerBlock> &ser
 						this->displayDir(root, request.path);
 					}
 					else if (!foundFile)
-						prepErrorResponse(403, location);
+						prepErrorResponse<LocationBlock>(403, location);
 				}
 				else if (isCGI(request, location)) // might need to rethink this, eg. if resource for video.py is in cgi-bin it wont output the video beacuse it thinks its not an acceptable extension
 				{
@@ -256,7 +246,7 @@ Response &SendData::sendResponse(int clientSocket, std::vector<ServerBlock> &ser
 				{
 					if (!this->read_file(root, request)) {
 						DEBUG_R "sending 404 error!!" << RESET << std::endl;
-						prepErrorResponse(404, location);
+						prepErrorResponse<LocationBlock>(404, location);
 					}
 				}
 			}
@@ -279,7 +269,8 @@ Response &SendData::sendResponse(int clientSocket, std::vector<ServerBlock> &ser
 			_response.contentType.clear();
 			_response.contentLength.clear();
 			std::cout << YELLOW << "Sending 404" << RESET << std::endl;
-			notfound();
+			prepErrorResponse<ServerBlock>(404, current_server);
+			// notfound();
 		}
 	}
 	if (request.method == "POST")
@@ -483,7 +474,7 @@ bool			codeDefinedInErrorPage(int code, const std::vector<std::string>& errorPag
 	return false;
 }
 
-std::string		getErrorPagePath(int code, const std::vector<std::vector<std::string> >& errorPage)
+std::string		SendData::getErrorPagePath(int code, const std::vector<std::vector<std::string> >& errorPage)
 {
 	if (errorPage.empty())
 		return "";
@@ -508,7 +499,8 @@ void		SendData::createResponseHeader(int code, size_t bodySize, std::string cont
 	}
 }
 
-int		readFromErrorPage(std::string& errorPagePath, std::string& body)
+
+int		SendData::readFromErrorPage(std::string& errorPagePath, std::string& body)
 {
 	struct stat		buffer;
 
@@ -531,54 +523,62 @@ int		readFromErrorPage(std::string& errorPagePath, std::string& body)
 }
 
 
-void		SendData::prepErrorResponse(int code, LocationBlock& location)
+void	SendData::codeErrorResponse(int code)
 {
-	std::string		errorPagePath = getErrorPagePath(code, location.getErrorPage());
-	// std::cout << BOLD_RED << "errorPagePath: " << errorPagePath << RESET << "\n";
-	std::string		contentType;
-	int				fileStatus;
-
-	std::cout << "IN PREP ERROR RESPONSE\n";
-
-	if (!errorPagePath.empty())
-	{ // need to create error response from errorPage
-		// errorPagePath = location.getRoot() + location.getPrefix() + "/" + errorPagePath;
-		removeExcessSlashes(errorPagePath);
-		// std::cout << BOLD_RED << "errorPagePath: " << errorPagePath << RESET << "\n";
-
-		std::cout << "ERROR PAGE PATH: " << errorPagePath << std::endl;
-
-		fileStatus = readFromErrorPage(errorPagePath, _response.body); // this already reads into the body (passed by reference)
-		if (fileStatus == SD_OK) { // body gets init with right error_page content
-			contentType = mimeTypesMap_G[get_file_extension(errorPagePath)];
-
-			std::cout << "CONTENT TYPE: -->" << contentType << "<--" << std::endl;
-
-			if (contentType == "")
-				createDfltResponseBody(code, contentType, "txt");
-		}
-		else if (fileStatus == SD_NO_READ_PERM) {
-			if (code != 403) {
-				prepErrorResponse(403, location);
-				return ;
-			}
-			else
-				createDfltResponseBody(code, contentType);
-		}
-		else if (fileStatus == SD_NO_FILE) {
-			if (code != 404) {
-				prepErrorResponse(404, location);
-				return ;
-			}
-			else
-				createDfltResponseBody(code, contentType);
-		}
-	}
-	else // need to create hardcoded error response
-		createDfltResponseBody(code, contentType);
-
+	std::string contentType;
+	createDfltResponseBody(code, contentType);
 	createResponseHeader(code, _response.body.size(), contentType);
 }
+
+
+// void		SendData::prepErrorResponse(int code, LocationBlock& location)
+// {
+// 	std::string		errorPagePath = getErrorPagePath(code, location.getErrorPage());
+// 	// std::cout << BOLD_RED << "errorPagePath: " << errorPagePath << RESET << "\n";
+// 	std::string		contentType;
+// 	int				fileStatus;
+
+// 	std::cout << "IN PREP ERROR RESPONSE\n";
+
+// 	if (!errorPagePath.empty())
+// 	{ // need to create error response from errorPage
+// 		// errorPagePath = location.getRoot() + location.getPrefix() + "/" + errorPagePath;
+// 		removeExcessSlashes(errorPagePath);
+// 		// std::cout << BOLD_RED << "errorPagePath: " << errorPagePath << RESET << "\n";
+
+// 		std::cout << "ERROR PAGE PATH: " << errorPagePath << std::endl;
+
+// 		fileStatus = readFromErrorPage(errorPagePath, _response.body); // this already reads into the body (passed by reference)
+// 		if (fileStatus == SD_OK) { // body gets init with right error_page content
+// 			contentType = mimeTypesMap_G[get_file_extension(errorPagePath)];
+
+// 			std::cout << "CONTENT TYPE: -->" << contentType << "<--" << std::endl;
+
+// 			if (contentType == "")
+// 				createDfltResponseBody(code, contentType, "txt");
+// 		}
+// 		else if (fileStatus == SD_NO_READ_PERM) {
+// 			if (code != 403) {
+// 				prepErrorResponse(403, location);
+// 				return ;
+// 			}
+// 			else
+// 				createDfltResponseBody(code, contentType);
+// 		}
+// 		else if (fileStatus == SD_NO_FILE) {
+// 			if (code != 404) {
+// 				prepErrorResponse(404, location);
+// 				return ;
+// 			}
+// 			else
+// 				createDfltResponseBody(code, contentType);
+// 		}
+// 	}
+// 	else // need to create hardcoded error response
+// 		createDfltResponseBody(code, contentType);
+
+// 	createResponseHeader(code, _response.body.size(), contentType);
+// }
 
 void		SendData::createDfltResponseBody(int code, std::string&	contentType, std::string postFix) {
 	_response.body = "<!DOCTYPE html><html><head><title>" + intToString(code) + " " + _status._statusMsg[code][0]/*  + " Not Found" */ + "</title></head>";

@@ -58,6 +58,7 @@ const std::vector<std::string>&	Block::getIndex() const { return this->_index; }
 const char&	Block::getAutoindex() const { return this->_autoindex; }
 
 
+
 static void	isValidCode(const std::string& code, int directive) {
 	std::stringstream	ss(code.c_str());
 	int					statusCode;

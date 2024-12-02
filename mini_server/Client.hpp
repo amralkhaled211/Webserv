@@ -22,12 +22,10 @@
 #include <sys/types.h>
 #include <iomanip>
 #include "config_parser/Parser.hpp"
-#include "SendData.hpp"
 #include "Response.hpp"
 
 
 struct Response;
-class SendData;
 
 typedef struct parser
 {

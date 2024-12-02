@@ -11,10 +11,10 @@
 #define BOLD_YELLOW					"\033[1;93m"
 #define RESET						"\033[0m"
 
+
 class LocationBlock : public Block
 {
 	private:
-		std::vector<LocationBlock>		_nestedLocationVec;
 		std::string						_prefix; // definition of location
 		std::vector<std::string>		_allowed_methods;
 		// need to research about the cgi stuff, these are just from the example.conf
@@ -35,7 +35,6 @@ class LocationBlock : public Block
 		std::vector<std::string>&		getCgiExt();
 
 
-		void		addLocationBlock();
 		void		setDirective(const std::string& directiveKey, std::string& directiveValue);
 		void		setPrefix(const std::string& prefix);
 
