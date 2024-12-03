@@ -99,7 +99,7 @@ bool Client::parse_body(std::string& body)
 		std::cout << "end of body  dont read anymore " << std::endl;
 		return true;
 	}
-	return false;
+	return false; // this mean we still expecting more chunks
 }
 
 bool Client::HandlChunk()
@@ -135,6 +135,12 @@ bool Client::HandlChunk()
 		_bytesRead += this->_buffer.size(); 
 		if (_bytesRead == _targetBytes)
 			return true;
+		else if (_bytesRead > _targetBytes)
+		{
+			std::cerr << "Error: Bad request 400" << std::endl;
+			request.statusError = 400;
+			return true;
+		}
 	}
 	return false;
 }
@@ -175,11 +181,11 @@ bool Client::headersValidate(std::string &buffer, std::string method)
 				request.statusError = 0;
 				return true;
 			}
-			else if (line == "\r" && request.headers.find("Host") == request.headers.end() &&
-						request.headers.find("Content-Length") == request.headers.end() &&
-						request.headers.find("Content-Type") == request.headers.end())
+			else if (line == "\r" && (request.headers.find("Host") == request.headers.end() ||
+						request.headers.find("Content-Length") == request.headers.end() || // i need status code 411 if the content length is not there
+						request.headers.find("Content-Type") == request.headers.end()))
 			{
-				std::cerr << "Error: Bad request 400" << std::endl;
+				std::cerr << "Error: Bad request 400" << std::endl; 
 				request.statusError = 400;
 				return true;
 			}
@@ -216,18 +222,16 @@ bool Client::handlingBody(std::string &body)
 		_isChunked = true;
 		return false;
 	}
-	else if (_bytesRead == _targetBytes)
+	else if (_bytesRead == _targetBytes) /// i dont think this is needed but i will keep it for now
 		return true;
 	
 	return false;
 }
 
-bool Client::bodyValidate(std::string &Buffer)
+bool Client::bodyValidate(std::string &Buffer)  // here i would change the logic a bit later && like checking for boundary and file name
 {
-
 	std::istringstream headerStream(Buffer);
 	std::string line;
-	// std::cout << "request.body.size() " << request.body.size() << std::endl;
 	if (request.body.empty() && !_newLineChecked)
 	{
 		std::getline(headerStream, line);
@@ -239,19 +243,18 @@ bool Client::bodyValidate(std::string &Buffer)
 		}
 	}
 	request.body = Buffer;
-	std::cout << "request.body=====> ;" << request.body << std::endl;
 	while (std::getline(headerStream, line))
     {
         if (line == "\r" && !request.body.empty()) // Check for the end of headers
 		{
 			std::cout << "end of body" << std::endl;
-			request.statusError = 0;
-			return true;
-		}
-		else if ((line == "\r" && request.body.empty()))
-		{
-			std::cerr << "Error: Bad request 400" << std::endl;
-			request.statusError = 400;
+			if (_targetBytes != request.body.size())
+			{
+				std::cerr << "Error: content length is too short " << std::endl;
+				request.statusError = 400;
+			}
+			else
+				request.statusError = 0;
 			return true;
 		}
     }
@@ -260,7 +263,7 @@ bool Client::bodyValidate(std::string &Buffer)
 
 bool Client::parseHeadersAndBody()
 {
-	if (_isChunked )
+	if (_isChunked)
 	{
 		if (HandlChunk())
 			return true;
@@ -268,19 +271,18 @@ bool Client::parseHeadersAndBody()
 	else if (request.method == "POST")
 	{
 		size_t headerEndPos = this->_buffer.find("\r\n\r\n");
-		if (headerEndPos == std::string::npos || _newLineChecked) // this would be an indcation that the headers would be on chunks 
+		std::cout << BOLD_GREEN << "this buffer"<< this->_buffer << RESET << std::endl;
+		if (headerEndPos == std::string::npos) // this would be an indcation that the headers would be on chunks 
 		{
 			std::cout << "headerEndPos not found" << std::endl;
-			std::cout << "this-> buffer =====> : " << this->_buffer << std::endl;
 			parseHeaders(this->_buffer);
-			std::cout << "content length : " << request.headers["Content-Length"] << std::endl;
 			if (headersValidate(this->_buffer, request.method)) // if this true that means we have the headers and now we ganna do the same thing for the body
 			{
 				std::cout << "i am inside the header vaildatio :: " << std::endl;
 				if (request.statusError == 0) // this mean we are expecting a body if we dont have on then its not valid and we send a message
 				{
 					std::cout << "i am ready for the body : " << std::endl;
-					if (bodyValidate(this->_buffer))
+					if (bodyValidate(this->_buffer)) // i could use later here handling body function
 						return true;
 					else
 				    {
@@ -289,11 +291,12 @@ bool Client::parseHeadersAndBody()
 				}
 				else
 				{
-					return true;
+					return true; /// this would mean i am receiving an errot status 400
 				}
 			}
 			else
 			{
+				std::cout << "i am stuck hrer " << std::endl;
 				_headersIsChunked = true;
 				return false;
 			}
@@ -304,6 +307,12 @@ bool Client::parseHeadersAndBody()
 			std::string body = this->_buffer.substr(headerEndPos + 4);
 			std::string headerSection = this->_buffer.substr(0, headerEndPos);
 			parseHeaders(headerSection);
+			if(headersValidate(this->_buffer, request.method))// this would check if the headers were sent all as one chunk via telnet
+			{
+				std::cout << "sending the 400 error " << std::endl;
+				if (request.statusError != 0)
+					return true;
+			}
 			if (handlingBody(body))
 			{
 				std::cout << "i am going to the else true" << std::endl;
