@@ -215,7 +215,7 @@ bool SendData::findIndexFile(const std::vector<std::string> &files, std::string 
 	return false;
 }
 
-bool SendData::findCGIIndex(const std::vector<std::string> &files, std::string &root, parser &request, LocationBlock location) // if found will also prepare response, else return false
+std::string SendData::findCGIIndex(const std::vector<std::string> &files, std::string &root, parser &request) // if found will also prepare response, else return false
 {
 	bool found = false;
 	size_t i = 0;
@@ -226,6 +226,7 @@ bool SendData::findCGIIndex(const std::vector<std::string> &files, std::string &
 		file = root + '/' + files[i];
 		removeExcessSlashes(file);
 		struct stat		buffer;
+		std::cout << "FILE: " << file << std::endl;
 
 		if (stat(file.c_str(), &buffer) == 0 && access(file.c_str(), R_OK) == 0 && access(file.c_str(), X_OK) == 0)
 		{
@@ -237,11 +238,9 @@ bool SendData::findCGIIndex(const std::vector<std::string> &files, std::string &
 	}
 	if (found)
 	{	
-		//std::cout << GREEN << file << RESET <<std::endl;
-		handleCGI(file, request, ServerBlock(), location);//get this out to sendResponse
-		return true;
+		return file;
 	}
-	return false;
+	return "";
 }
 
 bool SendData::isCGI(const parser &request, LocationBlock location)
@@ -274,12 +273,14 @@ Response &SendData::sendResponse(int clientSocket, std::vector<ServerBlock> &ser
 				{
 					if (isCGI(request, location)) //check if cgi location then if found the index file execute the cgi else execute the directory 
 					{
-						bool foundFile = findCGIIndex(location.getIndex(), root, request, location);
-						if (!foundFile && location.getAutoindex() == ON) {
+						std::string file = findCGIIndex(location.getIndex(), root, request);
+						if (file != "")
+							handleCGI(file, request, current_server, location);
+						else if (file == "" && location.getAutoindex() == ON) {
 							this->displayDir(root, request.path);
 						}
-						else if (!foundFile)
-							prepErrorResponse(403, location);
+						else if (file == "")
+							prepErrorResponse(404, location);
 					}
 					else //checking again if there is an index file, else display the directory
 					{
@@ -288,10 +289,10 @@ Response &SendData::sendResponse(int clientSocket, std::vector<ServerBlock> &ser
 							this->displayDir(root, request.path);
 						}
 						else if (!foundFile)
-							prepErrorResponse(403, location);
+							prepErrorResponse(404, location);
 					}
 				}
-				else if (isCGI(request, location)) // add a check here that also checks the extensions to avoid going into cgi if unnecessary
+				else if (isCGI(request, location)) // add a check here that also checks if the extensions exist and match to avoid going into cgi if unnecessary
 				{
 					//std::cout << RED_COLOR << "In CGI GET" << RESET << std::endl;
 					handleCGI(root, request, current_server, location);

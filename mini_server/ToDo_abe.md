@@ -1,5 +1,6 @@
 # TASKS
-- [ ] CGI Enviroment setup with correct values
+- [x] CGI Enviroment setup with correct values
+- [ ] Rewrite the findCGIIndex in isDie
 
 ## LEARNING
 
