@@ -337,6 +337,8 @@ std::string Epoll::getCurrentServerHost(int socketFD)
 	for (size_t i = 0; i < _servers.size(); ++i)
 	{
 		hostPort = _servers[i].getHostFromMap(socketFD);
+		if (!hostPort.empty())
+			break;
 	}
 	return hostPort;
 }
@@ -368,6 +370,8 @@ void Epoll::handleConnection(int server_fd) // we add additionally to the server
 		// }
 
 		std::string currentServerHost = getCurrentServerHost(server_fd);
+
+		std::cout << "current Server Host: " << currentServerHost << std::endl;
 
 		Client newClient;
 		newClient.setClientFD(client_fd); // creating new Client Object for the new client

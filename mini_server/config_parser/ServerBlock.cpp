@@ -23,7 +23,7 @@ ServerBlock&	ServerBlock::operator=(const ServerBlock& other) {
 ServerBlock::~ServerBlock() { }
 
 
-void		ServerBlock::setDirective(const std::string& directiveKey, std::string& directiveValue) {
+void			ServerBlock::setDirective(const std::string& directiveKey, std::string& directiveValue) {
 
 	if (_addCommonDirective(directiveKey, directiveValue))
 		return;
@@ -77,10 +77,10 @@ std::vector<std::string>&		ServerBlock::getServerName() { return this->_server_n
 
 std::vector<std::string>&		ServerBlock::getHostPort() { return this->_hostPort; }
 
-void							ServerBlock::addLocationBlock() { this->_locationVec.push_back(LocationBlock()); }
+void				ServerBlock::addLocationBlock() { this->_locationVec.push_back(LocationBlock()); }
 
 
-void							ServerBlock::createNamePortComb() {
+void				ServerBlock::createNamePortComb() {
 
 	std::vector<std::string>		hosts = this->getServerName();
 	std::vector<std::string>		ports;
@@ -104,7 +104,7 @@ void							ServerBlock::createNamePortComb() {
 
 }
 
-void							ServerBlock::setupDefaults() {
+void				ServerBlock::setupDefaults() {
 	if (this->_listen.empty())
 		this->_listen.push_back(8000);
 
@@ -132,8 +132,14 @@ void							ServerBlock::setupDefaults() {
 		this->_locationVec[i].setupDefaults(static_cast<Block&>(*this));
 }
 
+std::string			getExtentions(std::string fileName) {
+	size_t point = fileName.find_last_of('.');
+	if (point == std::string::npos)
+		return (".");
+	return fileName.substr(point);
+}
 
-void							ServerBlock::contextError() { // checkDupLocation()
+void				ServerBlock::contextError() { // checkDupLocation()
 
 	std::string		tmpPrefix;
 
@@ -149,11 +155,11 @@ void							ServerBlock::contextError() { // checkDupLocation()
 		// if (!_locationVec[i].getCgiExt().empty()) { // is cgi
 		// 	std::vector<std::string> cgiExt = _locationVec[i].getCgiExt();
 		// 	std::vector<std::string> cgiIndex = _locationVec[i].getIndex();
-		// 	for (size_t k = 0; k < cgiExt.size(); ++k) {
-		// 		std::string currCgiExt = cgiExt[k];
+		// 	for (size_t k = 0; k < cgiIndex.size(); ++k) {
+		// 		std::string	currCgiIndexExt = getExtentions(cgiIndex[k]);
 		// 		bool		isCorrectExt = false;
-		// 		for (size_t l = 0; l < cgiIndex.size(); ++l) {
-		// 			if (currCgiExt == (cgiIndex[l]))
+		// 		for (size_t l = 0; l < cgiExt.size(); ++l) {
+		// 			if (currCgiIndexExt == cgiExt[l])
 		// 				isCorrectExt = true;
 		// 		}
 		// 		if (!isCorrectExt)

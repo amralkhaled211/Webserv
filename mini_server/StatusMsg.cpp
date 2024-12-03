@@ -165,6 +165,12 @@ void StatusMsg::_fourHunderds()
 	msg.push_back("The server can not find the requested resource.");
 	_statusMsg[404] = msg;
 	msg.clear();
+
+	// 405 Method Not Allowed
+    msg.push_back("Method Not Allowed");
+    msg.push_back("The method specified in the request is not allowed for the resource identified by the request URI.");
+    _statusMsg[405] = msg;
+    msg.clear();
 }
 
 void StatusMsg::_fiveHunderds()

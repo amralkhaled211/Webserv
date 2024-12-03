@@ -124,7 +124,7 @@ LocationBlock SendData::findLocationBlock(std::vector<LocationBlock> &locations,
 			location = *it;
 
 			if (location.getPrefix() == possibleReqLoc[i]) // need to make sure the prefix is also cleaned from excess slashes
-			{				
+			{
 				fullPath = location.getRoot() + '/' + possibleReqLoc[0]; // for defining whether request is a directory or a file
 				if (isDirectory(fullPath))
 					_isDir = true;
@@ -218,12 +218,16 @@ Response &SendData::sendResponse(int clientSocket, std::vector<ServerBlock> &ser
 		try
 		{
 			LocationBlock location = findLocationBlock(current_server.getLocationVec(), request);
-
-			std::string root = location.getRoot() + request.path; // maybe a more suitable name: pathToFileToServe
+			std::vector<std::string>::iterator itAllowedMethod = std::find(location.getAllowedMethods().begin(), location.getAllowedMethods().end(), "GET");
+			if (itAllowedMethod == location.getAllowedMethods().end()) {
+				prepErrorResponse(405, location);
+				return _response;
+			}
+			std::string root = PATH_TO_WWW + location.getRoot() + request.path; // maybe a more suitable name: pathToFileToServe
 			
 			std::cout << MAGENTA_COLOR << "Root: " << root << std::endl << "Request path:" <<  request.path << RESET << std::endl;
 			/* location.printLocationBlock(); */
-			
+
 			if (location.getReturn().empty())
 			{
 				if (_isDir == true) // here we handle the directory
@@ -275,7 +279,12 @@ Response &SendData::sendResponse(int clientSocket, std::vector<ServerBlock> &ser
 	if (request.method == "POST")
 	{
 		LocationBlock location = findLocationBlock(current_server.getLocationVec(), request);
-		std::string root = location.getRoot() + request.path;
+		std::vector<std::string>::iterator itAllowedMethod = std::find(location.getAllowedMethods().begin(), location.getAllowedMethods().end(), "POST");
+		if (itAllowedMethod == location.getAllowedMethods().end()) {
+			prepErrorResponse(405, location);
+			return _response;
+		}
+		std::string root = PATH_TO_WWW + location.getRoot() + request.path;
 		//std::cout << MAGENTA_COLOR << "Root: " << root << std::endl << "Request path:" <<  request.path << std::endl << "Request method: " << request.method << RESET << std::endl;
 
 		if (isCGI(request, location)) // might need to rethink this, eg. if resource for video.py is in cgi-bin it wont output the video beacuse it thinks its not an acceptable extension

@@ -35,6 +35,14 @@ std::vector<std::string>&		LocationBlock::getCgiPath() { return this->_cgi_path;
 std::vector<std::string>&		LocationBlock::getCgiExt() { return this->_cgi_ext; }
 
 
+static bool	isCgiExtNotAllowed(std::vector<std::string> enteredCgiExt) {
+	for (size_t i = 0; i < enteredCgiExt.size(); ++i) {
+		if (enteredCgiExt[i] != ".py" && enteredCgiExt[i] != ".php")
+			return true;
+	}
+	return false;
+}
+
 void	LocationBlock::setDirective(const std::string& directiveKey, std::string& directiveValue) {
 
 	if (_addCommonDirective(directiveKey, directiveValue))
@@ -54,11 +62,15 @@ void	LocationBlock::setDirective(const std::string& directiveKey, std::string& d
 		}
 		this->_allowed_methods = valueArgs;
 	}
-	else if (directiveKey == "cgi_path") {
+	else if (directiveKey == "cgi_path") { // will see if we will use it, not using so far
+		// check specifically from a range of allowed ones
 		for (size_t i = 0; i < amountArgs; i++)
 			this->_cgi_path.push_back(valueArgs[i]);
 	}
 	else if (directiveKey == "cgi_ext") {
+		// check specifically from a range of allowed ones
+		// if (isCgiExtNotAllowed(valueArgs))
+		// 	throw std::runtime_error("CGI extension not Supported");
 		for (size_t i = 0; i < amountArgs; i++)
 			this->_cgi_ext.push_back(valueArgs[i]);
 	}
