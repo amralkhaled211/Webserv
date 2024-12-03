@@ -29,6 +29,7 @@ void RequestHandler::receiveData(int clientSocket, std::vector<Client> &clients)
 		throw std::runtime_error("Receiving failed");
 	this->_buffer.assign(Buffer, bytesReceived); // this buffer should go to the right client
 	this->findClient(clientSocket, clients);
+	//std::cout << BOLD_GREEN << "Received: " << this->_buffer << RESET << std::endl;
 }
 
 Client &RequestHandler::findAllRecieved(std::vector<Client> clients)

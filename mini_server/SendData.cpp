@@ -49,7 +49,7 @@ bool SendData::read_file(std::string const &path, parser &request) // this alrea
 
 void SendData::handleCGI(const std::string &root, parser &request, ServerBlock server, LocationBlock location) //will need to return errors from here
 {
-	std::cout << CYAN_COLOR << root << RESET << std::endl;
+	//std::cout << CYAN_COLOR << root << RESET << std::endl;
 	std::string file_extension = '.' +  get_file_extension(root);
 	std::vector<std::string> allowed_ext = location.getCgiExt();
 	bool isAllowed = false;
@@ -57,7 +57,7 @@ void SendData::handleCGI(const std::string &root, parser &request, ServerBlock s
 	for (std::vector<std::string>::iterator it = allowed_ext.begin(); it != allowed_ext.end(); it++)
 	{
 		//std::cout << "IN FOR LOOP" << std::endl;
-		std::cout << MAGENTA_COLOR <<"Allowed extension: " << *it << "-------" << "Our extension: " << file_extension << RESET <<std::endl;
+		//std::cout << MAGENTA_COLOR <<"Allowed extension: " << *it << "-------" << "Our extension: " << file_extension << RESET <<std::endl;
 		if (*it == file_extension)
 		{
 			isAllowed = true;
@@ -73,7 +73,6 @@ void SendData::handleCGI(const std::string &root, parser &request, ServerBlock s
 	CGI cgi(root, request);
 	cgi.setEnv(server);
 	int code = cgi.executeScript();
-	std::cout<<MAGENTA_COLOR<< code << RESET <<std::endl;
 	if (code != 0)
 	{
 		prepErrorResponse(code, location);
@@ -238,8 +237,8 @@ bool SendData::findCGIIndex(const std::vector<std::string> &files, std::string &
 	}
 	if (found)
 	{	
-		std::cout << GREEN << file << RESET <<std::endl;
-		handleCGI(file, request, ServerBlock(), location);
+		//std::cout << GREEN << file << RESET <<std::endl;
+		handleCGI(file, request, ServerBlock(), location);//get this out to sendResponse
 		return true;
 	}
 	return false;
@@ -275,29 +274,24 @@ Response &SendData::sendResponse(int clientSocket, std::vector<ServerBlock> &ser
 				{
 					if (isCGI(request, location)) //check if cgi location then if found the index file execute the cgi else execute the directory 
 					{
-						//std::cout << RED_COLOR << "In isDir CGI GET" << std::endl;
 						bool foundFile = findCGIIndex(location.getIndex(), root, request, location);
-						//std::cout << "foundFile: " << foundFile << RESET << std::endl;
-						
 						if (!foundFile && location.getAutoindex() == ON) {
-							// std::cout << "before AUTOINDEX -> root for this location: " << root << std::endl;
 							this->displayDir(root, request.path);
 						}
 						else if (!foundFile)
 							prepErrorResponse(403, location);
 					}
-					else
+					else //checking again if there is an index file, else display the directory
 					{
 						bool foundFile = findIndexFile(location.getIndex(), root, request);
 						if (!foundFile && location.getAutoindex() == ON) {
-							// std::cout << "before AUTOINDEX -> root for this location: " << root << std::endl;
 							this->displayDir(root, request.path);
 						}
 						else if (!foundFile)
 							prepErrorResponse(403, location);
 					}
 				}
-				else if (isCGI(request, location)) // might need to rethink this, eg. if resource for video.py is in cgi-bin it wont output the video beacuse it thinks its not an acceptable extension
+				else if (isCGI(request, location)) // add a check here that also checks the extensions to avoid going into cgi if unnecessary
 				{
 					//std::cout << RED_COLOR << "In CGI GET" << RESET << std::endl;
 					handleCGI(root, request, current_server, location);
@@ -319,11 +313,6 @@ Response &SendData::sendResponse(int clientSocket, std::vector<ServerBlock> &ser
 		catch (const std::exception &e) // what kind of error do we expect here?
 		{
 			std::string error = e.what(); // here we need to check what the error is and send notfound or error page accordingly
-			std::cout << RED_COLOR << "Error: " << error << RESET << std::endl; 
-			/* std::cout << BOLD_YELLOW << "Response Status: " <<  _response.status << std::endl;
-			std::cout << "Content Type: "  << _response.contentType << std::endl;
-			std::cout << "Content Length: " << _response.contentLength << RESET << std::endl; */
-			// i should here send the right error for invalid locatio
 			_response.body.clear();
 			_response.status.clear();
 			_response.contentType.clear();

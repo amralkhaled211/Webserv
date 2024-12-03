@@ -1,10 +1,5 @@
 # TASKS
-- [ ] Handle different status codes coming form CGI, set error pages accordingly -> 508 for inf loop, 500 for execve error, 403 for forbidden, 404 for not found
-- [ ] Setup error pages
-- [ ] Dup2 cerr in child to handle the execve errors 
 - [ ] CGI Enviroment setup with correct values
-- [ ] Add CGI to isDir in SendData at GET method
-- [ ] Handle CGI based on extensions, not path
 
 ## LEARNING
 
@@ -17,7 +12,11 @@
 
 #### DONE
 
+- [x] Handle different status codes coming form CGI, set error pages accordingly -> 508 for inf loop, 500 for execve error, 403 for forbidden, 404 for not found
+- [x] Setup error pages 
 - [x] Fix child leak -> dont pass location and serverblock to CGI maybe
+- [x] Add CGI to isDir in SendData at GET method
+- [x] Handle CGI based on extensions, not path
 - [x] Fix error 1
 - [x] Implement POST handler for CGI
 - [x] Research new approach for CGI response instead of the cgi_output.html method

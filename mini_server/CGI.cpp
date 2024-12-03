@@ -77,16 +77,16 @@ void CGI::setEnv(ServerBlock server)
 	_env["REQUEST_METHOD"] = _request.method;
 	_env["QUERY_STRING"] = _request.queryString;
 	_env["SCRIPT_NAME"] = _scriptPath;
-	_env["PATH_INFO"] = _request.path;
+	_env["PATH_INFO"] = _scriptPath;
+	size_t semicolon = _request.headers["Host"].find_first_of(':');
+	_env["SERVER_NAME"] = _request.headers["Host"].substr(0, semicolon);
+	_env["SERVER_PORT"] = _request.headers["Host"].substr(semicolon + 1);
 	_env["PATH_TRANSLATED"] = "/translated/path" + _request.path;
-	_env["SERVER_NAME"] = join(server.getServerName(), ", ");//replace with actual host name etc THIS  IS HARDCODED RN
-	_env["SERVER_PORT"] = "8080";
-	_env["SERVER_PROTOCOL"] = "HTTP/1.1";
-	std::string remoteAddr = "127.0.0.1"; // Replace with actual method to get remote address
+	_env["SERVER_PROTOCOL"] = _request.version;
+	/* std::string remoteAddr = "127.0.0.1"; // Replace with actual method to get remote address
     std::string remoteHost = "localhost"; // Replace with actual method to get remote host
     _env["REMOTE_ADDR"] = remoteAddr;
-    _env["REMOTE_HOST"] = remoteHost;
-	std::string file_extension = get_file_extension(_request.path);
+    _env["REMOTE_HOST"] = remoteHost; */
 
     _env["CONTENT_TYPE"] = _request.headers["Content-Type"];
 
