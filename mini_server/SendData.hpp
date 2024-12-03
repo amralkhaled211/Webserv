@@ -57,6 +57,7 @@ class SendData
 	}
 	ServerBlock findServerBlock(std::vector<ServerBlock> &servers, parser &request);
 	bool findIndexFile(const std::vector<std::string> &files, std::string &root, parser &request);
+	bool findCGIIndex(const std::vector<std::string> &files, std::string &root, parser &request, LocationBlock location);
 	void handleCGI(const std::string &root, parser &request, ServerBlock server, LocationBlock location);
 	bool isCGI(const parser &request, LocationBlock location);
 	void redirect(LocationBlock& location);

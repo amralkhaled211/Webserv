@@ -105,7 +105,7 @@ void Epoll::removeFD(int fd) {
 
 void Epoll::handleEpollEvents(const std::vector<int> &serverSockets)
 {
-	// std::cout << "Waiting for events" << std::endl;
+	//std::cout << "Waiting for events" << std::endl;
 	
 	// std::cout << "FDs in the epoll instance right now: \n";
 	// for (size_t i = 0; i < _clFDs.size(); ++i) {

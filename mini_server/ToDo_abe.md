@@ -1,5 +1,5 @@
 # TASKS
-- [ ] Handle different status codes coming form CGI, set error pages accordingly
+- [ ] Handle different status codes coming form CGI, set error pages accordingly -> 508 for inf loop, 500 for execve error, 403 for forbidden, 404 for not found
 - [ ] Setup error pages
 - [ ] Dup2 cerr in child to handle the execve errors 
 - [ ] CGI Enviroment setup with correct values

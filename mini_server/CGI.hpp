@@ -37,7 +37,7 @@ class CGI
 		bool getStatusSet() const;
 
 		void setEnv(ServerBlock server);
-		bool executeScript();
+		int executeScript();
 		void generateResponse();
 		void createhtml();
 

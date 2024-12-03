@@ -148,7 +148,7 @@ void CGI::printEnv()
 	}	
 }
 
-bool CGI::executeScript()
+int CGI::executeScript()
 {
 	int inPipe[2];
 	int outPipe[2];
@@ -186,11 +186,11 @@ bool CGI::executeScript()
 		child_out.flush(); */
         if (execve(_scriptPath.c_str(), arg, &envp[0]) == -1)
         {
-            std::cerr << "Failed to execute CGI script: " << strerror(errno) << std::endl;
+            //std::cerr << "Failed to execute CGI script: " << strerror(errno) << std::endl;
             freeEnvp(envp);
             //exit(1);
-			std::cout << ERROR_MARKER << std::endl;
-			return false;
+			std::cout << ERROR_MARKER << ": " <<strerror(errno) <<std::endl;
+			return 1;
         }
 	}
 	else //PARENT
@@ -233,32 +233,30 @@ bool CGI::executeScript()
 			std::cout << "CGI Content type: " << _contentType << std::endl;
 			std::cout << "CGI Content length: " << _contentLength << RESET << std::endl;
 			std::cout << "CGI Body: " << _responseBody << std::endl; */
-            throw std::runtime_error("CGI script execution timed out");
+            return 508;
         }
 		
 
 		char buffer[1024] = {0};
+		std::string bufferStr;
+		std::string errStr;
 		bool eof = false;
 		std::ostringstream output;
 		ssize_t bytesRead;
 		while ((bytesRead = read(outPipe[0], buffer,sizeof(buffer))) > 0)
 		{
-			//std::cout << "In read loop" << std::endl;
-			for (int i = 0; i < bytesRead; i++)
+			buffer[bytesRead] = '\0';
+			bufferStr = buffer;
+			if (bufferStr.find(ERROR_MARKER) != std::string::npos)
 			{
-				//std::cout << YELLOW_COLOR << buffer[i] << RESET;
-				if (strncmp(buffer + i, ERROR_MARKER, strlen(ERROR_MARKER)) == 0)
-				{
-					std::cout << "ERROR_MARKER found" << std::endl;
-					kill(pid, SIGTERM);
-        			sleep(1);
-        			kill(pid, SIGKILL);
-					eof = true;
-					break;
-				}
-			}
-			if (eof)
+				errStr = bufferStr.substr(bufferStr.find(ERROR_MARKER) + strlen(ERROR_MARKER) + 2);
+				std::cout << RED << "ERROR_MARKER found: " << errStr << RESET << std::endl;
+				kill(pid, SIGTERM);
+				sleep(1);
+				kill(pid, SIGKILL);
+				eof = true;
 				break;
+			}
 			output.write(buffer, bytesRead);
 		}
 
@@ -267,7 +265,13 @@ bool CGI::executeScript()
 		if (eof)
 		{
 			_responseBody.clear();
-			return false;
+			std::cout << errStr;
+			if (errStr == "Permission denied")
+				return 403;
+			else if (errStr.find("No such file or directory") != std::string::npos)
+				return 404;
+			else
+				return 500;
 		}
 		
 		int status;
@@ -275,7 +279,7 @@ bool CGI::executeScript()
 
 		_responseBody = output.str();
 	}
-	return true;
+	return 0;
 }
 
 /* std::string trimNewline(const std::string &str)
