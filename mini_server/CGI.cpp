@@ -145,7 +145,7 @@ void CGI::printEnv()
 	for(std::map<std::string, std::string>::iterator it = _env.begin(); it != _env.end(); ++it)
 	{
 		std::cout << it->first << ": " << it->second << std::endl;
-	}	
+	}
 }
 
 bool CGI::executeScript()
