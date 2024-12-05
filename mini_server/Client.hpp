@@ -55,11 +55,11 @@ class Client
 		Client();
 		//~Client();
 		bool parse_first_line();
-		void parseHeaders(std::string &Buffer);
+		bool parseHeaders(std::string &Buffer);
 		bool headersValidate(std::string &Buffer, std::string method);
-		int validateContentType();
 		int validateContentLength();
-		void validateBounderyBody();
+		int validateHost();
+		int validateTransferEncoding();
 		bool bodyValidate(std::string &Buffer);
 		bool handlingBody(std::string &body);
 		bool parse_body(std::string &body);
@@ -72,21 +72,22 @@ class Client
 		void setAllRecieved(bool allRecieved) { isAllRecieved = allRecieved; }
 		bool getIsAllRecieved() { return isAllRecieved; }
 		void parseQueryString();
-
 		parser &getRequest();
-
 		void setResponseBuffer(std::string resBuffer);
 		std::string& getResponseBuffer() { return _responseBuffer; }
 		bool getSentHeader() { return _sentHeader; }
 		void setSentHeader(bool value) { _sentHeader = value; }
 		void setResponse(Response &response) { _response = response; }
 		Response &getResponse() { return _response; }
-
 		int status;
 		bool getIsChunked() { return _isChunked; }
 		void setClientTime(std::time_t initTime) {_timeOut = initTime;}
 		std::time_t getClientTime(){return _timeOut;}
 		void saveBodyToFile();
+
+
+		int validateContentType();
+		void validateBounderyBody();
 	
 	private:
 	std::time_t _timeOut;
@@ -98,6 +99,8 @@ class Client
 	bool _isChunked;
 	bool _headersIsChunked;
 	bool _newLineChecked;
+	bool _chunkLengthRecieved;
+	int  _chunkLengthValue;
 	size_t _targetBytes;
 	size_t _bytesRead;
 	bool isAllRecieved;
