@@ -22,6 +22,10 @@ ServerBlock&	ServerBlock::operator=(const ServerBlock& other) {
 
 ServerBlock::~ServerBlock() { }
 
+static bool	isInvalidServerName(std::string server_name) {
+	// IP
+	// Domain
+}
 
 void			ServerBlock::setDirective(const std::string& directiveKey, std::string& directiveValue) {
 
@@ -37,7 +41,7 @@ void			ServerBlock::setDirective(const std::string& directiveKey, std::string& d
 
 		std::istringstream	ss(directiveValue);
 		while (!ss.eof()) {
-			int		port;
+			int	port;
 			ss >> port;
 			if (ss.fail())
 				throw std::runtime_error("Invalid listen Directive");
@@ -51,6 +55,8 @@ void			ServerBlock::setDirective(const std::string& directiveKey, std::string& d
 		if (!_server_name.empty())
 			throw std::runtime_error("Duplicate server_name Directive");
 		for (size_t i = 0; i < amountArgs; i++) {
+			if (isInvalidServerName(valueArgs[i]))
+				throw std::runtime_error("Invalid server_name Directive");
 			this->_server_name.push_back(valueArgs[i]);
 		}
 	}

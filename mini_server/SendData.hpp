@@ -12,7 +12,8 @@ class Client;
 #define	SD_NO_READ_PERM		-1
 #define	SD_NO_FILE			-2
 
-#define	PATH_TO_WWW	"/home/aismaili/Webserv/"
+#define	PATH_TO_WWW	"/"
+// "/home/aismaili/Webserv/"
 
 typedef struct Redirection
 {

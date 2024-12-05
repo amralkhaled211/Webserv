@@ -57,7 +57,17 @@ const std::vector<std::string>&	Block::getIndex() const { return this->_index; }
 
 const char&	Block::getAutoindex() const { return this->_autoindex; }
 
-
+bool	isInvalidPath(std::string root) {
+	size_t	pos1 = root.find("/../") != std::string::npos;
+	size_t	pos2 = root.find("../") != std::string::npos && root.find("../") == 0;
+	size_t	pos3 = root.find("/..") != std::string::npos && root.find("/..") == root.size() - (1 + 2);
+	size_t	pos4 = root.find("~/") != std::string::npos;
+	
+	if (pos1 || pos2 || pos3 || pos4) {
+		return true;
+	}
+	return false;
+}
 
 static void	isValidCode(const std::string& code, int directive) {
 	std::stringstream	ss(code.c_str());
@@ -65,15 +75,12 @@ static void	isValidCode(const std::string& code, int directive) {
 
 	if (ss.str().find_first_not_of("0123456789") != std::string::npos)
 			throw std::runtime_error("Invalid return Directive Code");
-	if (directive == RETURN && (!(ss >> statusCode) || !(statusCode >= 100 && statusCode <= 599)))
+	if (directive == IS_RETURN && (!(ss >> statusCode) || !(statusCode >= 100 && statusCode <= 599)))
 		throw std::runtime_error("Invalid return Directive Code");
-	if (directive == ERROR_PAGE && (!(ss >> statusCode) || !(statusCode >= 300 && statusCode <= 599)))
+	if (directive == IS_ERROR_PAGE && (!(ss >> statusCode) || !(statusCode >= 300 && statusCode <= 599)))
 		throw std::runtime_error("Invalid error_page Directive Code");
 }
 
-/* static bool isValidRedirURLI(std::string& redir) { // URL URI check, (if comments -> remove)
-	// will see what to check for, maybe something regarding quotes
-} */
 
 void		invalidReturnSyntax(std::vector<std::string>& valueArgs) {
 	if (valueArgs.empty() || valueArgs.size() > 2)
@@ -81,14 +88,15 @@ void		invalidReturnSyntax(std::vector<std::string>& valueArgs) {
 
 	if (valueArgs.size() == 1) { // accept either only a status code OR a link (not a location)
 		if (valueArgs[0][0] >= '0' && valueArgs[0][0] <= '9') // isdigit() is from c library
-			isValidCode(valueArgs[0], RETURN);
+			isValidCode(valueArgs[0], IS_RETURN);
 		else if (valueArgs[0][0] == '/') // is a relative path -> needs a status code
 			throw std::runtime_error("Invalid return Directive Code");
 		// isValidRedirURLI(valueArgs[0]);
 	}
 	else if (valueArgs.size() == 2) {
-		isValidCode(valueArgs[0], RETURN);
-		// isValidRedirURLI(valueArgs[1]);
+		isValidCode(valueArgs[0], IS_RETURN);
+		if (isInvalidPath(valueArgs[1]))
+			throw std::runtime_error("Invalid Path for return");
 	}
 	else
 		throw std::runtime_error("Invalid return Directive");
@@ -127,7 +135,7 @@ static bool		invalidMeasurementPostfix(std::string& directiveValue) {
 
 	size_t		postfixNotSet = measurementUnitSet.find(directiveValue[len - 1]) == std::string::npos;
 
-	if (postfixNotSet && !std::isdigit(directiveValue[len - 1])) // can we use isdigit()???
+	if (postfixNotSet && !std::isdigit(directiveValue[len - 1]))
 		return true;
 	else if (postfixNotSet)
 		directiveValue += 'm';
@@ -156,10 +164,10 @@ static void		checkValidErrorPage(std::vector<std::string> valueArgs) {
 
 	for (size_t i = 0; i < amountArgs; ++i) {
 		if (i != (amountArgs - 1)) {
-			isValidCode(valueArgs[i], ERROR_PAGE);
+			isValidCode(valueArgs[i], IS_ERROR_PAGE);
 		}
-		// is there any check needed for the error file?
-		// nginx accepts anything, even just a "/"
+		if (i == (amountArgs - 1) && isInvalidPath(valueArgs[i]))
+			throw std::runtime_error("Invalid Path used for error_page");
 	}
 }
 
@@ -170,6 +178,8 @@ static void		checkValidIndex(std::vector<std::string> valueArgs) {
 			if (valueArgs[i][0] == '/')
 				throw std::runtime_error("only last index can be absolute path");
 		}
+		if (i == (valueArgs.size() - 1) && isInvalidPath(valueArgs[i]))
+			throw std::runtime_error("Invalid Path used for index");
 	}
 }
 
@@ -182,6 +192,8 @@ bool		Block::_addCommonDirective(const std::string& directiveKey, std::string& d
 			throw std::runtime_error("Duplicate root Directive");
 		if (amountArgs != 1)
 			throw std::runtime_error("Invalid root Directive");
+		if (isInvalidPath(directiveValue))
+			throw std::runtime_error("Invalid root Directive Path");
 		removeExcessSlashes(directiveValue);
 		this->_root = directiveValue;
 		return true;
@@ -193,14 +205,12 @@ bool		Block::_addCommonDirective(const std::string& directiveKey, std::string& d
 	}
 	else if (directiveKey == "return") {
 		invalidReturnSyntax(valueArgs);
-		// TODO: check: locPrefix != redirection location
-		// cannot do it here, no access to location prefix
 		if (!this->_return.empty())// no duplicate check, nginx multiple but will only use the first, maybe we should do it different???
 			return true;
 		this->_return = valueArgs;
 		return true;
 	}
-	else if (directiveKey == "index") { // requires new implementation, not handling some cases
+	else if (directiveKey == "index") {
 		if (!this->_index.empty())
 			throw std::runtime_error("Duplicate index Directive");
 		if (valueArgs.size() < 1)

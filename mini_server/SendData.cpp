@@ -125,7 +125,7 @@ LocationBlock SendData::findLocationBlock(std::vector<LocationBlock> &locations,
 
 			if (location.getPrefix() == possibleReqLoc[i]) // need to make sure the prefix is also cleaned from excess slashes
 			{
-				fullPath = location.getRoot() + '/' + possibleReqLoc[0]; // for defining whether request is a directory or a file
+				fullPath = PATH_TO_WWW + location.getRoot() + '/' + possibleReqLoc[0]; // for defining whether request is a directory or a file
 				if (isDirectory(fullPath))
 					_isDir = true;
 				else
@@ -262,7 +262,7 @@ Response &SendData::sendResponse(int clientSocket, std::vector<ServerBlock> &ser
 		catch (const std::exception &e) // what kind of error do we expect here?
 		{
 			std::string error = e.what(); // here we need to check what the error is and send notfound or error page accordingly
-			std::cout << RED_COLOR << "Error: " << error << RESET << std::endl; 
+			std::cout << RED_COLOR << "Error: " << error << RESET << std::endl;
 			/* std::cout << BOLD_YELLOW << "Response Status: " <<  _response.status << std::endl;
 			std::cout << "Content Type: "  << _response.contentType << std::endl;
 			std::cout << "Content Length: " << _response.contentLength << RESET << std::endl; */
@@ -295,10 +295,11 @@ Response &SendData::sendResponse(int clientSocket, std::vector<ServerBlock> &ser
 		else
 		{
 			saveBodyToFile("../website/upload/" + request.fileName, request);
-			_response.status = "HTTP/1.1 200 OK\r\n";
-			_response.contentType = "Content-Type: text/html;\r\n";
 			_response.body = "<!DOCTYPE html><html><head><title>200 OK</title></head>";
 			_response.body += "<body><h1>200 OK</h1><p>file saved</p></body></html>";
+			// this->createResponseHeader(200, _response.body.size());
+			_response.status = "HTTP/1.1 200 OK\r\n";
+			_response.contentType = "Content-Type: text/html;\r\n";
 			_response.contentLength = "Content-Length: " + intToString(_response.body.size()) + "\r\n";
 		}
 	}

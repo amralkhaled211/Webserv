@@ -310,7 +310,9 @@ void Epoll::handleData(int client_fd)
 		clientB.status = SENDING;
 
 		std::string responseBuffer;
-		responseBuffer = clientB.getResponse().status + clientB.getResponse().location + clientB.getResponse().contentType + clientB.getResponse().transferEncoding + clientB.getResponse().contentLength + "\r\n" + clientB.getResponse().body;
+		responseBuffer = clientB.getResponse().status + clientB.getResponse().location
+						+ clientB.getResponse().contentType + clientB.getResponse().transferEncoding
+						+ clientB.getResponse().contentLength + "\r\n" + clientB.getResponse().body;
 
 		clientB.setResponseBuffer(responseBuffer);
 		// std::cout << BOLD_GREEN << "Client Response Buffer: " << clientB.getResponseBuffer() << RESET << std::endl;

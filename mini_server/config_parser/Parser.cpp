@@ -305,13 +305,9 @@ void		Parser::_locationBlock(std::stringstream& ss) { // this is gonna be recurc
 				if (token.empty())
 					throw std::runtime_error("Empty Location Prefix");
 				else {
-					try { // this try and catch is not needed, but maybe somewhere else when someone use the getLocationVecBack() method
-						_serverVec.back().getLocationVecBack().setPrefix(token);
-					}
-					catch(const std::exception& e) {
-						std::cerr << e.what() << std::endl;
-						throw;
-					}
+					if (isInvalidPath(token))
+						throw std::runtime_error("Invalid Path for Location URI");
+					_serverVec.back().getLocationVecBack().setPrefix(token);
 				}
 			}
 			else if (ch == '{'/*  && !_serverVec.back().getLocationVec().back().getPrefix().empty() */) { // redundant

@@ -68,6 +68,7 @@ std::string get_file_name(const std::string &file_path);
 bool isDirectory(const std::string &path);
 std::vector<std::string> split(const std::string &str, char delimiter);
 std::string sizeTToHexString(size_t value);
+std::string decodeURIComponent(const std::string& component, bool isQueryString = false);
 
 // debugging functions
 void print_map(std::map<std::string, std::string> const &m);
