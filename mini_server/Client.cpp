@@ -42,7 +42,7 @@ bool Client::parseHeadersAndBody()
 		std::cout << BOLD_GREEN << "this buffer"<< this->_buffer << RESET << std::endl;
 		if (headerEndPos == std::string::npos) // this would be an indcation that the headers would be on chunks 
 		{
-			std::cout << "headerEndPos not found" << std::endl;
+			// std::cout << "headerEndPos not found" << std::endl;
 			if (parseHeaders(this->_buffer))	
 				return true;
 			if (headersValidate(this->_buffer, request.method) || _newLineChecked) // if this true that means we have the headers and now we ganna do the same thing for the body
@@ -50,7 +50,7 @@ bool Client::parseHeadersAndBody()
 				// std::cout << "i am inside the header vaildatio :: " << std::endl;
 				if (request.statusError == 0) // this mean we are expecting a body if we dont have on then its not valid and we send a message
 				{
-					// std::cout << "i am ready for the body : " << std::endl;
+					std::cout << "i am ready for the body : " << std::endl;
 					if (bodyValidate(this->_buffer)) // i could use later here handling body function
 						return true;
 					else

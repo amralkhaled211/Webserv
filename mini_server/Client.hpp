@@ -57,10 +57,14 @@ class Client
 		bool parse_first_line();
 		bool parseHeaders(std::string &Buffer);
 		bool headersValidate(std::string &Buffer, std::string method);
+		bool validatePostHeaders(std::string &buffer);
+		bool validateGetHeaders(std::string &buffer);
 		int validateContentLength();
 		int validateHost();
 		int validateTransferEncoding();
 		bool bodyValidate(std::string &Buffer);
+		bool handleChunkedTransferEncoding(std::istringstream &headerStream);
+		bool handleContentLength(std::istringstream &headerStream);
 		bool handlingBody(std::string &body);
 		bool parse_body(std::string &body);
 		bool HandlChunk();
@@ -85,9 +89,6 @@ class Client
 		std::time_t getClientTime(){return _timeOut;}
 		void saveBodyToFile();
 
-
-		int validateContentType();
-		void validateBounderyBody();
 	
 	private:
 	std::time_t _timeOut;
@@ -110,3 +111,5 @@ class Client
 
 
 size_t stringToSizeT(const std::string& str);
+bool isHexadecimal(const std::string& str);
+int hexStringToInt(const std::string& hexStr);
