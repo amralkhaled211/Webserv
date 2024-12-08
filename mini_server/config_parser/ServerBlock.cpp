@@ -23,8 +23,14 @@ ServerBlock&	ServerBlock::operator=(const ServerBlock& other) {
 ServerBlock::~ServerBlock() { }
 
 static bool	isInvalidServerName(std::string server_name) {
-	// IP
 	// Domain
+	(void)server_name;
+	if (server_name.find_first_of("$@!*") != std::string::npos) // invalid characters
+		return true;
+	if (server_name.find("..") != std::string::npos) // invalid format
+		return true;
+	// IP
+	return false;
 }
 
 void			ServerBlock::setDirective(const std::string& directiveKey, std::string& directiveValue) {
@@ -97,7 +103,7 @@ void				ServerBlock::createNamePortComb() {
 		ss << this->getListen()[i];
 		ss >> port;
 		if (ss.fail())
-			throw std::runtime_error("sstream fail");
+			throw std::runtime_error("sstream fail"); // investigate this further
 		ports.push_back(port);
 		ss.clear();
 		ss.str("");
