@@ -446,14 +446,14 @@ void		SendData::displayDir(const std::string& path, const std::string& requestUR
 
 			// Include size and last modification date in the HTML output
 			std::stringstream htmlStream;
-			htmlStream << "<tr><td><a href=\"" << encodeURI(escapeHtml(fullPath)) << "\">" << displayName << "</a></td>"
+			htmlStream << "<tr><td><a href=\"" << encodeURI(escapeHtml(fullPath)) << "\">" << escapeHtml(displayName) << "</a></td>"
 					<< "<td>" << fileSize << "</td>"
 					<< "<td>" << modTimeStr << "</td></tr>";
 			html << htmlStream.str();
 		} else {
 			std::cout << "ERRNO: " << errno << std::endl;
 			std::stringstream htmlStream;
-			htmlStream << "<tr><td><a href=\"" << encodeURI(escapeHtml(fullPath)) << "\">" << displayName << "</a></td>"
+			htmlStream << "<tr><td><a href=\"" << encodeURI(escapeHtml(fullPath)) << "\">" << escapeHtml(displayName) << "</a></td>"
 					<< "<td colspan=\"2\">(unable to retrieve file information)</td></tr>";
 			html << htmlStream.str();
 		}

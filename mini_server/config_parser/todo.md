@@ -8,26 +8,20 @@
 - [ ] Test the difference between '/' and '\'
 - [ ] Test return syntax checks
 - [ ] Test running siege tester and uploading something in chuncks
-      - what if there is a new request in between chunks?
-
-
-### LEARNING
-- [ ] Figure out meaning/use case of each directive
-- [ ] Figure out CGI
+- [ ] Test Edge Cases Parsing
 
 
 ### CODING
 - [x] REMOVE TRY_FILES FROM PARSING
-
 
 - [ ] PARSER ERROR HANDLING FOR
   - [x] ERROR_PAGE - see below for details
   - [x] INDEX - only last can be absolute path
   - [x] client_max_body_size -> accepted k,m,g as postfix, 0 means do not check size
   - [ ] cgi-ext and cgi-path
-  - [ ] check range for ports
+  - [x] check range for ports
 
-- [ ] autoindex better design
+- [x] autoindex better design
 
 - [X] decide on listen directive
 - [X] defualt allowed_methods
@@ -36,15 +30,9 @@
 - [x] give dafaults to all the directives
   - [x] if a Location Block's directive does not have any Value, it must take the global one
     - [x] need to know about all the directive defaults
-- [ ] Edge Cases Parsing
-  - [ ] Test and Handle nested locations
 
-
-- [ ] QUOTES
-  - [ ] ask around how others implement quotes
-    - [ ] Accept/Deny Quotes as Directive Key
-    - [ ] Accept/Deny Quotes as Directive Value
-        - [ ] adjust removal of comments '#'
+- [x] QUOTES
+  - [x] ask around how others implement quotes
   
 
 - [x] error_page
