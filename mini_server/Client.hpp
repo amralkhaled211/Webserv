@@ -67,6 +67,7 @@ class Client
 		bool handleContentLength(std::istringstream &headerStream);
 		bool handlingBody(std::string &body);
 		bool parse_body(std::string &body);
+		// void writeFile(const std::string& data);
 		bool HandlChunk();
 		bool parseHeadersAndBody();
 		void allRecieved();
