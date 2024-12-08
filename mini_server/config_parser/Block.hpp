@@ -1,6 +1,5 @@
 #pragma once
 
-// #include "Parser.hpp"
 #include <string>
 #include <vector>
 #include <stdexcept>
@@ -11,8 +10,9 @@
 #define ON					1
 #define NOT_SET				2
 
-#define	RETURN				1
-#define	ERROR_PAGE			2
+#define	IS_RETURN			1
+#define	IS_ERROR_PAGE		2
+
 
 class Block // parent // the purpose of this is just to not have class with the same attibutes and methods, we won't do any Polymorphism, just Inheritence
 {
@@ -21,7 +21,7 @@ class Block // parent // the purpose of this is just to not have class with the 
 
 		// all the directives, that are in both Server and Location
 		std::string								_root;
-		std::vector<std::vector<std::string> >	_error_page; // a block can have more then one error_page
+		std::vector<std::vector<std::string> >	_error_page; // a block can have more than one error_page
 		std::vector<std::string>				_return;
 		std::vector<std::string>				_index;
 		char									_autoindex;
@@ -50,11 +50,10 @@ class Block // parent // the purpose of this is just to not have class with the 
 
 		bool				_addCommonDirective(const std::string& directiveKey, std::string& directiveValue);
 
-		virtual void		addLocationBlock() = 0;
 		virtual void		setDirective(const std::string& directiveKey, std::string& directiveValue) = 0;
-
 };
 
 // will put these in a diff file
 std::vector<std::string>	splitString(const std::string& input);
 void						removeExcessSlashes(std::string& path);
+bool						isInvalidPath(std::string root);

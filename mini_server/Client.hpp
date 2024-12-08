@@ -22,13 +22,13 @@
 #include <sys/types.h>
 #include <iomanip>
 #include "config_parser/Parser.hpp"
-#include "SendData.hpp"
+#include "RequestHandler.hpp"
 #include "Response.hpp"
 #include <ctime>
+// #include "SendData.hpp"
 
 
 struct Response;
-class SendData;
 
 typedef struct parser
 {
@@ -83,6 +83,9 @@ class Client
 		void setSentHeader(bool value) { _sentHeader = value; }
 		void setResponse(Response &response) { _response = response; }
 		Response &getResponse() { return _response; }
+		void setHostPort(std::string hostPort) { _hostPort = hostPort; }
+		std::string getHostPort(std::string hostPort) { return _hostPort; }
+
 		int status;
 		bool getIsChunked() { return _isChunked; }
 		void setClientTime(std::time_t initTime) {_timeOut = initTime;}
@@ -107,6 +110,7 @@ class Client
 	bool isAllRecieved;
 	bool _sentHeader; // for response in chunks
 	Response _response;
+	std::string _hostPort;
 };
 
 

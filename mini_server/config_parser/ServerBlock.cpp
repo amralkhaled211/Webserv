@@ -22,8 +22,18 @@ ServerBlock&	ServerBlock::operator=(const ServerBlock& other) {
 
 ServerBlock::~ServerBlock() { }
 
+static bool	isInvalidServerName(std::string server_name) {
+	// Domain
+	(void)server_name;
+	if (server_name.find_first_of("$@!*") != std::string::npos) // invalid characters
+		return true;
+	if (server_name.find("..") != std::string::npos) // invalid format
+		return true;
+	// IP
+	return false;
+}
 
-void		ServerBlock::setDirective(const std::string& directiveKey, std::string& directiveValue) {
+void			ServerBlock::setDirective(const std::string& directiveKey, std::string& directiveValue) {
 
 	if (_addCommonDirective(directiveKey, directiveValue))
 		return;
@@ -37,7 +47,7 @@ void		ServerBlock::setDirective(const std::string& directiveKey, std::string& di
 
 		std::istringstream	ss(directiveValue);
 		while (!ss.eof()) {
-			int		port;
+			int	port;
 			ss >> port;
 			if (ss.fail())
 				throw std::runtime_error("Invalid listen Directive");
@@ -51,6 +61,8 @@ void		ServerBlock::setDirective(const std::string& directiveKey, std::string& di
 		if (!_server_name.empty())
 			throw std::runtime_error("Duplicate server_name Directive");
 		for (size_t i = 0; i < amountArgs; i++) {
+			if (isInvalidServerName(valueArgs[i]))
+				throw std::runtime_error("Invalid server_name Directive");
 			this->_server_name.push_back(valueArgs[i]);
 		}
 	}
@@ -58,6 +70,10 @@ void		ServerBlock::setDirective(const std::string& directiveKey, std::string& di
 		throw std::runtime_error("Invalid Directive");
 }
 
+
+std::string						ServerBlock::getHostFromMap(int socketFD) { return _socketFD_host[socketFD]; }
+
+void							ServerBlock::setHostInMap(int socketFD, std::string hostPort) { _socketFD_host[socketFD] = hostPort; }
 
 std::vector<LocationBlock>&		ServerBlock::getLocationVec() { return this->_locationVec; }
 
@@ -73,10 +89,10 @@ std::vector<std::string>&		ServerBlock::getServerName() { return this->_server_n
 
 std::vector<std::string>&		ServerBlock::getHostPort() { return this->_hostPort; }
 
-void							ServerBlock::addLocationBlock() { this->_locationVec.push_back(LocationBlock()); }
+void				ServerBlock::addLocationBlock() { this->_locationVec.push_back(LocationBlock()); }
 
 
-void							ServerBlock::createNamePortComb() {
+void				ServerBlock::createNamePortComb() {
 
 	std::vector<std::string>		hosts = this->getServerName();
 	std::vector<std::string>		ports;
@@ -87,7 +103,7 @@ void							ServerBlock::createNamePortComb() {
 		ss << this->getListen()[i];
 		ss >> port;
 		if (ss.fail())
-			throw std::runtime_error("sstream fail");
+			throw std::runtime_error("sstream fail"); // investigate this further
 		ports.push_back(port);
 		ss.clear();
 		ss.str("");
@@ -100,7 +116,7 @@ void							ServerBlock::createNamePortComb() {
 
 }
 
-void							ServerBlock::setupDefaults() {
+void				ServerBlock::setupDefaults() {
 	if (this->_listen.empty())
 		this->_listen.push_back(8000);
 
@@ -128,8 +144,14 @@ void							ServerBlock::setupDefaults() {
 		this->_locationVec[i].setupDefaults(static_cast<Block&>(*this));
 }
 
+std::string			getExtentions(std::string fileName) {
+	size_t point = fileName.find_last_of('.');
+	if (point == std::string::npos)
+		return (".");
+	return fileName.substr(point);
+}
 
-void							ServerBlock::contextError() { // checkDupLocation()
+void				ServerBlock::contextError() { // checkDupLocation()
 
 	std::string		tmpPrefix;
 
@@ -142,6 +164,20 @@ void							ServerBlock::contextError() { // checkDupLocation()
 			if (tmpPrefix == _locationVec[j].getPrefix())
 				throw std::runtime_error("Duplicate location Defintion");
 		}
+		// if (!_locationVec[i].getCgiExt().empty()) { // is cgi
+		// 	std::vector<std::string> cgiExt = _locationVec[i].getCgiExt();
+		// 	std::vector<std::string> cgiIndex = _locationVec[i].getIndex();
+		// 	for (size_t k = 0; k < cgiIndex.size(); ++k) {
+		// 		std::string	currCgiIndexExt = getExtentions(cgiIndex[k]);
+		// 		bool		isCorrectExt = false;
+		// 		for (size_t l = 0; l < cgiExt.size(); ++l) {
+		// 			if (currCgiIndexExt == cgiExt[l])
+		// 				isCorrectExt = true;
+		// 		}
+		// 		if (!isCorrectExt)
+		// 			throw std::runtime_error("Index File Extension doesn't match CGI Extension");
+		// 	}
+		// }
 	}
 
 	// more checks to follow

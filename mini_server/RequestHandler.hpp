@@ -21,7 +21,7 @@
 #include <dirent.h>
 #include <sys/types.h>
 #include <iomanip>
-#include "config_parser/Parser.hpp"
+// #include "config_parser/Parser.hpp"
 #include "Client.hpp"
 
 class Client;
@@ -35,8 +35,9 @@ class Client;
 #define CYAN_COLOR "\033[36m"
 #define WHITE_COLOR "\033[37m"
 
-extern std::map<std::string, std::string> mimeTypesMap_G;
+#define	READ_CHUNK_SIZE	64000
 
+extern std::map<std::string, std::string> mimeTypesMap_G;
 
 class RequestHandler
 {
@@ -54,10 +55,6 @@ class RequestHandler
 
 
 
-
-
-
-
 // utility functions
 std::string intToString(int value);
 int stringToInt(const std::string &str);
@@ -66,6 +63,8 @@ std::string get_file_extension(const std::string &file_path);
 std::string get_file_name(const std::string &file_path);
 bool isDirectory(const std::string &path);
 std::vector<std::string> split(const std::string &str, char delimiter);
+std::string sizeTToHexString(size_t value);
+std::string decodeURIComponent(const std::string& component, bool isQueryString = false);
 
 // debugging functions
 void print_map(std::map<std::string, std::string> const &m);

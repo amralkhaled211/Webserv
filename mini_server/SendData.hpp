@@ -1,8 +1,8 @@
 #pragma once
-#include "RequestHandler.hpp"
 #include "Client.hpp"
 #include "StatusMsg.hpp"
 #include "Response.hpp"
+// #include "CGI.hpp"
 
 struct parser;
 class Client;
@@ -11,6 +11,8 @@ class Client;
 #define	SD_NO_READ_PERM		-1
 #define	SD_NO_FILE			-2
 
+#define	PATH_TO_WWW	"/"
+// "/home/aismaili/Webserv/"
 
 typedef struct Redirection
 {
@@ -25,15 +27,6 @@ typedef struct Redirection
     }
 } Redirection;
 
-// typedef struct Response
-// {
-// 	std::string status;
-// 	std::string contentType;
-// 	std::string location; // uri
-// 	std::string transferEncoding;
-// 	std::string contentLength;
-// 	std::string body;
-// } Response;
 
 class SendData
 {
@@ -51,8 +44,6 @@ class SendData
 	template <typename T>
 	bool findInVector(const std::vector<T> &vec, const T &target)
 	{
-		// std::cout << BOLD_YELLOW << "FIND IN VECTOR -> size: " << vec.size() << " begin: " << *vec.begin() << RESET << std::endl;
-		// std::cout << "FIND IN VECTOR -> target: " << target << std::endl;
 		return std::find(vec.begin(), vec.end(), target) != vec.end();
 	}
 	ServerBlock findServerBlock(std::vector<ServerBlock> &servers, parser &request);
@@ -63,8 +54,62 @@ class SendData
 	void saveBodyToFile(const std::string &filename, parser &request);
 	Response &sendResponse(int clientSocket, std::vector<ServerBlock> &servers, parser &request, int epollFD);
 	void displayDir(const std::string& path, const std::string& requestPath);
-	void prepErrorResponse(int code, LocationBlock& locationBlock);
 	void createResponseHeader(int code, size_t bodySize, std::string contentTypes);
 	void createDfltResponseBody(int code, std::string&	contentType, std::string postFix = "html");
 	void codeErrorResponse(int code);
+	std::string getErrorPagePath(int code, const std::vector<std::vector<std::string> >& errorPage);
+	int readFromErrorPage(std::string& errorPagePath, std::string& body);
+	
+	// template<typename T>
+	// void prepErrorResponse(int code, T& location);
+
+	template<typename T>
+	void		prepErrorResponse(int code, T& location)
+	{
+		std::string		errorPagePath = getErrorPagePath(code, location.getErrorPage());
+		std::string		contentType;
+		int				fileStatus;
+
+		std::cout << "IN PREP ERROR RESPONSE\n";
+
+		if (!errorPagePath.empty())
+		{
+			removeExcessSlashes(errorPagePath);
+
+			std::cout << "ERROR PAGE PATH: " << errorPagePath << std::endl;
+
+			fileStatus = readFromErrorPage(errorPagePath, _response.body); // this already writes into the body (passed by reference)
+			if (fileStatus == SD_OK) { // body gets init with right error_page content
+				contentType = mimeTypesMap_G[get_file_extension(errorPagePath)];
+
+				std::cout << "CONTENT TYPE: -->" << contentType << "<--" << std::endl;
+
+				if (contentType == "")
+					createDfltResponseBody(code, contentType, "txt");
+			}
+			else if (fileStatus == SD_NO_READ_PERM) {
+				if (code != 403) {
+					prepErrorResponse(403, location);
+					return ;
+				}
+				else
+					createDfltResponseBody(code, contentType);
+			}
+			else if (fileStatus == SD_NO_FILE) {
+				if (code != 404) {
+					prepErrorResponse(404, location);
+					return ;
+				}
+				else
+					createDfltResponseBody(code, contentType);
+			}
+		}
+		else
+			createDfltResponseBody(code, contentType);
+
+		createResponseHeader(code, _response.body.size(), contentType);
+	}
 };
+
+
+// #include "ErrorTemplate.tpp"

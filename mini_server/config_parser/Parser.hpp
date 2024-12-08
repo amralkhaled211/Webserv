@@ -33,11 +33,6 @@
 #define BOLD_WHITE "\033[1;97m"
 #define RESET "\033[0m"
 
-// // not in use
-// #define IS_BRACE_O ch == '{'
-// #define IS_BRACE_C ch == '}'
-// #define IS_SEMICOLON ch == ';'
-// #define IS_SPACE ch == ' '
 
 class Parser // http Block basically
 {
@@ -65,11 +60,6 @@ public:
 	void _configToContent();   // Content is basically everything compressed in one string // other name: _fileContentToOneStr(), _fileToStr()
 							   // !!! in case of comments (#), skip rest of line (don't fill it inside _content) and coninue with the next line !!!
 	void _removeExcessSpace(); // excess spaces: before and after 1) block names (http, server, location), 2) semicolon (;), 3) ’{’ & '}'
-
-	/*			ERROR			*/
-
-	void _syntaxError(); // check for syntax errors --> missing semicolon (directive specific mostly), missing brace (using booleans like in minishell with quotes),
-						 // missing block name (before a opening brace there should be a block name), missing directive (see notes), ...
 
 	/*			ACTUAL PARSING			*/
 

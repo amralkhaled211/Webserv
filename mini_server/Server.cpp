@@ -12,29 +12,29 @@ Server::~Server()
         close(_serverSockets[i]);
 }
 
-bool isValidIPAddress(const std::string& ipAddress) // we use forbidden c functions here!
+bool isValidIPAddress(const std::string& ipAddress) // we use c functions here!
 {
     int num, dots = 0;
     char *ptr;
     char ipCopy[16];
-    strncpy(ipCopy, ipAddress.c_str(), 16);
+    std::strncpy(ipCopy, ipAddress.c_str(), 16);
     ipCopy[15] = '\0';
 
     if (ipAddress.empty())
         return false;
 
-    ptr = strtok(ipCopy, ".");
+    ptr = std::strtok(ipCopy, ".");
     if (ptr == NULL)
         return false;
 
     while (ptr)
     {
-        if (!isdigit(*ptr))
+        if (!std::isdigit(*ptr))
             return false;
-        num = atoi(ptr);
+        num = std::atoi(ptr);
         if (num >= 0 && num <= 255)
         {
-            ptr = strtok(NULL, ".");
+            ptr = std::strtok(NULL, ".");
             if (ptr != NULL)
                 dots++;
         }
@@ -62,7 +62,7 @@ int Server::create_and_configure_socket()
     return serverSocket;
 }
 
-void Server::bindNamesWithPorts(std::vector<std::string>& serverName, std::vector<int> serverPort)
+void Server::bindNamesWithPorts(std::vector<std::string>& serverName, std::vector<int> serverPort, ServerBlock &currServer)
 {
     if (serverName.size() == 0)
         serverName.push_back("localhost");
@@ -87,6 +87,9 @@ void Server::bindNamesWithPorts(std::vector<std::string>& serverName, std::vecto
 
 	        if (listen(serverSocket, 5) < 0)
 	        	throw std::runtime_error("Listening failed");
+            
+            currServer.setHostInMap(serverSocket, name + ":" + intToString(port));
+
             _serverSockets.push_back(serverSocket);
         }
     }
@@ -98,7 +101,7 @@ void Server::createSocket()
     //std::cout << "size of serverBlock :" << _servers.size() << std::endl;
     for(int i = 0; i < _servers.size(); i++)
     {
-        bindNamesWithPorts(_servers[i].getServerName(), _servers[i].getListen());
+        bindNamesWithPorts(_servers[i].getServerName(), _servers[i].getListen(), _servers[i]);
     }
     //std::cout << BOLD_GREEN << "ALL THE CREATED SOCKETS: ";
     //for (size_t i = 0; i < this->_serverSockets.size(); ++i) {

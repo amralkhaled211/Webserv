@@ -317,3 +317,7 @@ procedure for chunked response
 5. signal to client all chunks were send, with this msg
 	0\r\n
 	\r\n
+
+valgrind
+
+valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes --log-file=valgrind.log --track-fds=yes

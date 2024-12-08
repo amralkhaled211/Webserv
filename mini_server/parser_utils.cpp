@@ -16,11 +16,11 @@ std::string get_file_name(const std::string& file_path)
 std::string deleteSpaces(std::string const &str)
 {
 	size_t first = str.find_first_not_of(' ');
-    if (std::string::npos == first)
-        return str;
+	if (std::string::npos == first)
+		return str;
 
-    size_t last = str.find_last_not_of(' ');
-    return str.substr(first, (last - first + 1));
+	size_t last = str.find_last_not_of(' ');
+	return str.substr(first, (last - first + 1));
 }
 
 std::string intToString(int value)
@@ -38,15 +38,6 @@ int stringToInt(const std::string& str) // issue: value gets not initialized, if
 	ss >> value;
 	return value;
 }
-
-
-/* size_t stringToSizeT(const std::string& str)
-{
-	std::stringstream ss(str);
-	size_t value;
-	ss >> value;
-	return value;
-} */
 
 
 size_t stringToSizeT(const std::string& str)
@@ -78,21 +69,47 @@ std::vector<std::string> split(const std::string& str, char delimiter)
 	while (std::getline(ss, token, delimiter))
 	{
 		if (!token.empty())
-	    	tokens.push_back("/" + token);
+			tokens.push_back("/" + token);
 	}
 	if (tokens.empty())
-	    	tokens.push_back("/");
+			tokens.push_back("/");
 	return tokens;
 }
 
+std::string sizeTToHexString(size_t value) {
+	std::stringstream ss;
+	ss << std::hex << value;
+	return ss.str();
+}
+
+std::string decodeURIComponent(const std::string& component, bool isQueryString)
+{
+	std::ostringstream decoded;
+	for (size_t i = 0; i < component.length(); ++i)
+	{
+		if (component[i] == '%' && i + 2 < component.length())
+		{
+			// Decode %XX to its ASCII character
+			std::string hex = component.substr(i + 1, 2);
+			char decodedChar = static_cast<char>(std::strtol(hex.c_str(), NULL, 16));
+			decoded << decodedChar;
+			i += 2;
+		}
+		else if (isQueryString && component[i] == '+') // Replace '+' with space in query strings
+			decoded << ' ';
+		else
+			decoded << component[i];
+	}
+	return decoded.str();
+}
 
 ///debugging function
 void print_map(const std::map<std::string, std::string>& m)
 {
-    for (std::map<std::string, std::string>::const_iterator it = m.begin(); it != m.end(); ++it)
-    {
-        std::cout << it->first << ": " << it->second << std::endl;
-    }
+	for (std::map<std::string, std::string>::const_iterator it = m.begin(); it != m.end(); ++it)
+	{
+		std::cout << it->first << ": " << it->second << std::endl;
+	}
 }
 
 void	printServerVec(std::vector<ServerBlock>& _serverVec) {
