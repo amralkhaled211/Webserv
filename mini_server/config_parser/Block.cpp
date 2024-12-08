@@ -82,16 +82,16 @@ static void	isValidCode(const std::string& code, int directive) {
 }
 
 
-void		invalidReturnSyntax(std::vector<std::string>& valueArgs) {
+static void		invalidReturnSyntax(std::vector<std::string>& valueArgs) {
 	if (valueArgs.empty() || valueArgs.size() > 2)
 		throw std::runtime_error("Invalid return Directive");
 
-	if (valueArgs.size() == 1) { // accept either only a status code OR a link (not a location)
-		if (valueArgs[0][0] >= '0' && valueArgs[0][0] <= '9') // isdigit() is from c library
-			isValidCode(valueArgs[0], IS_RETURN);
-		else if (valueArgs[0][0] == '/') // is a relative path -> needs a status code
-			throw std::runtime_error("Invalid return Directive Code");
-		// isValidRedirURLI(valueArgs[0]);
+	if (valueArgs.size() == 1) { // accept only external redir here
+		// if (std::isdigit(valueArgs[0][0]))
+		// 	isValidCode(valueArgs[0], IS_RETURN);
+		// else 
+		if (valueArgs[0].substr(0, 5) != "https")
+			throw std::runtime_error("Invalid return Directive");
 	}
 	else if (valueArgs.size() == 2) {
 		isValidCode(valueArgs[0], IS_RETURN);
@@ -146,12 +146,21 @@ static bool		invalidMeasurementPostfix(std::string& directiveValue) {
 	std::string	word;
 
 	ss >> size;
-	if (ss.fail())
+	if (ss.fail()) {
 		return true;
+	}
 
 	ss >> word;
 	if (!ss.eof() || word.size() != 1)
 		return true;
+
+	int maxSizeGiga = 4;
+
+	if ((word == "g" && size > maxSizeGiga) ||
+		(word == "m" && size > maxSizeGiga * 1000) ||
+		(word == "k" && size > maxSizeGiga * 1000000)) {
+			return true;
+		}
 
 	return false;
 }
@@ -236,10 +245,9 @@ bool		Block::_addCommonDirective(const std::string& directiveKey, std::string& d
 		else if (amountArgs != 1)
 			throw std::runtime_error("Invalid client_max_body_size Directive, too many args");
 		// client_max_body_size error handling
-		else if (!invalidMeasurementPostfix(directiveValue))
-			this->_client_max_body_size = directiveValue;
-		else
+		else if (invalidMeasurementPostfix(directiveValue)) // TODO: 0 means unlimited and limit max size
 			throw std::runtime_error("Invalid client_max_body_size Directive");
+		this->_client_max_body_size = directiveValue;
 		return true;
 	}
 	return false;

@@ -13,11 +13,7 @@ void SendData::notfound()
 bool SendData::read_file(std::string const &path, parser &request) // this already prepares the response
 {
 	std::string file_extension = get_file_extension(path);
-	//std::cout << "-----------------------------------\n"
-	//<<"file extention: " << file_extension << std::endl
-	//<< "request path: " << request.path << "\n"
-	//<< "path: " << path
-	//<< "-----------------------------------\n" ;
+
 	std::ifstream file(path.c_str());
 	if (file.is_open())
 	{
@@ -227,6 +223,8 @@ Response &SendData::sendResponse(int clientSocket, std::vector<ServerBlock> &ser
 		codeErrorResponse(request.statusError);
 		return _response;
 	}
+
+	request.path = decodeURIComponent(request.path);
 	
 	_isReturn = false;
 	ServerBlock current_server = findServerBlock(servers, request);
@@ -236,6 +234,7 @@ Response &SendData::sendResponse(int clientSocket, std::vector<ServerBlock> &ser
 		try
 		{
 			LocationBlock location = findLocationBlock(current_server.getLocationVec(), request);
+			
 			std::vector<std::string>::iterator itAllowedMethod = std::find(location.getAllowedMethods().begin(), location.getAllowedMethods().end(), "GET");
 			if (itAllowedMethod == location.getAllowedMethods().end()) {
 				prepErrorResponse(405, location);
@@ -297,6 +296,7 @@ Response &SendData::sendResponse(int clientSocket, std::vector<ServerBlock> &ser
 	if (request.method == "POST")
 	{
 		LocationBlock location = findLocationBlock(current_server.getLocationVec(), request);
+		
 		std::vector<std::string>::iterator itAllowedMethod = std::find(location.getAllowedMethods().begin(), location.getAllowedMethods().end(), "POST");
 		if (itAllowedMethod == location.getAllowedMethods().end()) {
 			prepErrorResponse(405, location);
@@ -339,6 +339,21 @@ void SendData::saveBodyToFile(const std::string &filename, parser &request)
         std::cerr << "Error opening file for writing: " << filename << std::endl;
     }
 	request.body.clear();
+}
+
+// Percent-encode a filename for use in a URI
+std::string encodeURI(const std::string& filename) {
+    std::ostringstream encoded;
+    for (size_t i = 0; i < filename.length(); ++i) {
+        if (isalnum(filename[i]) || filename[i] == '-' || filename[i] == '_' || 
+            filename[i] == '.' || filename[i] == '~') {
+            encoded << filename[i];
+        } else {
+            encoded << '%' << std::hex << std::uppercase << std::setw(2) 
+                    << std::setfill('0') << (static_cast<int>(filename[i]) & 0xFF);
+        }
+    }
+    return encoded.str();
 }
 
 std::vector<std::pair<std::string, std::string> >	listDirectory(const std::string& path)
@@ -394,23 +409,15 @@ std::string escapeHtml(const std::string &input)
 	return output;
 }
 
-#include <ctime>
-
-void		SendData::displayDir(const std::string& path, const std::string& requestPath)
+void		SendData::displayDir(const std::string& path, const std::string& requestURI)
 {
 	// first pair-element is the element, second one is the full path, but with a '/' at the end for directories
 	std::vector<std::pair<std::string, std::string> >	dirElements(listDirectory(path));
 
-	// std::cout << "Elements in directory " << path << ":" << std::endl;
-	// std::cout << "Dir/File Name" << std::setw(30) << "Dir/File Path\n";
-	// for (size_t i = 0; i < dirElements.size(); ++i) {
-	// 	std::cout << dirElements[i].first << std::setw(50) << dirElements[i].second << std::endl;
-	// }
-
 	// must embed the dirElements into a html file
 	std::ostringstream html;
-	html << "<!DOCTYPE html><html><head><title>Index of " << escapeHtml(requestPath) << "</title></head><body>";
-	html << "<h1>Index of " << escapeHtml(requestPath) << "</h1>";
+	html << "<!DOCTYPE html><html><head><title>Index of " << escapeHtml(requestURI) << "</title></head><body>";
+	html << "<h1>Index of " << escapeHtml(requestURI) << "</h1>";
 	html << "<ul>";
 
 	html << "<table border=\"1\">";
@@ -418,10 +425,12 @@ void		SendData::displayDir(const std::string& path, const std::string& requestPa
 
 	for (size_t i = 0; i < dirElements.size(); ++i) {
 		std::string displayName = dirElements[i].first;
-		std::string fullPath = requestPath;
+		std::string fullPath = requestURI;
 		if (!fullPath.empty() && fullPath[fullPath.size() - 1] != '/')
 			fullPath += '/';
 		fullPath += displayName;
+
+		std::cout << "display name: " << displayName << std::endl;
 
 		struct stat fileStat;
 		if (stat(dirElements[i].second.c_str(), &fileStat) == 0) {
@@ -437,15 +446,14 @@ void		SendData::displayDir(const std::string& path, const std::string& requestPa
 
 			// Include size and last modification date in the HTML output
 			std::stringstream htmlStream;
-			htmlStream << "<tr><td><a href=\"" << escapeHtml(fullPath) << "\">" << escapeHtml(displayName) << "</a></td>"
+			htmlStream << "<tr><td><a href=\"" << encodeURI(escapeHtml(fullPath)) << "\">" << displayName << "</a></td>"
 					<< "<td>" << fileSize << "</td>"
 					<< "<td>" << modTimeStr << "</td></tr>";
 			html << htmlStream.str();
 		} else {
 			std::cout << "ERRNO: " << errno << std::endl;
-			// Handle error if stat() fails
 			std::stringstream htmlStream;
-			htmlStream << "<tr><td><a href=\"" << escapeHtml(fullPath) << "\">" << escapeHtml(displayName) << "</a></td>"
+			htmlStream << "<tr><td><a href=\"" << encodeURI(escapeHtml(fullPath)) << "\">" << displayName << "</a></td>"
 					<< "<td colspan=\"2\">(unable to retrieve file information)</td></tr>";
 			html << htmlStream.str();
 		}
@@ -460,9 +468,6 @@ void		SendData::displayDir(const std::string& path, const std::string& requestPa
 	// std::cerr << _response.body << std::endl;
 	size_t content_len = _response.body.size();
 	createResponseHeader(200, content_len, "text/html");
-	// _response.status = "HTTP/1.1 200 OK\r\n";
-	// _response.contentType = "Content-Type: text/html;\r\n";
-	// _response.contentLength = "Content-Length: " + intToString(content_len) + "\r\n";
 }
 
 
@@ -535,57 +540,7 @@ void	SendData::codeErrorResponse(int code)
 	createResponseHeader(code, _response.body.size(), contentType);
 }
 
-
-// void		SendData::prepErrorResponse(int code, LocationBlock& location)
-// {
-// 	std::string		errorPagePath = getErrorPagePath(code, location.getErrorPage());
-// 	// std::cout << BOLD_RED << "errorPagePath: " << errorPagePath << RESET << "\n";
-// 	std::string		contentType;
-// 	int				fileStatus;
-
-// 	std::cout << "IN PREP ERROR RESPONSE\n";
-
-// 	if (!errorPagePath.empty())
-// 	{ // need to create error response from errorPage
-// 		// errorPagePath = location.getRoot() + location.getPrefix() + "/" + errorPagePath;
-// 		removeExcessSlashes(errorPagePath);
-// 		// std::cout << BOLD_RED << "errorPagePath: " << errorPagePath << RESET << "\n";
-
-// 		std::cout << "ERROR PAGE PATH: " << errorPagePath << std::endl;
-
-// 		fileStatus = readFromErrorPage(errorPagePath, _response.body); // this already reads into the body (passed by reference)
-// 		if (fileStatus == SD_OK) { // body gets init with right error_page content
-// 			contentType = mimeTypesMap_G[get_file_extension(errorPagePath)];
-
-// 			std::cout << "CONTENT TYPE: -->" << contentType << "<--" << std::endl;
-
-// 			if (contentType == "")
-// 				createDfltResponseBody(code, contentType, "txt");
-// 		}
-// 		else if (fileStatus == SD_NO_READ_PERM) {
-// 			if (code != 403) {
-// 				prepErrorResponse(403, location);
-// 				return ;
-// 			}
-// 			else
-// 				createDfltResponseBody(code, contentType);
-// 		}
-// 		else if (fileStatus == SD_NO_FILE) {
-// 			if (code != 404) {
-// 				prepErrorResponse(404, location);
-// 				return ;
-// 			}
-// 			else
-// 				createDfltResponseBody(code, contentType);
-// 		}
-// 	}
-// 	else // need to create hardcoded error response
-// 		createDfltResponseBody(code, contentType);
-
-// 	createResponseHeader(code, _response.body.size(), contentType);
-// }
-
-void		SendData::createDfltResponseBody(int code, std::string&	contentType, std::string postFix) {
+void	SendData::createDfltResponseBody(int code, std::string&	contentType, std::string postFix) {
 	_response.body = "<!DOCTYPE html><html><head><title>" + intToString(code) + " " + _status._statusMsg[code][0]/*  + " Not Found" */ + "</title></head>";
 	_response.body += "<body><h1>" + intToString(code) + " " + _status._statusMsg[code][0] + "</h1><p>" + _status._statusMsg[code][1] + "</p></body></html>";
 	contentType = mimeTypesMap_G[postFix];

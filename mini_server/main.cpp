@@ -1,6 +1,6 @@
 #include "Server.hpp"
 
-#define DFLT_CONF_FILE  "conf_files/amr.conf"
+#define DFLT_CONF_FILE  "conf_files/ali.conf"
 
 bool serverRunning = true;
 

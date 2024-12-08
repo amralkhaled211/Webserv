@@ -53,7 +53,7 @@ void	LocationBlock::setDirective(const std::string& directiveKey, std::string& d
 
 	if (directiveKey == "allowed_methods") {
 
-		if (amountArgs == 0 || amountArgs > 3) // 0 check not needed maybe
+		if (amountArgs > 3)
 			throw std::runtime_error("Invalid allowed_methods Directive");
 
 		for (size_t i = 0; i < amountArgs; i++) {
@@ -85,19 +85,8 @@ void		LocationBlock::setPrefix(const std::string& prefix) { this->_prefix = pref
 
 void		LocationBlock::setupDefaults(Block& parentServer) {
 
-	// std::cout << "setup Defaults in LocationBlock\n";
-
-	// std::cout << "parent root value: " << parentServer.getRoot() << std::endl;
-
-	// if (_root.empty())
-	// 	std::cout << BOLD_YELLOW << "ROOT IS EMPTY!\n" << RESET;
-	// else
-	// 	std::cout << BOLD_YELLOW << "ROOT IS NOT EMPTY: " << _root << "!\n" << RESET;
-
 	if (this->_root.empty())
 		this->_root = parentServer.getRoot();
-
-	// std::cout << "current root: " << _root << std::endl;
 
 	if (this->_index.empty())
 		this->_index = parentServer.getIndex(); // note: only matters if a directory was requested

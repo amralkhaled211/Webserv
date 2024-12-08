@@ -49,7 +49,7 @@ void			ServerBlock::setDirective(const std::string& directiveKey, std::string& d
 		while (!ss.eof()) {
 			int	port;
 			ss >> port;
-			if (ss.fail())
+			if (ss.fail() || (port < 1024 || port > 65535)) // below 1024 requires privilages
 				throw std::runtime_error("Invalid listen Directive");
 			std::cout << "Port: " << "http://localhost:"<< port << std::endl;
 			this->_listen.push_back(port);
@@ -113,7 +113,6 @@ void				ServerBlock::createNamePortComb() {
 		for (size_t j = i; j < ports.size(); ++j)
 			this->_hostPort.push_back(hosts[i] + ":" + ports[j]);
 	}
-
 }
 
 void				ServerBlock::setupDefaults() {
@@ -123,7 +122,7 @@ void				ServerBlock::setupDefaults() {
 	if (this->_server_name.empty())
 		this->_server_name.push_back(""); // nginx
 
-	this->createNamePortComb();
+	this->createNamePortComb(); // don't remember the point of this
 
 	if (this->_root.empty())
 		this->_root = "../"; // nginx, relative path
