@@ -281,6 +281,20 @@ int CGI::executeScript()
 		int status;
 		waitpid(pid, &status, 0);
 
+		/* if (WIFEXITED(status))
+		{
+			if (WEXITSTATUS(status) != 0)
+			{
+				std::cerr << "Child process exited with status " << WEXITSTATUS(status) << std::endl;
+				return 500;
+			}
+		}
+		else
+		{
+			std::cerr << "Child process exited abnormally" << std::endl;
+			return 500;
+		} */
+
 		_responseBody = output.str();
 	}
 	return 0;
