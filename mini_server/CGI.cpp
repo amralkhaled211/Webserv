@@ -255,8 +255,8 @@ int CGI::executeScript()
 			{
 				errStr = bufferStr.substr(bufferStr.find(ERROR_MARKER) + strlen(ERROR_MARKER) + 2);
 				std::cout << RED << "ERROR_MARKER found: " << errStr << RESET << std::endl;
-				kill(pid, SIGTERM);
-				sleep(1);
+				/* kill(pid, SIGTERM);
+				sleep(1); */
 				kill(pid, SIGKILL);
 				eof = true;
 				break;
@@ -281,7 +281,7 @@ int CGI::executeScript()
 		int status;
 		waitpid(pid, &status, 0);
 
-		/* if (WIFEXITED(status))
+		if (WIFEXITED(status))
 		{
 			if (WEXITSTATUS(status) != 0)
 			{
@@ -293,7 +293,7 @@ int CGI::executeScript()
 		{
 			std::cerr << "Child process exited abnormally" << std::endl;
 			return 500;
-		} */
+		}
 
 		_responseBody = output.str();
 	}
