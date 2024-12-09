@@ -35,26 +35,9 @@
 ------    1    -------
 
 
-./Server config_parser/conf_files/example.conf
-Port: http://localhost:8080
-Port: http://localhost:8282
-Failed to execute CGI script: Exec format error
-^CStatus set
-Content type set
-Content length set
-CGI Status: HTTP/1.1 HTTP/1.1 404 Not Found
-
-;GI Content type: Content-Type: text/html;
-
-CGI Content length: Content-Length: 155
-
-Response Status: HTTP/1.1 HTTP/1.1 404 Not Found
-
-;ontent Type: Content-Type: text/html;
-
-Content Length: Content-Length: 155
-
-Server shutting down
+/usr/bin/python3: can't open file '/home/aszabo/Docs/Webserv/website/cgi-bin/enviroment.py': [Errno 2] No such file or directory
+  File "/home/aszabo/Docs/Webserv/website/cgi-bin/environment.py", line 3
+    use strict;
 
 
 -------    2    -------

@@ -195,9 +195,9 @@ void StatusMsg::_fiveHunderds()
 	_statusMsg[504] = msg;
 	msg.clear();
 
-	// msg.push_back("Gateway Timeout");
-	// msg.push_back("The server, while acting as a gateway or proxy, did not get a response in time from the upstream server.");
-	// _statusMsg[508] = msg;
-	// msg.clear();
+	 msg.push_back("Infinite Loop Detected");
+	 msg.push_back("The server has detected an infinite loop while processing the request.");
+	 _statusMsg[508] = msg;
+	 msg.clear();
 
 }

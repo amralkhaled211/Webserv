@@ -3,7 +3,7 @@
 
 CGI::CGI() {}
 
-CGI::CGI(const std::string &scriptPath, const parser &request) : _scriptPath(scriptPath) , _request(request), _typeSet(false), _statusSet(false)/* _lengthSet(false) */
+CGI::CGI(const std::string &scriptPath, const parser &request) : _scriptPath(scriptPath) , _request(request), _typeSet(false), _statusSet(false), _interpreter("")
 {}
 
 CGI::~CGI() {}
@@ -123,6 +123,33 @@ void CGI::setEnv(ServerBlock server)
 	}
 }
 
+bool CGI::setInterpreters(LocationBlock location)
+{
+	std::vector<std::string> interpreters = location.getCgiPath();
+	for (std::vector<std::string>::iterator it = interpreters.begin(); it != interpreters.end(); ++it)
+	{
+		//_interpreters[*it] = *it;
+		std::istringstream ss(*it);
+		std::string path;
+		while (ss >> path)
+		{
+			if (path.find("python3") != std::string::npos)
+				_interpreters[".py"] = path;
+			else if (path.find("php") != std::string::npos)
+				_interpreters[".php"] = path;
+			else if (path.find("perl") != std::string::npos)
+				_interpreters[".pl"] = path;
+		}
+	}
+	std::string fileExt = '.' + get_file_extension(_scriptPath);
+	_interpreter = _interpreters[fileExt];
+	if (_interpreter.empty())
+	{
+		return false;
+	}
+	return true;
+}
+
 
 void freeEnvp(std::vector<char*> &envp)
 {
@@ -156,7 +183,6 @@ int CGI::executeScript()
 	if (pipe(inPipe) == -1 || pipe(outPipe) == -1)
 		throw std::runtime_error("Failed to create pipes in CGI");
 
-
 	pid_t pid = fork();
 	if (pid == -1)
 		throw std::runtime_error("Failed to fork in CGI");
@@ -168,28 +194,15 @@ int CGI::executeScript()
 		close(inPipe[1]);
         close(outPipe[0]);
 
-		/* std::ofstream child_out("cgi_child_debug.txt");
-        if (!child_out.is_open())
-        {
-            std::cerr << "Failed to open debug log file" << std::endl;
-            exit(1);
-        }
-
-		child_out << "Child process started" << std::endl; */
-
 		std::vector<char*> envp = setUpEnvp();
-
-		/* child_out << "Env is set up going into execve" << std::endl; */
 		
-		char *arg[] = {const_cast<char*>(_scriptPath.c_str()), NULL};
-		/* child_out << "Executing script: " << _scriptPath << std::endl;
-		child_out.flush(); */
-        if (execve(_scriptPath.c_str(), arg, &envp[0]) == -1)
+		
+		char *arg[] = {const_cast<char*>(_interpreter.c_str()), const_cast<char*>(_scriptPath.c_str()), NULL};
+
+        if (execve(_interpreter.c_str(), arg, &envp[0]) == -1)
         {
-            //std::cerr << "Failed to execute CGI script: " << strerror(errno) << std::endl;
             freeEnvp(envp);
-            //exit(1);
-			std::cout << ERROR_MARKER << ": " <<strerror(errno) <<std::endl;
+			std::cout << ERROR_MARKER << ": " << strerror(errno) <<std::endl;
 			return 1;
         }
 	}
@@ -198,10 +211,7 @@ int CGI::executeScript()
 		close(inPipe[0]);
 		close(outPipe[1]);
 		
-		if (_request.method == "POST" && !_request.body.empty())
-		{
-			/* std::cout << CYAN_COLOR << "Writing POST body to pipe: " <<std::endl;
-			std::cout << _request.body << RESET << std::endl; */	
+		if (_request.method == "POST" && !_request.body.empty()){
 			write (inPipe[1], _request.body.c_str(), _request.body.size());
 		}
 		close(inPipe[1]);
@@ -220,19 +230,13 @@ int CGI::executeScript()
             close(outPipe[0]);
             throw std::runtime_error("select() failed");
         }
-        else if (selectResult == 0)
+        else if (selectResult == 0) // timeout occured
         {
-            // Timeout occurred
+
             kill(pid, SIGTERM); // Send SIGTERM to the child process
             sleep(1); // Give the child process some time to terminate
             kill(pid, SIGKILL); // Send SIGKILL if the child process is still running
             close(outPipe[0]);
-			/* _responseBody.clear(); */
-			/* std::cout << BOLD_YELLOW << "CGI script execution timed out" << std::endl;
-			std::cout << "CGI Status: " << _responseStatus << std::endl;
-			std::cout << "CGI Content type: " << _contentType << std::endl;
-			std::cout << "CGI Content length: " << _contentLength << RESET << std::endl;
-			std::cout << "CGI Body: " << _responseBody << std::endl; */
             return 508;
         }
 		

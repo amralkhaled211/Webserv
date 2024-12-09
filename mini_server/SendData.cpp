@@ -49,15 +49,11 @@ bool SendData::read_file(std::string const &path, parser &request) // this alrea
 
 void SendData::handleCGI(const std::string &root, parser &request, ServerBlock server, LocationBlock location) //will need to return errors from here
 {
-	//std::cout << CYAN_COLOR << root << RESET << std::endl;
 	std::string file_extension = '.' +  get_file_extension(root);
 	std::vector<std::string> allowed_ext = location.getCgiExt();
 	bool isAllowed = false;
-	//std::cout << "HERE"	<< std::endl;
 	for (std::vector<std::string>::iterator it = allowed_ext.begin(); it != allowed_ext.end(); it++)
 	{
-		//std::cout << "IN FOR LOOP" << std::endl;
-		//std::cout << MAGENTA_COLOR <<"Allowed extension: " << *it << "-------" << "Our extension: " << file_extension << RESET <<std::endl;
 		if (*it == file_extension)
 		{
 			isAllowed = true;
@@ -66,12 +62,17 @@ void SendData::handleCGI(const std::string &root, parser &request, ServerBlock s
 	}
 	if (!isAllowed)
 	{
-		//std::cout << "CGI NOT ALLOWED" << std::endl;
 		prepErrorResponse(400, location);
 		return ;
 	}
 	CGI cgi(root, request);
 	cgi.setEnv(server);
+	if (cgi.setInterpreters(location) == false)
+	{
+		prepErrorResponse(500, location);
+		return ;
+	}
+
 	int code = cgi.executeScript();
 	if (code != 0)
 	{
@@ -101,9 +102,6 @@ void SendData::handleCGI(const std::string &root, parser &request, ServerBlock s
 		
 	unsigned int content_len = _response.body.size();
 		_response.contentLength = "Content-Length: " + intToString(content_len) + "\r\n";
-	/* std::cout << MAGENTA_COLOR << "CGI Status: " << _response.status << std::endl;
-	std::cout << "CGI Content type: " << _response.contentType << std::endl;
-	std::cout << "CGI Content length: " << _response.contentLength << RESET << std::endl; */
 }
 
 std::vector<std::string>	possibleRequestedLoc(std::string uri) {

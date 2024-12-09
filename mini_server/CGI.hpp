@@ -11,6 +11,7 @@ class CGI
 	private:
 		
 		std::string _scriptPath;
+		std::string _interpreter;
 		std::string _responseBody;
 		std::string _contentType;
 		std::string _contentLength;
@@ -20,6 +21,7 @@ class CGI
 		bool		_lengthSet;
 		bool		_statusSet;
 		std::map<std::string, std::string> _env;
+		std::map<std::string, std::string> _interpreters;
 		//Response		_response;
 
 	public:
@@ -37,6 +39,7 @@ class CGI
 		bool getStatusSet() const;
 
 		void setEnv(ServerBlock server);
+		bool setInterpreters(LocationBlock location);
 		int executeScript();
 		void generateResponse();
 		void createhtml();
