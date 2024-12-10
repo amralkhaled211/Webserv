@@ -47,6 +47,24 @@ bool SendData::read_file(std::string const &path, parser &request) // this alrea
 	return false;
 }
 
+int SendData::checkCGIFile(const std::string &path)
+{
+	struct stat buffer;
+
+	if (stat(path.c_str(), &buffer) == 0)
+	{
+		if (access(path.c_str(), R_OK) != 0 || access(path.c_str(), X_OK) != 0)
+			return 403;
+		int fd = open(path.c_str(), O_RDONLY);
+		if (fd == -1)
+			return 404;
+		close(fd);
+	}
+	else
+		return 404;
+	return 0;
+}
+
 void SendData::handleCGI(const std::string &root, parser &request, ServerBlock server, LocationBlock location) //will need to return errors from here
 {
 	std::string file_extension = '.' +  get_file_extension(root);
@@ -65,6 +83,13 @@ void SendData::handleCGI(const std::string &root, parser &request, ServerBlock s
 		prepErrorResponse(400, location);
 		return ;
 	}
+	int code = checkCGIFile(root);
+	if (code != 0)
+	{
+		//std::cout << RED << "CGI FILE ERROR: " << code << RESET <<std::endl;
+		prepErrorResponse(code, location);
+		return ;
+	}
 	CGI cgi(root, request);
 	cgi.setEnv(server);
 	if (cgi.setInterpreters(location) == false)
@@ -73,7 +98,7 @@ void SendData::handleCGI(const std::string &root, parser &request, ServerBlock s
 		return ;
 	}
 
-	int code = cgi.executeScript();
+	code = cgi.executeScript();
 	if (code != 0)
 	{
 		prepErrorResponse(code, location);

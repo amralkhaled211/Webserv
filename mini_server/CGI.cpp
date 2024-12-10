@@ -254,7 +254,7 @@ int CGI::executeScript()
 			if (bufferStr.find(ERROR_MARKER) != std::string::npos)
 			{
 				errStr = bufferStr.substr(bufferStr.find(ERROR_MARKER) + strlen(ERROR_MARKER) + 2);
-				std::cout << RED << "ERROR_MARKER found: " << errStr << RESET << std::endl;
+				//std::cout << RED << "ERROR_MARKER found: " << errStr << RESET << std::endl;
 				/* kill(pid, SIGTERM);
 				sleep(1); */
 				kill(pid, SIGKILL);
@@ -283,7 +283,7 @@ int CGI::executeScript()
 
 		if (WIFEXITED(status))
 		{
-			if (WEXITSTATUS(status) != 0)
+			if (WEXITSTATUS(status) != 0 || WIFSIGNALED(status))
 			{
 				std::cerr << "Child process exited with status " << WEXITSTATUS(status) << std::endl;
 				return 500;
