@@ -59,6 +59,8 @@ class SendData
 	void codeErrorResponse(int code);
 	std::string getErrorPagePath(int code, const std::vector<std::vector<std::string> >& errorPage);
 	int readFromErrorPage(std::string& errorPagePath, std::string& body);
+	bool isNotAllowedMethod(LocationBlock& location, std::vector<std::string> allowedMethods, std::string method);
+
 	
 	// template<typename T>
 	// void prepErrorResponse(int code, T& location);

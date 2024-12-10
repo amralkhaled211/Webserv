@@ -214,6 +214,17 @@ bool SendData::isCGI(const parser &request, LocationBlock location)
 		return false;
 }
 
+bool	SendData::isNotAllowedMethod(LocationBlock& location, std::vector<std::string> allowedMethods, std::string currMethod)
+{
+	std::vector<std::string>::iterator itAllowedMethod = std::find(allowedMethods.begin(), allowedMethods.end(), currMethod);
+	if (itAllowedMethod == allowedMethods.end())
+	{
+		prepErrorResponse(405, location);
+		return true;
+	}
+	return false;
+}
+
 Response &SendData::sendResponse(int clientSocket, std::vector<ServerBlock> &servers, parser &request, int epollFD)
 {
 
@@ -229,17 +240,17 @@ Response &SendData::sendResponse(int clientSocket, std::vector<ServerBlock> &ser
 	_isReturn = false;
 	ServerBlock current_server = findServerBlock(servers, request);
 
+	LocationBlock location = findLocationBlock(current_server.getLocationVec(), request);
+
 	if (request.method == "GET")
 	{
 		try
 		{
-			LocationBlock location = findLocationBlock(current_server.getLocationVec(), request);
+			// LocationBlock location = findLocationBlock(current_server.getLocationVec(), request);
 			
-			std::vector<std::string>::iterator itAllowedMethod = std::find(location.getAllowedMethods().begin(), location.getAllowedMethods().end(), "GET");
-			if (itAllowedMethod == location.getAllowedMethods().end()) {
-				prepErrorResponse(405, location);
+			if (isNotAllowedMethod(location, location.getAllowedMethods(), "GET"))
 				return _response;
-			}
+
 			std::string root = PATH_TO_WWW + location.getRoot() + request.path; // maybe a more suitable name: pathToFileToServe
 			
 			// std::cout << MAGENTA_COLOR << "Root: " << root << std::endl << "Request path:" <<  request.path << RESET << std::endl;
@@ -297,11 +308,9 @@ Response &SendData::sendResponse(int clientSocket, std::vector<ServerBlock> &ser
 	{
 		LocationBlock location = findLocationBlock(current_server.getLocationVec(), request);
 		
-		std::vector<std::string>::iterator itAllowedMethod = std::find(location.getAllowedMethods().begin(), location.getAllowedMethods().end(), "POST");
-		if (itAllowedMethod == location.getAllowedMethods().end()) {
-			prepErrorResponse(405, location);
-			return _response;
-		}
+		if (isNotAllowedMethod(location, location.getAllowedMethods(), "POST"))
+				return _response;
+
 		std::string root = PATH_TO_WWW + location.getRoot() + request.path;
 		//std::cout << MAGENTA_COLOR << "Root: " << root << std::endl << "Request path:" <<  request.path << std::endl << "Request method: " << request.method << RESET << std::endl;
 
@@ -320,6 +329,16 @@ Response &SendData::sendResponse(int clientSocket, std::vector<ServerBlock> &ser
 			_response.contentType = "Content-Type: text/html;\r\n";
 			_response.contentLength = "Content-Length: " + intToString(_response.body.size()) + "\r\n";
 		}
+	}
+	else if (request.method == "DELETE")
+	{
+		// LocationBlock location = findLocationBlock(current_server.getLocationVec(), request);
+
+		if (isNotAllowedMethod(location, location.getAllowedMethods(), "DELETE"))
+				return _response;
+		std::string root = PATH_TO_WWW + location.getRoot() + request.path; // maybe a more suitable name: pathToFileToServe
+
+		// Delete implementation
 	}
 	return _response;
 }
