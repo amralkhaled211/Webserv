@@ -421,7 +421,22 @@ Response &SendData::sendResponse(int clientSocket, std::vector<ServerBlock> &ser
 				return _response;
 		std::string root = PATH_TO_WWW + location.getRoot() + request.path; // maybe a more suitable name: pathToFileToServe
 
+		std::cout << BOLD_RED << "IN DELETE METHOD" << RESET << std::endl;
 		// Delete implementation
+		struct stat buffer;
+        if (stat(root.c_str(), &buffer) == 0) 
+		{
+            if (remove(root.c_str()) == 0) 
+			{
+                _response.body = "<!DOCTYPE html><html><head><title>200 OK</title></head>";
+                _response.body += "<body><h1>200 OK</h1><p>File deleted successfully</p></body></html>";
+                _response.status = "HTTP/1.1 200 OK\r\n";
+                _response.contentType = "Content-Type: text/html;\r\n";
+                _response.contentLength = "Content-Length: " + intToString(_response.body.size()) + "\r\n";
+            }
+			else 
+               prepErrorResponse(500, location);
+        } 
 	}
 	std::cout << MAGENTA_COLOR <<  _response.status << std::endl;
 	std::cout << _response.contentType << std::endl;

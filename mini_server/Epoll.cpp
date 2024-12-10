@@ -289,7 +289,7 @@ void Epoll::handleData(int client_fd)
 
 	if (clientB.getIsAllRecieved()) // we only go on here once we recieved the whole request
 	{
-		std::cout <<YELLOW<< "BODY "<<clientB.getRequest().body << RESET <<std::endl;
+		//std::cout <<YELLOW<< "BODY "<<clientB.getRequest().body << RESET <<std::endl;
 		clientB.setResponse(sendData.sendResponse(clientB.getClientFD(), _servers, clientB.getRequest(), _epollFD));
 
 		clientB.status = RECIEVED;

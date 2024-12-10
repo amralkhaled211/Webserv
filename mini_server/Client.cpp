@@ -95,7 +95,7 @@ bool Client::parseHeadersAndBody()
 			}
 		}
 	}
-	else /// this will be for the GET request
+	else if (request.method == "GET")
 	{
 		//std::cout << "coming to the get validation " << std::endl;
 		if (parseHeaders(this->_buffer))
@@ -104,6 +104,10 @@ bool Client::parseHeadersAndBody()
 			return true; // this would mean the headers are not chunked 
 		else 
 			_headersIsChunked = true;
+	}
+	else if (request.method == "DELETE")
+	{
+		return true;
 	}
 	std::cout << "we throwing this ::: " << std::endl;	
 	return false;
