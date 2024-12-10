@@ -252,7 +252,7 @@ void Epoll::handleResponse(int clientToSend)
 	}
 	else if (isChunkedResponse && !remainingResBuffer.size())
 	{
-		std::cout << "SENDING LAST CHUNK\n";
+		//std::cout << "SENDING LAST CHUNK\n";
 		sendNow = "0\r\n\r\n";
 	}
 	else
@@ -263,7 +263,7 @@ void Epoll::handleResponse(int clientToSend)
 	if (isChunkedResponse && sendNow != "0\r\n\r\n") {
 		return ; // didn't send whole response, delay killing and closing
 	}
-	std::cout << "killing and closing the client fd " << clientToSend << "\n";
+	//std::cout << "killing and closing the client fd " << clientToSend << "\n";
 	killClient(clientToSend);
 	close(clientToSend);
 }
@@ -289,6 +289,7 @@ void Epoll::handleData(int client_fd)
 
 	if (clientB.getIsAllRecieved()) // we only go on here once we recieved the whole request
 	{
+		std::cout <<YELLOW<< "BODY "<<clientB.getRequest().body << RESET <<std::endl;
 		clientB.setResponse(sendData.sendResponse(clientB.getClientFD(), _servers, clientB.getRequest(), _epollFD));
 
 		clientB.status = RECIEVED;
@@ -364,7 +365,7 @@ void Epoll::handleConnection(int server_fd) // we add additionally to the server
 
 		std::string currentServerHost = getCurrentServerHost(server_fd);
 
-		std::cout << "current Server Host: " << currentServerHost << std::endl;
+		//std::cout << "current Server Host: " << currentServerHost << std::endl;
 
 		Client newClient;
 		newClient.setClientFD(client_fd); // creating new Client Object for the new client

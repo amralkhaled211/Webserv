@@ -89,6 +89,7 @@ void SendData::handleCGI(const std::string &root, parser &request, ServerBlock s
 	}
 
 	code = cgi.executeScript();
+	std::cout << RED << "Done with CGI execution" << RESET << std::endl;
 	if (code != 0)
 	{
 		prepErrorResponse(code, location);
@@ -96,6 +97,7 @@ void SendData::handleCGI(const std::string &root, parser &request, ServerBlock s
 	}
 
 	cgi.generateResponse();
+	std::cout << RED << "Done with CGI response" << RESET << std::endl;
 
 	_response.body = cgi.getResponse();
 
@@ -115,8 +117,16 @@ void SendData::handleCGI(const std::string &root, parser &request, ServerBlock s
 	else
 		_response.contentType = "Content-Type: text/html;\r\n";
 		
-	unsigned int content_len = _response.body.size();
-		_response.contentLength = "Content-Length: " + intToString(content_len) + "\r\n";
+	if (_response.body.size() > SEND_CHUNK_SIZE) {
+		_response.transferEncoding = "Transfer-Encoding: chunked\r\n";
+		_response.contentLength = "";
+	}
+	else {
+		_response.contentLength = "Content-Length: " + intToString(_response.body.size()) + "\r\n";
+		_response.transferEncoding = "";
+	}
+	/* unsigned int content_len = _response.body.size();
+		_response.contentLength = "Content-Length: " + intToString(content_len) + "\r\n"; */
 }
 
 std::vector<std::string>	possibleRequestedLoc(std::string uri) {
@@ -246,7 +256,7 @@ std::string SendData::findCGIIndex(const std::vector<std::string> &files, std::s
 		file = root + '/' + files[i];
 		removeExcessSlashes(file);
 		struct stat		buffer;
-		std::cout << "FILE: " << file << std::endl;
+		//std::cout << "FILE: " << file << std::endl;
 
 		if (stat(file.c_str(), &buffer) == 0 && access(file.c_str(), R_OK) == 0 && access(file.c_str(), X_OK) == 0)
 		{
@@ -263,7 +273,7 @@ std::string SendData::findCGIIndex(const std::vector<std::string> &files, std::s
 	return "";
 }
 
-bool SendData::isCGI(const parser &request, LocationBlock location)
+bool SendData::isCGI(LocationBlock location)
 {
 	if (location.getCgiPath().empty() || location.getCgiExt().empty())
 		return false;
@@ -316,7 +326,7 @@ Response &SendData::sendResponse(int clientSocket, std::vector<ServerBlock> &ser
 			{
 				if (_isDir == true) // here we handle the directory
 				{
-					if (isCGI(request, location)) //check if cgi location then if found the index file execute the cgi else execute the directory 
+					if (isCGI(location)) //check if cgi location then if found the index file execute the cgi else execute the directory 
 					{
 						std::string file = findCGIIndex(location.getIndex(), root, request);
 						if (file != "")
@@ -337,7 +347,7 @@ Response &SendData::sendResponse(int clientSocket, std::vector<ServerBlock> &ser
 							prepErrorResponse(404, location);
 					}
 				}
-				else if (isCGI(request, location)) // add a check here that also checks if the extensions exist and match to avoid going into cgi if unnecessary
+				else if (isCGI(location)) // add a check here that also checks if the extensions exist and match to avoid going into cgi if unnecessary
 				{
 					//std::cout << RED_COLOR << "In CGI GET" << RESET << std::endl;
 					handleCGI(root, request, current_server, location);
@@ -383,9 +393,13 @@ Response &SendData::sendResponse(int clientSocket, std::vector<ServerBlock> &ser
 		std::string root = PATH_TO_WWW + location.getRoot() + request.path;
 		//std::cout << MAGENTA_COLOR << "Root: " << root << std::endl << "Request path:" <<  request.path << std::endl << "Request method: " << request.method << RESET << std::endl;
 
-		if (isCGI(request, location)) // might need to rethink this, eg. if resource for video.py is in cgi-bin it wont output the video beacuse it thinks its not an acceptable extension
+		std::cout << CYAN_COLOR << "Request body: " << request.body << RESET << std::endl;
+
+
+		if (isCGI(location)) // might need to rethink this, eg. if resource for video.py is in cgi-bin it wont output the video beacuse it thinks its not an acceptable extension
 		{
 			//std::cout << RED_COLOR << "In CGI POST" << RESET << std::endl;
+			std::cout << root << std::endl;
 			handleCGI(root, request, current_server, location);
 		}
 		else
@@ -409,6 +423,9 @@ Response &SendData::sendResponse(int clientSocket, std::vector<ServerBlock> &ser
 
 		// Delete implementation
 	}
+	std::cout << MAGENTA_COLOR <<  _response.status << std::endl;
+	std::cout << _response.contentType << std::endl;
+	std::cout << _response.contentLength << RESET << std::endl;
 	return _response;
 }
 
@@ -518,7 +535,7 @@ void		SendData::displayDir(const std::string& path, const std::string& requestUR
 			fullPath += '/';
 		fullPath += displayName;
 
-		std::cout << "display name: " << displayName << std::endl;
+		//std::cout << "display name: " << displayName << std::endl;
 
 		struct stat fileStat;
 		if (stat(dirElements[i].second.c_str(), &fileStat) == 0) {
@@ -534,14 +551,14 @@ void		SendData::displayDir(const std::string& path, const std::string& requestUR
 
 			// Include size and last modification date in the HTML output
 			std::stringstream htmlStream;
-			htmlStream << "<tr><td><a href=\"" << encodeURI(escapeHtml(fullPath)) << "\">" << escapeHtml(displayName) << "</a></td>"
+			htmlStream << "<tr><td><a href=\"" << escapeHtml(fullPath) << "\">" << escapeHtml(displayName) << "</a></td>"
 					<< "<td>" << fileSize << "</td>"
 					<< "<td>" << modTimeStr << "</td></tr>";
 			html << htmlStream.str();
 		} else {
 			std::cout << "ERRNO: " << errno << std::endl;
 			std::stringstream htmlStream;
-			htmlStream << "<tr><td><a href=\"" << encodeURI(escapeHtml(fullPath)) << "\">" << escapeHtml(displayName) << "</a></td>"
+			htmlStream << "<tr><td><a href=\"" << escapeHtml(fullPath) << "\">" << escapeHtml(displayName) << "</a></td>"
 					<< "<td colspan=\"2\">(unable to retrieve file information)</td></tr>";
 			html << htmlStream.str();
 		}

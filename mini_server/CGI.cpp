@@ -139,6 +139,8 @@ bool CGI::setInterpreters(LocationBlock location)
 				_interpreters[".php"] = path;
 			else if (path.find("perl") != std::string::npos)
 				_interpreters[".pl"] = path;
+			else if (path.find("bash") != std::string::npos)
+				_interpreters[".sh"] = path;
 		}
 	}
 	std::string fileExt = '.' + get_file_extension(_scriptPath);
@@ -183,6 +185,8 @@ int CGI::executeScript()
 	if (pipe(inPipe) == -1 || pipe(outPipe) == -1)
 		throw std::runtime_error("Failed to create pipes in CGI");
 
+	std::cout << "Executing script: " << _interpreter << " " << _scriptPath << std::endl;
+
 	pid_t pid = fork();
 	if (pid == -1)
 		throw std::runtime_error("Failed to fork in CGI");
@@ -210,6 +214,8 @@ int CGI::executeScript()
 	{
 		close(inPipe[0]);
 		close(outPipe[1]);
+
+		std::cout << _request.method << " " << _request.path << " " << _request.body << std::endl;
 		
 		if (_request.method == "POST" && !_request.body.empty()){
 			write (inPipe[1], _request.body.c_str(), _request.body.size());
@@ -254,7 +260,7 @@ int CGI::executeScript()
 			if (bufferStr.find(ERROR_MARKER) != std::string::npos)
 			{
 				errStr = bufferStr.substr(bufferStr.find(ERROR_MARKER) + strlen(ERROR_MARKER) + 2);
-				//std::cout << RED << "ERROR_MARKER found: " << errStr << RESET << std::endl;
+				std::cout << RED << "ERROR_MARKER found: " << errStr << RESET << std::endl;
 				/* kill(pid, SIGTERM);
 				sleep(1); */
 				kill(pid, SIGKILL);

@@ -1,4 +1,5 @@
 <?php
+<?php
 
 // Output the HTTP headers
 header("Content-Type: text/html");

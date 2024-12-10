@@ -39,7 +39,7 @@ bool Client::parseHeadersAndBody()
 	else if (request.method == "POST")
 	{
 		size_t headerEndPos = this->_buffer.find("\r\n\r\n");
-		std::cout << BOLD_GREEN << "this buffer"<< this->_buffer << RESET << std::endl;
+		//std::cout << BOLD_GREEN << "this buffer"<< this->_buffer << RESET << std::endl;
 		if (headerEndPos == std::string::npos) // this would be an indcation that the headers would be on chunks 
 		{
 			// std::cout << "headerEndPos not found" << std::endl;
@@ -72,25 +72,25 @@ bool Client::parseHeadersAndBody()
 		}
 		else 
 		{
-			std::cout << "i am going to the else " << std::endl;
+			//std::cout << "i am going to the else " << std::endl;
 			std::string body = this->_buffer.substr(headerEndPos + 4);
 			std::string headerSection = this->_buffer.substr(0, headerEndPos);
 			if (parseHeaders(headerSection))
 				return true;
 			if(headersValidate(this->_buffer, request.method))// this would check if the headers were sent all as one chunk via telnet
 			{
-				std::cout << "sending the 400 error " << std::endl;
+				//std::cout << "sending the 400 error " << std::endl;
 				if (request.statusError != 0)
 					return true;
 			}
 			if (handlingBody(body))
 			{
-				std::cout << "i am going to the else true" << std::endl;
+				//std::cout << "i am going to the else true" << std::endl;
 				return true;
 			}
 			else
 			{
-				std::cout << "i am going to the else false" << std::endl;
+				//std::cout << "i am going to the else false" << std::endl;
 				return false;
 			}
 		}
@@ -162,7 +162,7 @@ void Client::saveBodyToFile()
     if (infile.good())
     {
 		//we might want to handle this differently like an error page or something
-        std::cout << "File already exists: " << filePath << std::endl;
+        //std::cout << "File already exists: " << filePath << std::endl;
 	}
 	infile.close();
 
@@ -199,7 +199,7 @@ bool Client::parse_first_line()
 	request.method = deleteSpaces(this->_buffer.substr(start, end - start));
 	if (request.method != "GET" && request.method != "POST" && request.method != "DELETE")
 	{
-	    std::cerr << "Error: bad request method" << std::endl;
+	    //std::cerr << "Error: bad request method" << std::endl;
 	    request.statusError = 400;
 	    return false;
 	}

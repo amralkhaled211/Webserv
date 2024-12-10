@@ -147,7 +147,7 @@ bool Client::validateGetHeaders(std::string &buffer)
     {
         if (line == "\r" && request.headers.find("Host") != request.headers.end() && !request.headers["Host"].empty()) // Check for the end of headers
         {
-            std::cout << "end of headers" << std::endl;
+            //std::cout << "end of headers" << std::endl;
             request.statusError = 0;
             return true;
         }
@@ -170,11 +170,11 @@ bool Client::validatePostHeaders(std::string &buffer)
         if (line == "\r" && validateHost() == 0) // Check for the end of headers
         {
 
-			std::cout << "end of headers" << std::endl;
+			//end of headers" << std::endl;
             if (request.headers.find("Content-Length") != request.headers.end() &&
                 request.headers.find("Transfer-Encoding") == request.headers.end())
             {
-                std::cout << "doing the Content-length " << std::endl;
+                //std::cout << "doing the Content-length " << std::endl;
                 request.statusError = validateContentLength();
                 return true;
             }

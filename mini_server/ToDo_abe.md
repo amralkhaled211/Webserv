@@ -1,5 +1,5 @@
 # TASKS
-- [ ] Try passing the interpreters from cgi_path to execve
+- [ ] CGI Post is not working now, fix with Amr
 ## LEARNING
 
 - [ ] Read CGI book
@@ -11,6 +11,7 @@
 
 #### DONE
 
+- [x] Try passing the interpreters from cgi_path to execve
 - [x] CGI Enviroment setup with correct values
 - [x] Rewrite the findCGIIndex in isDie
 - [x] Handle different status codes coming form CGI, set error pages accordingly -> 508 for inf loop, 500 for execve error, 403 for forbidden, 404 for not found

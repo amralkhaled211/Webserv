@@ -15,7 +15,6 @@ try:
         
         # Output the HTTP headers
         print("Content-Type: image/gif")
-        print(f"Content-Length: {content_length}")
         print("Status: 200 OK")
         print()
         

@@ -11,7 +11,7 @@ class Client;
 #define	SD_NO_READ_PERM		-1
 #define	SD_NO_FILE			-2
 
-#define	PATH_TO_WWW	"/"
+#define	PATH_TO_WWW	""
 // "/home/aismaili/Webserv/"
 
 typedef struct Redirection
@@ -51,7 +51,7 @@ class SendData
 	std::string findCGIIndex(const std::vector<std::string> &files, std::string &root, parser &request);
 	void handleCGI(const std::string &root, parser &request, ServerBlock server, LocationBlock location);
 	int	checkCGIFile(const std::string &path);
-	bool isCGI(const parser &request, LocationBlock location);
+	bool isCGI(LocationBlock location);
 	void redirect(LocationBlock& location, parser &request);
 	void saveBodyToFile(const std::string &filename, parser &request);
 	Response &sendResponse(int clientSocket, std::vector<ServerBlock> &servers, parser &request, int epollFD);
@@ -74,7 +74,7 @@ class SendData
 		std::string		contentType;
 		int				fileStatus;
 
-		std::cout << "IN PREP ERROR RESPONSE\n";
+		//std::cout << "IN PREP ERROR RESPONSE\n";
 
 		if (!errorPagePath.empty())
 		{
