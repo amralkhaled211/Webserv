@@ -59,6 +59,7 @@ Client &findClient(int clientFD, std::vector<Client> &clients) // careful, there
 	}
 	throw std::runtime_error("THIS MUST BE A NEW CLIENT OR A SERVER SOCKET");
 	//std::cout << "RETURNING LAST CLIENT\n";
+	//std::cout << "RETURNING LAST CLIENT\n";
 	return clients[--i]; // returning last one, should never happen!!
 }
 
@@ -169,7 +170,7 @@ void Epoll::handleEpollEvents(const std::vector<int> &serverSockets)
 			_clFDs.push_back(_events[i].data.fd);
 		if (_events[i].events & (EPOLLERR | EPOLLHUP | EPOLLRDHUP)) // what do these errors/flags mean?
 		{
-			std::cout << "---------------------------------------------------\n";
+			//std::cout << "---------------------------------------------------\n";
 			std::cerr << "Error on fd " << _events[i].data.fd << ": \n";
 			if (_events[i].events & EPOLLERR)
 				std::cerr << YELLOW_COLOR << "EPOLLERR\n" << RESET_COLOR;
@@ -205,7 +206,7 @@ void Epoll::handleEpollEvents(const std::vector<int> &serverSockets)
 					printClientInfo(_clients[j].getClientFD(),_events[i].events, _clients);
 					std::cout << "\n" << RESET;
 				}
-				std::cout << "---------------------------------------------------\n";
+				//std::cout << "---------------------------------------------------\n";
 			}
 		}
 		// std::cout << "######################################################\n";

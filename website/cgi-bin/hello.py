@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 
 print("<!DOCTYPE html>")
 print("<html lang=en>")

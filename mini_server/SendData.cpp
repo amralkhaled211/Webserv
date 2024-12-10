@@ -32,19 +32,36 @@ bool SendData::read_file(std::string const &path, parser &request) // this alrea
 		file.close();
 		return true;
 	}
-	if (!file.is_open())
-		std::cout << "COULDN'T OPEN FILE: " << path << std::endl;
+	/* if (!file.is_open())
+		std::cout << "COULDN'T OPEN FILE: " << path << std::endl; */
 	return false;
+}
+
+int SendData::checkCGIFile(const std::string &path)
+{
+	struct stat buffer;
+
+	if (stat(path.c_str(), &buffer) == 0)
+	{
+		if (access(path.c_str(), R_OK) != 0 || access(path.c_str(), X_OK) != 0)
+			return 403;
+		int fd = open(path.c_str(), O_RDONLY);
+		if (fd == -1)
+			return 404;
+		close(fd);
+	}
+	else
+		return 404;
+	return 0;
 }
 
 void SendData::handleCGI(const std::string &root, parser &request, ServerBlock server, LocationBlock location) //will need to return errors from here
 {
-	std::string file_extension = '.' +  get_file_extension(request.path);
+	std::string file_extension = '.' +  get_file_extension(root);
 	std::vector<std::string> allowed_ext = location.getCgiExt();
 	bool isAllowed = false;
 	for (std::vector<std::string>::iterator it = allowed_ext.begin(); it != allowed_ext.end(); it++)
 	{
-		/* std::cout << "allowed ext : " << *it << std::endl; */
 		if (*it == file_extension)
 		{
 			isAllowed = true;
@@ -53,20 +70,34 @@ void SendData::handleCGI(const std::string &root, parser &request, ServerBlock s
 	}
 	if (!isAllowed)
 	{
-		throw std::runtime_error("CGI extension not allowed");
+		prepErrorResponse(400, location);
+		return ;
+	}
+	int code = checkCGIFile(root);
+	if (code != 0)
+	{
+		//std::cout << RED << "CGI FILE ERROR: " << code << RESET <<std::endl;
+		prepErrorResponse(code, location);
+		return ;
 	}
 	CGI cgi(root, request);
 	cgi.setEnv(server);
-	if (cgi.executeScript() != true)
+	if (cgi.setInterpreters(location) == false)
 	{
-		//std::cout << RED_COLOR << "CGI execution failed" << RESET << std::endl;
-		throw std::runtime_error("CGI execution failed");
+		prepErrorResponse(500, location);
+		return ;
 	}
+
+	code = cgi.executeScript();
+	if (code != 0)
+	{
+		prepErrorResponse(code, location);
+		return ;
+	}
+
 	cgi.generateResponse();
 
 	_response.body = cgi.getResponse();
-
-	file_extension = get_file_extension(request.path);
 
 	if (cgi.getStatusSet())
 	{
@@ -86,9 +117,6 @@ void SendData::handleCGI(const std::string &root, parser &request, ServerBlock s
 		
 	unsigned int content_len = _response.body.size();
 		_response.contentLength = "Content-Length: " + intToString(content_len) + "\r\n";
-	/* std::cout << MAGENTA_COLOR << "CGI Status: " << _response.status << std::endl;
-	std::cout << "CGI Content type: " << _response.contentType << std::endl;
-	std::cout << "CGI Content length: " << _response.contentLength << RESET << std::endl; */
 }
 
 std::vector<std::string>	possibleRequestedLoc(std::string uri) {
@@ -199,6 +227,7 @@ bool SendData::findIndexFile(const std::vector<std::string> &files, std::string 
 		std::string file = root + '/' + files[i];
 		removeExcessSlashes(file);
 		//std::cout << BOLD_GREEN << "FILE from index: " << file << RESET << std::endl;
+		//std::cout << BOLD_GREEN << "FILE from index: " << file << RESET << std::endl;
 		if (read_file(file, request))
 			return true;
 		i++;
@@ -206,12 +235,39 @@ bool SendData::findIndexFile(const std::vector<std::string> &files, std::string 
 	return false;
 }
 
+std::string SendData::findCGIIndex(const std::vector<std::string> &files, std::string &root, parser &request) // if found will also prepare response, else return false
+{
+	bool found = false;
+	size_t i = 0;
+	std::string file;
+
+	while (i < files.size())
+	{
+		file = root + '/' + files[i];
+		removeExcessSlashes(file);
+		struct stat		buffer;
+		std::cout << "FILE: " << file << std::endl;
+
+		if (stat(file.c_str(), &buffer) == 0 && access(file.c_str(), R_OK) == 0 && access(file.c_str(), X_OK) == 0)
+		{
+			found = true;
+			break;
+		}
+		else	
+			i++;
+	}
+	if (found)
+	{	
+		return file;
+	}
+	return "";
+}
+
 bool SendData::isCGI(const parser &request, LocationBlock location)
 {
-	if (request.path.find("/cgi-bin/") != std::string::npos)
-		return true;
-	else
+	if (location.getCgiPath().empty() || location.getCgiExt().empty())
 		return false;
+	return true;
 }
 
 bool	SendData::isNotAllowedMethod(LocationBlock& location, std::vector<std::string> allowedMethods, std::string currMethod)
@@ -260,15 +316,28 @@ Response &SendData::sendResponse(int clientSocket, std::vector<ServerBlock> &ser
 			{
 				if (_isDir == true) // here we handle the directory
 				{
-					bool foundFile = findIndexFile(location.getIndex(), root, request);
-					if (!foundFile && location.getAutoindex() == ON) {
-						// std::cout << "before AUTOINDEX -> root for this location: " << root << std::endl;
-						this->displayDir(root, request.path);
+					if (isCGI(request, location)) //check if cgi location then if found the index file execute the cgi else execute the directory 
+					{
+						std::string file = findCGIIndex(location.getIndex(), root, request);
+						if (file != "")
+							handleCGI(file, request, current_server, location);
+						else if (file == "" && location.getAutoindex() == ON) {
+							this->displayDir(root, request.path);
+						}
+						else if (file == "")
+							prepErrorResponse(404, location);
 					}
-					else if (!foundFile)
-						prepErrorResponse<LocationBlock>(403, location);
+					else //checking again if there is an index file, else display the directory
+					{
+						bool foundFile = findIndexFile(location.getIndex(), root, request);
+						if (!foundFile && location.getAutoindex() == ON) {
+							this->displayDir(root, request.path);
+						}
+						else if (!foundFile)
+							prepErrorResponse(404, location);
+					}
 				}
-				else if (isCGI(request, location)) // might need to rethink this, eg. if resource for video.py is in cgi-bin it wont output the video beacuse it thinks its not an acceptable extension
+				else if (isCGI(request, location)) // add a check here that also checks if the extensions exist and match to avoid going into cgi if unnecessary
 				{
 					//std::cout << RED_COLOR << "In CGI GET" << RESET << std::endl;
 					handleCGI(root, request, current_server, location);
@@ -549,6 +618,7 @@ int		SendData::readFromErrorPage(std::string& errorPagePath, std::string& body)
 	ss << file.rdbuf();
 
 	body = ss.str();
+	//std::cout << "BODY: " << body << std::endl;
 	return SD_OK;
 }
 

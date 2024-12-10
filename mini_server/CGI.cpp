@@ -3,7 +3,7 @@
 
 CGI::CGI() {}
 
-CGI::CGI(const std::string &scriptPath, const parser &request) : _scriptPath(scriptPath) , _request(request), _typeSet(false), _statusSet(false)/* _lengthSet(false) */
+CGI::CGI(const std::string &scriptPath, const parser &request) : _scriptPath(scriptPath) , _request(request), _typeSet(false), _statusSet(false), _interpreter("")
 {}
 
 CGI::~CGI() {}
@@ -77,16 +77,16 @@ void CGI::setEnv(ServerBlock server)
 	_env["REQUEST_METHOD"] = _request.method;
 	_env["QUERY_STRING"] = _request.queryString;
 	_env["SCRIPT_NAME"] = _scriptPath;
-	_env["PATH_INFO"] = _request.path;
+	_env["PATH_INFO"] = _scriptPath;
+	size_t semicolon = _request.headers["Host"].find_first_of(':');
+	_env["SERVER_NAME"] = _request.headers["Host"].substr(0, semicolon);
+	_env["SERVER_PORT"] = _request.headers["Host"].substr(semicolon + 1);
 	_env["PATH_TRANSLATED"] = "/translated/path" + _request.path;
-	_env["SERVER_NAME"] = join(server.getServerName(), ", ");//replace with actual host name etc THIS  IS HARDCODED RN
-	_env["SERVER_PORT"] = "8080";
-	_env["SERVER_PROTOCOL"] = "HTTP/1.1";
-	std::string remoteAddr = "127.0.0.1"; // Replace with actual method to get remote address
+	_env["SERVER_PROTOCOL"] = _request.version;
+	/* std::string remoteAddr = "127.0.0.1"; // Replace with actual method to get remote address
     std::string remoteHost = "localhost"; // Replace with actual method to get remote host
     _env["REMOTE_ADDR"] = remoteAddr;
-    _env["REMOTE_HOST"] = remoteHost;
-	std::string file_extension = get_file_extension(_request.path);
+    _env["REMOTE_HOST"] = remoteHost; */
 
     _env["CONTENT_TYPE"] = _request.headers["Content-Type"];
 
@@ -123,6 +123,33 @@ void CGI::setEnv(ServerBlock server)
 	}
 }
 
+bool CGI::setInterpreters(LocationBlock location)
+{
+	std::vector<std::string> interpreters = location.getCgiPath();
+	for (std::vector<std::string>::iterator it = interpreters.begin(); it != interpreters.end(); ++it)
+	{
+		//_interpreters[*it] = *it;
+		std::istringstream ss(*it);
+		std::string path;
+		while (ss >> path)
+		{
+			if (path.find("python3") != std::string::npos)
+				_interpreters[".py"] = path;
+			else if (path.find("php") != std::string::npos)
+				_interpreters[".php"] = path;
+			else if (path.find("perl") != std::string::npos)
+				_interpreters[".pl"] = path;
+		}
+	}
+	std::string fileExt = '.' + get_file_extension(_scriptPath);
+	_interpreter = _interpreters[fileExt];
+	if (_interpreter.empty())
+	{
+		return false;
+	}
+	return true;
+}
+
 
 void freeEnvp(std::vector<char*> &envp)
 {
@@ -148,14 +175,13 @@ void CGI::printEnv()
 	}
 }
 
-bool CGI::executeScript()
+int CGI::executeScript()
 {
 	int inPipe[2];
 	int outPipe[2];
 
 	if (pipe(inPipe) == -1 || pipe(outPipe) == -1)
 		throw std::runtime_error("Failed to create pipes in CGI");
-
 
 	pid_t pid = fork();
 	if (pid == -1)
@@ -168,29 +194,16 @@ bool CGI::executeScript()
 		close(inPipe[1]);
         close(outPipe[0]);
 
-		/* std::ofstream child_out("cgi_child_debug.txt");
-        if (!child_out.is_open())
-        {
-            std::cerr << "Failed to open debug log file" << std::endl;
-            exit(1);
-        }
-
-		child_out << "Child process started" << std::endl; */
-
 		std::vector<char*> envp = setUpEnvp();
-
-		/* child_out << "Env is set up going into execve" << std::endl; */
 		
-		char *arg[] = {const_cast<char*>(_scriptPath.c_str()), NULL};
-		/* child_out << "Executing script: " << _scriptPath << std::endl;
-		child_out.flush(); */
-        if (execve(_scriptPath.c_str(), arg, &envp[0]) == -1)
+		
+		char *arg[] = {const_cast<char*>(_interpreter.c_str()), const_cast<char*>(_scriptPath.c_str()), NULL};
+
+        if (execve(_interpreter.c_str(), arg, &envp[0]) == -1)
         {
-            std::cerr << "Failed to execute CGI script: " << strerror(errno) << std::endl;
             freeEnvp(envp);
-            //exit(1);
-			std::cout << ERROR_MARKER << std::endl;
-			return false;
+			std::cout << ERROR_MARKER << ": " << strerror(errno) <<std::endl;
+			return 1;
         }
 	}
 	else //PARENT
@@ -198,10 +211,7 @@ bool CGI::executeScript()
 		close(inPipe[0]);
 		close(outPipe[1]);
 		
-		if (_request.method == "POST" && !_request.body.empty())
-		{
-			/* std::cout << CYAN_COLOR << "Writing POST body to pipe: " <<std::endl;
-			std::cout << _request.body << RESET << std::endl; */	
+		if (_request.method == "POST" && !_request.body.empty()){
 			write (inPipe[1], _request.body.c_str(), _request.body.size());
 		}
 		close(inPipe[1]);
@@ -220,45 +230,37 @@ bool CGI::executeScript()
             close(outPipe[0]);
             throw std::runtime_error("select() failed");
         }
-        else if (selectResult == 0)
+        else if (selectResult == 0) // timeout occured
         {
-            // Timeout occurred
+
             kill(pid, SIGTERM); // Send SIGTERM to the child process
             sleep(1); // Give the child process some time to terminate
             kill(pid, SIGKILL); // Send SIGKILL if the child process is still running
             close(outPipe[0]);
-			/* _responseBody.clear(); */
-			/* std::cout << BOLD_YELLOW << "CGI script execution timed out" << std::endl;
-			std::cout << "CGI Status: " << _responseStatus << std::endl;
-			std::cout << "CGI Content type: " << _contentType << std::endl;
-			std::cout << "CGI Content length: " << _contentLength << RESET << std::endl;
-			std::cout << "CGI Body: " << _responseBody << std::endl; */
-            throw std::runtime_error("CGI script execution timed out");
+            return 508;
         }
 		
 
-		char buffer[1024];
+		char buffer[1024] = {0};
+		std::string bufferStr;
+		std::string errStr;
 		bool eof = false;
 		std::ostringstream output;
 		ssize_t bytesRead;
 		while ((bytesRead = read(outPipe[0], buffer,sizeof(buffer))) > 0)
 		{
-			//std::cout << "In read loop" << std::endl;
-			for (int i = 0; i < bytesRead; i++)
+			buffer[bytesRead] = '\0';
+			bufferStr = buffer;
+			if (bufferStr.find(ERROR_MARKER) != std::string::npos)
 			{
-				//std::cout << YELLOW_COLOR << buffer[i] << RESET;
-				if (strncmp(buffer + i, ERROR_MARKER, strlen(ERROR_MARKER)) == 0)
-				{
-					std::cout << "ERROR_MARKER found" << std::endl;
-					kill(pid, SIGTERM);
-        			sleep(1);
-        			kill(pid, SIGKILL);
-					eof = true;
-					break;
-				}
-			}
-			if (eof)
+				errStr = bufferStr.substr(bufferStr.find(ERROR_MARKER) + strlen(ERROR_MARKER) + 2);
+				//std::cout << RED << "ERROR_MARKER found: " << errStr << RESET << std::endl;
+				/* kill(pid, SIGTERM);
+				sleep(1); */
+				kill(pid, SIGKILL);
+				eof = true;
 				break;
+			}
 			output.write(buffer, bytesRead);
 		}
 
@@ -267,15 +269,35 @@ bool CGI::executeScript()
 		if (eof)
 		{
 			_responseBody.clear();
-			return false;
+			std::cout << errStr;
+			if (errStr == "Permission denied")
+				return 403;
+			else if (errStr.find("No such file or directory") != std::string::npos)
+				return 404;
+			else
+				return 500;
 		}
 		
 		int status;
 		waitpid(pid, &status, 0);
 
+		if (WIFEXITED(status))
+		{
+			if (WEXITSTATUS(status) != 0 || WIFSIGNALED(status))
+			{
+				std::cerr << "Child process exited with status " << WEXITSTATUS(status) << std::endl;
+				return 500;
+			}
+		}
+		else
+		{
+			std::cerr << "Child process exited abnormally" << std::endl;
+			return 500;
+		}
+
 		_responseBody = output.str();
 	}
-	return true;
+	return 0;
 }
 
 /* std::string trimNewline(const std::string &str)
