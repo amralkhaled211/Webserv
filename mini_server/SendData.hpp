@@ -11,7 +11,7 @@ class Client;
 #define	SD_NO_READ_PERM		-1
 #define	SD_NO_FILE			-2
 
-#define	PATH_TO_WWW	"/"
+#define	PATH_TO_WWW	""
 // "/home/aismaili/Webserv/"
 
 typedef struct Redirection
@@ -38,6 +38,9 @@ class SendData
 	StatusMsg _status;
 	
 	public:
+	class LocationNotFoundException : public std::exception
+	{
+	};
 	void notfound();
 	bool read_file(std::string const &path, parser &request);
 	LocationBlock findLocationBlock(std::vector<LocationBlock> &locations, parser &request);
@@ -63,14 +66,11 @@ class SendData
 	int readFromErrorPage(std::string& errorPagePath, std::string& body);
 	bool isNotAllowedMethod(LocationBlock& location, std::vector<std::string> allowedMethods, std::string method);
 
-	
-	// template<typename T>
-	// void prepErrorResponse(int code, T& location);
 
 	template<typename T>
 	void		prepErrorResponse(int code, T& location)
 	{
-		std::string		errorPagePath = getErrorPagePath(code, location.getErrorPage());
+		std::string		errorPagePath = PATH_TO_WWW + getErrorPagePath(code, location.getErrorPage());
 		std::string		contentType;
 		int				fileStatus;
 

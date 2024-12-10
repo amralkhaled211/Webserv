@@ -38,7 +38,7 @@ void StatusMsg::_twoHunderds()
 
 	// 200 OK
 	msg.push_back("OK");
-	msg.push_back("");
+	msg.push_back("The server is providing a Default Page for the request");
 	_statusMsg[200] = msg;
 	msg.clear();
 

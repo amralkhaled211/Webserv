@@ -22,6 +22,7 @@ ServerBlock&	ServerBlock::operator=(const ServerBlock& other) {
 
 ServerBlock::~ServerBlock() { }
 
+
 static bool	isInvalidServerName(std::string server_name) {
 	// Domain
 	(void)server_name;
@@ -29,7 +30,7 @@ static bool	isInvalidServerName(std::string server_name) {
 		return true;
 	if (server_name.find("..") != std::string::npos) // invalid format
 		return true;
-	// IP
+	// IP - no checks by nginx
 	return false;
 }
 

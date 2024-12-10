@@ -4,7 +4,7 @@ import os
 import sys
 
 # Set the path to the image
-image_path = "/home/aszabo/Docs/Webserv/website/pics/cap.gif"
+image_path = "/home/aismaili/Webserv/website/pics/captain.gif"
 
 try:
     # Open the image file in binary mode

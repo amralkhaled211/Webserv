@@ -55,8 +55,7 @@ int Server::create_and_configure_socket()
     make_socket_non_blocking(serverSocket);
 
     int opt = 1; // 1024 * 1024;
-    if (setsockopt(serverSocket, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) < 0 ||
-        setsockopt(serverSocket, SOL_SOCKET, SO_REUSEPORT, &opt, sizeof(opt)) < 0)
+    if (setsockopt(serverSocket, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) < 0)
         throw std::runtime_error("setsockopt(SO_REUSEADDR) failed");
 
     return serverSocket;
@@ -73,17 +72,26 @@ void Server::bindNamesWithPorts(std::vector<std::string>& serverName, std::vecto
         for (std::vector<int>::iterator it_port = serverPort.begin(); it_port != serverPort.end(); ++it_port)
         {
             int port = *it_port;
-            int serverSocket = create_and_configure_socket();
             sockaddr_in serverAddress;
 	        serverAddress.sin_family = AF_INET;
 	        serverAddress.sin_port = htons(port);
             if (!isValidIPAddress(name))
+            {
                 serverAddress.sin_addr.s_addr = INADDR_ANY;
+                std::cout << "INVALID IP ADDRESS: " << name << std::endl;
+                std::cout << "                  : " << INADDR_ANY << std::endl;
+            }
             else
+            {
                 serverAddress.sin_addr.s_addr = inet_addr(name.c_str());
+                std::cout << "VALID IP ADDRESS: " << name << std::endl;
+            }
 
-	        if (bind(serverSocket, (struct sockaddr*)&serverAddress, sizeof(serverAddress)) < 0)
-	        	throw std::runtime_error("Binding failed");
+            int serverSocket = create_and_configure_socket();
+
+            int bindRC = bind(serverSocket, (struct sockaddr*)&serverAddress, sizeof(serverAddress));
+	        if (bindRC < 0)
+	        	throw std::runtime_error(std::string("Binding failed: ") + strerror(errno));
 
 	        if (listen(serverSocket, 5) < 0)
 	        	throw std::runtime_error("Listening failed");

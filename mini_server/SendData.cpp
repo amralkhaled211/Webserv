@@ -138,6 +138,7 @@ std::vector<std::string>	possibleRequestedLoc(std::string uri) {
 	return possibleReqLoc;
 }
 
+
 LocationBlock SendData::findLocationBlock(std::vector<LocationBlock> &locations, parser &request)
 {
 	std::vector<std::string> possibleReqLoc = possibleRequestedLoc(request.path); // other name: possibleReqLoc
@@ -164,8 +165,10 @@ LocationBlock SendData::findLocationBlock(std::vector<LocationBlock> &locations,
 			}
 		}
 	}
+	// serve default page in this case
+	throw LocationNotFoundException();
 	std::cout << BOLD_RED << "COULD NOT FIND LOCATION BLOCK" << RESET << std::endl;
-	throw std::exception(); // this is temporary, will create a error handling mechanism
+	// throw std::exception(); // this is temporary, will create a error handling mechanism
 }
 
 ServerBlock SendData::findServerBlock(std::vector<ServerBlock> &servers, parser &request) // uses the Host header field -> server_name:port -> Host: localhost:8081
@@ -296,14 +299,23 @@ Response &SendData::sendResponse(int clientSocket, std::vector<ServerBlock> &ser
 	_isReturn = false;
 	ServerBlock current_server = findServerBlock(servers, request);
 
-	LocationBlock location = findLocationBlock(current_server.getLocationVec(), request);
+	LocationBlock location;
+	try
+	{
+		location = findLocationBlock(current_server.getLocationVec(), request);
+	}
+	catch(const LocationNotFoundException& e)
+	{
+		std::string contentType;
+		createDfltResponseBody(200, contentType);
+		createResponseHeader(200, _response.body.size(), contentType);
+		return _response;
+	}
 
 	if (request.method == "GET")
 	{
 		try
-		{
-			// LocationBlock location = findLocationBlock(current_server.getLocationVec(), request);
-			
+		{			
 			if (isNotAllowedMethod(location, location.getAllowedMethods(), "GET"))
 				return _response;
 
@@ -393,21 +405,17 @@ Response &SendData::sendResponse(int clientSocket, std::vector<ServerBlock> &ser
 			saveBodyToFile("../website/upload/" + request.fileName, request);
 			_response.body = "<!DOCTYPE html><html><head><title>200 OK</title></head>";
 			_response.body += "<body><h1>200 OK</h1><p>file saved</p></body></html>";
-			// this->createResponseHeader(200, _response.body.size());
-			_response.status = "HTTP/1.1 200 OK\r\n";
-			_response.contentType = "Content-Type: text/html;\r\n";
-			_response.contentLength = "Content-Length: " + intToString(_response.body.size()) + "\r\n";
+			this->createResponseHeader(200, _response.body.size(), mimeTypesMap_G["html"]);
 		}
 	}
 	else if (request.method == "DELETE")
 	{
-		// LocationBlock location = findLocationBlock(current_server.getLocationVec(), request);
-
 		if (isNotAllowedMethod(location, location.getAllowedMethods(), "DELETE"))
 				return _response;
 		std::string root = PATH_TO_WWW + location.getRoot() + request.path; // maybe a more suitable name: pathToFileToServe
 
 		// Delete implementation
+
 	}
 	return _response;
 }
@@ -433,12 +441,18 @@ void SendData::saveBodyToFile(const std::string &filename, parser &request)
 std::string encodeURI(const std::string& filename) {
     std::ostringstream encoded;
     for (size_t i = 0; i < filename.length(); ++i) {
-        if (isalnum(filename[i]) || filename[i] == '-' || filename[i] == '_' || 
-            filename[i] == '.' || filename[i] == '~') {
-            encoded << filename[i];
-        } else {
+		char c = filename[i];
+        if (isalnum(c) || c == '-' || c == '_' || 
+            c == '.' || c == '~' || c == '/') {
+            encoded << c;
+        }
+		else if (c == ':' || c == '@' || c == '!' || c == '$' || c == '&' || c == '\'' ||
+                   c == '(' || c == ')' || c == '*' || c == '+' || c == ',' || c == ';' || c == '=') {
+            encoded << c; // Do not encode reserved characters
+		} 
+		else {
             encoded << '%' << std::hex << std::uppercase << std::setw(2) 
-                    << std::setfill('0') << (static_cast<int>(filename[i]) & 0xFF);
+                    << std::setfill('0') << (static_cast<int>(c) & 0xFF);
         }
     }
     return encoded.str();
@@ -531,6 +545,8 @@ void		SendData::displayDir(const std::string& path, const std::string& requestUR
 			char timeBuffer[20];
 			std::strftime(timeBuffer, sizeof(timeBuffer), "%Y-%m-%d %H:%M:%S", tm);
 			std::string modTimeStr(timeBuffer);
+
+			std::cout << "fullpath: " << fullPath << std::endl;
 
 			// Include size and last modification date in the HTML output
 			std::stringstream htmlStream;
