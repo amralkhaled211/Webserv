@@ -291,11 +291,26 @@ bool	SendData::isNotAllowedMethod(LocationBlock& location, std::vector<std::stri
 	return false;
 }
 
-bool SendData::checkDeletePath(std::string path)
+bool SendData::checkDeletePath(std::string path, LocationBlock location)
 {
-	if (path.substr(0, 15) == "/website/upload" || path.substr(0, 8) == "/upload/")
-		return true;
-	return false;
+	if (path.substr(0, 15) == "/website/upload")
+    {
+		std::string root = PATH_TO_WWW + location.getRoot() + path.substr(0, 15);
+        if (access(root.c_str(), W_OK) == 0)
+        {
+            return true;
+        }
+    }
+    // Check if the path starts with "/upload/"
+    else if (path.substr(0, 8) == "/upload/")
+    {
+		std::string root = PATH_TO_WWW + location.getRoot() + path.substr(0, 8);
+        if (access(root.c_str(), W_OK) == 0)
+        {
+            return true;
+        }
+    }
+    return false;
 }
 
 Response &SendData::sendResponse(int clientSocket, std::vector<ServerBlock> &servers, parser &request, int epollFD)
@@ -430,7 +445,7 @@ Response &SendData::sendResponse(int clientSocket, std::vector<ServerBlock> &ser
 
 		//std::cout << MAGENTA_COLOR << "Path: " << request.path << std::endl;
 
-		if (checkDeletePath(request.path))
+		if (checkDeletePath(request.path, location))
 		{
 			struct stat buffer;
 			if (stat(root.c_str(), &buffer) == 0) 
@@ -454,7 +469,7 @@ Response &SendData::sendResponse(int clientSocket, std::vector<ServerBlock> &ser
 		}
 		else
 		{
-			std::cout << std::endl << BOLD_RED << "You have no right peasant" << RESET << std::endl;
+			std::cout << std::endl << BOLD_RED << "You have no right to delete peasant" << RESET << std::endl;
 			prepErrorResponse(403, location);
 		}
 	}

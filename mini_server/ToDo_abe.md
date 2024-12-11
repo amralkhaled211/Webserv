@@ -1,5 +1,6 @@
 # TASKS
 - [ ] CGI Post is not working now, fix with Amr
+- [ ] Check write permissions in POST and DELETE for the upload directory
 ## LEARNING
 
 - [ ] Read CGI book
