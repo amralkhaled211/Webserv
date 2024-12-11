@@ -204,6 +204,7 @@ bool Client::validatePostHeaders(std::string &buffer)
 
 bool Client::headersValidate(std::string &buffer, std::string method)
 {
+    //std::cout << MAGENTA_COLOR << "Validating headers" << RESET <<std::endl;
     if (method == "GET")
     {
         return validateGetHeaders(buffer);
@@ -212,6 +213,10 @@ bool Client::headersValidate(std::string &buffer, std::string method)
     {
         return validatePostHeaders(buffer);
     }
+   /*  else if (method == "DELETE")
+    {
+        return validateGetHeaders(buffer);
+    } */
     return false;
 }
 

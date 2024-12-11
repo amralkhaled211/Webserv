@@ -107,6 +107,8 @@ bool Client::parseHeadersAndBody()
 	}
 	else if (request.method == "DELETE")
 	{
+		/* if (parseHeaders(this->_buffer))
+			return true; */
 		return true;
 	}
 	std::cout << "we throwing this ::: " << std::endl;	

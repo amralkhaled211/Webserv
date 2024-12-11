@@ -52,6 +52,7 @@ class SendData
 	void handleCGI(const std::string &root, parser &request, ServerBlock server, LocationBlock location);
 	int	checkCGIFile(const std::string &path);
 	bool isCGI(LocationBlock location);
+	bool checkDeletePath(std::string path);
 	void redirect(LocationBlock& location, parser &request);
 	void saveBodyToFile(const std::string &filename, parser &request);
 	Response &sendResponse(int clientSocket, std::vector<ServerBlock> &servers, parser &request, int epollFD);

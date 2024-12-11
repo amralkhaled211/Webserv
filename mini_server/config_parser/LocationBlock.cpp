@@ -116,6 +116,7 @@ void		LocationBlock::setupDefaults(Block& parentServer) {
 
 void		LocationBlock::printLocationBlock() {
 	std::cout << "Block Type: " << this->_blockType << std::endl;
+	std::cout << "Prefix: " << this->_prefix << std::endl;
 	std::cout << "Root: " << this->_root << std::endl;
 	std::cout << "Error Page: ";
 	for (size_t i = 0; i < this->_error_page.size(); ++i) {

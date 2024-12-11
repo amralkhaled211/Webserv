@@ -295,20 +295,6 @@ void Epoll::handleData(int client_fd)
 		clientB.status = RECIEVED;
 
 		modClientFDToSend(client_fd, _epollFD);
-		// struct epoll_event client_event;
-		// client_event.data.fd = clientB.getClientFD();
-		// client_event.events = EPOLLOUT;
-		// if (epoll_ctl(_epollFD, EPOLL_CTL_MOD, clientB.getClientFD(), &client_event) == -1)
-		// {
-		// 	close(clientB.getClientFD());
-		// 	std::cout << BOLD_GREEN << "client.getClientFD() Change mod : " << clientB.getClientFD() << RESET << std::endl;
-		// 	std::cout << "epoll_ctl failed" << std::endl;
-		// 	throw std::runtime_error("in sendResponse(): epoll_ctl while MODIFYING client FD " + intToString(clientB.getClientFD()));
-		// }
-		// if (E_DEBUG || E_DEBUG2) {
-		// 	DEBUG_G "AFTER EPOLL_CTL IN HANDLE DATA, so have the response ready\n" << RESET;
-		// 	printClientInfo(client_fd, client_event.events, _clients);
-		// }
 		clientB.status = SENDING;
 
 		std::string responseBuffer;

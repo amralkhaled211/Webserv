@@ -89,7 +89,7 @@ void SendData::handleCGI(const std::string &root, parser &request, ServerBlock s
 	}
 
 	code = cgi.executeScript();
-	std::cout << RED << "Done with CGI execution" << RESET << std::endl;
+	//std::cout << RED << "Done with CGI execution" << RESET << std::endl;
 	if (code != 0)
 	{
 		prepErrorResponse(code, location);
@@ -97,7 +97,7 @@ void SendData::handleCGI(const std::string &root, parser &request, ServerBlock s
 	}
 
 	cgi.generateResponse();
-	std::cout << RED << "Done with CGI response" << RESET << std::endl;
+	//std::cout << RED << "Done with CGI response" << RESET << std::endl;
 
 	_response.body = cgi.getResponse();
 
@@ -193,7 +193,7 @@ ServerBlock SendData::findServerBlock(std::vector<ServerBlock> &servers, parser 
 	}
 	// this would be fixed later
 	// std::cout << "reques:::" << request.headers["Host"] << std::endl;
-	std::cout << "\033[1;31m" <<  "returning the first server?, This is a BUG " << "\033[0m" << std::endl;
+	//std::cout << "\033[1;31m" <<  "returning the first server?, This is a BUG " << "\033[0m" << std::endl;
 	return servers[0]; // return default
 }
 
@@ -291,6 +291,13 @@ bool	SendData::isNotAllowedMethod(LocationBlock& location, std::vector<std::stri
 	return false;
 }
 
+bool SendData::checkDeletePath(std::string path)
+{
+	if (path.substr(0, 15) == "/website/upload" || path.substr(0, 8) == "/upload/")
+		return true;
+	return false;
+}
+
 Response &SendData::sendResponse(int clientSocket, std::vector<ServerBlock> &servers, parser &request, int epollFD)
 {
 
@@ -302,6 +309,8 @@ Response &SendData::sendResponse(int clientSocket, std::vector<ServerBlock> &ser
 	}
 
 	request.path = decodeURIComponent(request.path);
+	request.queryString = decodeURIComponent(request.queryString, true);
+	
 	
 	_isReturn = false;
 	ServerBlock current_server = findServerBlock(servers, request);
@@ -370,10 +379,6 @@ Response &SendData::sendResponse(int clientSocket, std::vector<ServerBlock> &ser
 		{
 			std::string error = e.what(); // here we need to check what the error is and send notfound or error page accordingly
 			std::cout << RED_COLOR << "Error: " << error << RESET << std::endl;
-			/* std::cout << BOLD_YELLOW << "Response Status: " <<  _response.status << std::endl;
-			std::cout << "Content Type: "  << _response.contentType << std::endl;
-			std::cout << "Content Length: " << _response.contentLength << RESET << std::endl; */
-			// i should here send the right error for invalid locatio
 			_response.body.clear();
 			_response.status.clear();
 			_response.contentType.clear();
@@ -406,7 +411,7 @@ Response &SendData::sendResponse(int clientSocket, std::vector<ServerBlock> &ser
 		{
 			saveBodyToFile("../website/upload/" + request.fileName, request);
 			_response.body = "<!DOCTYPE html><html><head><title>200 OK</title></head>";
-			_response.body += "<body><h1>200 OK</h1><p>file saved</p></body></html>";
+			_response.body += "<body><h1>200 OK</h1><p>File saved</p></body></html>";
 			// this->createResponseHeader(200, _response.body.size());
 			_response.status = "HTTP/1.1 200 OK\r\n";
 			_response.contentType = "Content-Type: text/html;\r\n";
@@ -421,26 +426,41 @@ Response &SendData::sendResponse(int clientSocket, std::vector<ServerBlock> &ser
 				return _response;
 		std::string root = PATH_TO_WWW + location.getRoot() + request.path; // maybe a more suitable name: pathToFileToServe
 
-		std::cout << BOLD_RED << "IN DELETE METHOD" << RESET << std::endl;
-		// Delete implementation
-		struct stat buffer;
-        if (stat(root.c_str(), &buffer) == 0) 
+		//std::cout << BOLD_RED << "IN DELETE METHOD" << RESET << std::endl;
+
+		//std::cout << MAGENTA_COLOR << "Path: " << request.path << std::endl;
+
+		if (checkDeletePath(request.path))
 		{
-            if (remove(root.c_str()) == 0) 
+			struct stat buffer;
+			if (stat(root.c_str(), &buffer) == 0) 
 			{
-                _response.body = "<!DOCTYPE html><html><head><title>200 OK</title></head>";
-                _response.body += "<body><h1>200 OK</h1><p>File deleted successfully</p></body></html>";
-                _response.status = "HTTP/1.1 200 OK\r\n";
-                _response.contentType = "Content-Type: text/html;\r\n";
-                _response.contentLength = "Content-Length: " + intToString(_response.body.size()) + "\r\n";
-            }
-			else 
-               prepErrorResponse(500, location);
-        } 
+				if (remove(root.c_str()) == 0) 
+				{
+					_response.body = "<!DOCTYPE html><html><head><title>200 OK</title></head>";
+					_response.body += "<body><h1>200 OK</h1><p>File deleted successfully</p></body></html>";
+					_response.status = "HTTP/1.1 200 OK\r\n";
+					_response.contentType = "Content-Type: text/html;\r\n";
+					_response.contentLength = "Content-Length: " + intToString(_response.body.size()) + "\r\n";
+				}
+				else
+				{
+					std::cout << BOLD_RED << "Error deleting file" << RESET << std::endl;
+					prepErrorResponse(500, location);
+				}
+			}
+			else
+				prepErrorResponse(404, location);
+		}
+		else
+		{
+			std::cout << std::endl << BOLD_RED << "You have no right peasant" << RESET << std::endl;
+			prepErrorResponse(403, location);
+		}
 	}
-	std::cout << MAGENTA_COLOR <<  _response.status << std::endl;
+	/* std::cout << MAGENTA_COLOR <<  _response.status << std::endl;
 	std::cout << _response.contentType << std::endl;
-	std::cout << _response.contentLength << RESET << std::endl;
+	std::cout << _response.contentLength << RESET << std::endl; */
 	return _response;
 }
 

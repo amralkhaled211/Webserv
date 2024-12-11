@@ -185,7 +185,7 @@ int CGI::executeScript()
 	if (pipe(inPipe) == -1 || pipe(outPipe) == -1)
 		throw std::runtime_error("Failed to create pipes in CGI");
 
-	std::cout << "Executing script: " << _interpreter << " " << _scriptPath << std::endl;
+	//std::cout << "Executing script: " << _interpreter << " " << _scriptPath << std::endl;
 
 	pid_t pid = fork();
 	if (pid == -1)
@@ -215,7 +215,7 @@ int CGI::executeScript()
 		close(inPipe[0]);
 		close(outPipe[1]);
 
-		std::cout << _request.method << " " << _request.path << " " << _request.body << std::endl;
+		//std::cout << _request.method << " " << _request.path << " " << _request.body << std::endl;
 		
 		if (_request.method == "POST" && !_request.body.empty()){
 			write (inPipe[1], _request.body.c_str(), _request.body.size());
