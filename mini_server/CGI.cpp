@@ -329,11 +329,9 @@ void CGI::generateResponse()
 			_contentType = line.substr(line.find("Content-Type:"));
 			continue;
 		}
-		/* if (line.find("Content-Length:") !=  std::string::npos){
-			_lengthSet = true;
-			_contentLength = line.substr(line.find("Content-Length:"));
+		if (line.find("Content-Length:") !=  std::string::npos){
 			continue;
-		} */
+		}
 		if (line.find("Status:") !=  std::string::npos){
 			_statusSet = true;
 			_responseStatus = "HTTP/1.1" + line.substr(line.find("Status:") + 7);

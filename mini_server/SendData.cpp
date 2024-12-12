@@ -125,8 +125,6 @@ void SendData::handleCGI(const std::string &root, parser &request, ServerBlock s
 		_response.contentLength = "Content-Length: " + intToString(_response.body.size()) + "\r\n";
 		_response.transferEncoding = "";
 	}
-	/* unsigned int content_len = _response.body.size();
-		_response.contentLength = "Content-Length: " + intToString(content_len) + "\r\n"; */
 }
 
 std::vector<std::string>	possibleRequestedLoc(std::string uri) {
@@ -293,20 +291,16 @@ bool	SendData::isNotAllowedMethod(LocationBlock& location, std::vector<std::stri
 
 bool SendData::checkDeletePath(std::string path, LocationBlock location)
 {
-	if (path.substr(0, 15) == "/website/upload")
-    {
-		std::string root = PATH_TO_WWW + location.getRoot() + path.substr(0, 15);
-        if (access(root.c_str(), W_OK) == 0)
-        {
-            return true;
-        }
+    size_t lastSlashPos = path.find_last_of('/');
+    if (lastSlashPos == std::string::npos) {
+        return false;
     }
-    // Check if the path starts with "/upload/"
-    else if (path.substr(0, 8) == "/upload/")
-    {
-		std::string root = PATH_TO_WWW + location.getRoot() + path.substr(0, 8);
-        if (access(root.c_str(), W_OK) == 0)
-        {
+
+    std::string directory = path.substr(0, lastSlashPos);
+
+    if (directory.size() >= 7 && directory.substr(directory.size() - 7) == "/upload") {
+        std::string root = PATH_TO_WWW + location.getRoot() + directory;
+        if (access(root.c_str(), W_OK) == 0) {
             return true;
         }
     }
@@ -424,13 +418,26 @@ Response &SendData::sendResponse(int clientSocket, std::vector<ServerBlock> &ser
 		}
 		else
 		{
-			saveBodyToFile("../website/upload/" + request.fileName, request);
-			_response.body = "<!DOCTYPE html><html><head><title>200 OK</title></head>";
-			_response.body += "<body><h1>200 OK</h1><p>File saved</p></body></html>";
-			// this->createResponseHeader(200, _response.body.size());
-			_response.status = "HTTP/1.1 200 OK\r\n";
-			_response.contentType = "Content-Type: text/html;\r\n";
-			_response.contentLength = "Content-Length: " + intToString(_response.body.size()) + "\r\n";
+			std::string uploadPath = "../website/upload";
+			if (access(uploadPath.c_str(), W_OK) == 0)
+			{
+
+				if (saveBodyToFile("../website/upload/" + request.fileName, request))
+				{
+					_response.body = "<!DOCTYPE html><html><head><title>200 OK</title></head>";
+					_response.body += "<body><h1>200 OK</h1><p>File saved</p></body></html>";
+					_response.status = "HTTP/1.1 200 OK\r\n";
+					_response.contentType = "Content-Type: text/html;\r\n";
+					_response.contentLength = "Content-Length: " + intToString(_response.body.size()) + "\r\n";
+				}
+				else
+					prepErrorResponse(500, location);
+			}
+			else
+			{
+				std::cout << BOLD_RED << "You don't have permission to save this file" << RESET << std::endl;
+				prepErrorResponse(403, location);
+			}
 		}
 	}
 	else if (request.method == "DELETE")
@@ -480,20 +487,23 @@ Response &SendData::sendResponse(int clientSocket, std::vector<ServerBlock> &ser
 }
 
 
-void SendData::saveBodyToFile(const std::string &filename, parser &request)
+bool SendData::saveBodyToFile(const std::string &filename, parser &request)
 {
     std::ofstream outFile(filename.c_str(), std::ios::binary);//| std::ios::app
     if (outFile.is_open())
     {
         outFile.write(request.body.c_str(), request.body.size());
         outFile.close();
+		request.body.clear();
+		return true;
     }
     else
     {
         // Handle error opening file
         std::cerr << "Error opening file for writing: " << filename << std::endl;
+		request.body.clear();
+		return false;
     }
-	request.body.clear();
 }
 
 // Percent-encode a filename for use in a URI
