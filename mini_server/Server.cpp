@@ -72,19 +72,31 @@ void Server::bindNamesWithPorts(std::vector<std::string>& serverName, std::vecto
         for (std::vector<int>::iterator it_port = serverPort.begin(); it_port != serverPort.end(); ++it_port)
         {
             int port = *it_port;
-            sockaddr_in serverAddress;
+            sockaddr_in serverAddress; // configuration for the socket
 	        serverAddress.sin_family = AF_INET;
 	        serverAddress.sin_port = htons(port);
+
             if (!isValidIPAddress(name))
             {
-                serverAddress.sin_addr.s_addr = INADDR_ANY;
-                std::cout << "INVALID IP ADDRESS: " << name << std::endl;
-                std::cout << "                  : " << INADDR_ANY << std::endl;
+                struct addrinfo hints, *res;
+                memset(&hints, 0, sizeof(hints));
+                hints.ai_family = AF_INET;
+                hints.ai_socktype = SOCK_STREAM;
+
+                int status = getaddrinfo(name.c_str(), NULL, &hints, &res);
+                if (status != 0)
+                {
+                    serverAddress.sin_addr.s_addr = INADDR_ANY;
+                }
+                else
+                {
+                    serverAddress.sin_addr = ((struct sockaddr_in*)res->ai_addr)->sin_addr;
+                    freeaddrinfo(res);
+                }
             }
             else
             {
                 serverAddress.sin_addr.s_addr = inet_addr(name.c_str());
-                std::cout << "VALID IP ADDRESS: " << name << std::endl;
             }
 
             int serverSocket = create_and_configure_socket();
@@ -99,6 +111,8 @@ void Server::bindNamesWithPorts(std::vector<std::string>& serverName, std::vecto
             currServer.setHostInMap(serverSocket, name + ":" + intToString(port));
 
             _serverSockets.push_back(serverSocket);
+
+            std::cout << "Port: http://" << name + ":" + intToString(port) << std::endl;
         }
     }
 }

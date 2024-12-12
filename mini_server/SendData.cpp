@@ -295,6 +295,7 @@ Response &SendData::sendResponse(int clientSocket, std::vector<ServerBlock> &ser
 	}
 
 	request.path = decodeURIComponent(request.path);
+	request.queryString = decodeURIComponent(request.queryString, true);
 	
 	_isReturn = false;
 	ServerBlock current_server = findServerBlock(servers, request);
@@ -449,7 +450,7 @@ std::string encodeURI(const std::string& filename) {
 		else if (c == ':' || c == '@' || c == '!' || c == '$' || c == '&' || c == '\'' ||
                    c == '(' || c == ')' || c == '*' || c == '+' || c == ',' || c == ';' || c == '=') {
             encoded << c; // Do not encode reserved characters
-		} 
+		}
 		else {
             encoded << '%' << std::hex << std::uppercase << std::setw(2) 
                     << std::setfill('0') << (static_cast<int>(c) & 0xFF);
@@ -532,8 +533,6 @@ void		SendData::displayDir(const std::string& path, const std::string& requestUR
 			fullPath += '/';
 		fullPath += displayName;
 
-		std::cout << "display name: " << displayName << std::endl;
-
 		struct stat fileStat;
 		if (stat(dirElements[i].second.c_str(), &fileStat) == 0) {
 			// Get file size
@@ -545,8 +544,6 @@ void		SendData::displayDir(const std::string& path, const std::string& requestUR
 			char timeBuffer[20];
 			std::strftime(timeBuffer, sizeof(timeBuffer), "%Y-%m-%d %H:%M:%S", tm);
 			std::string modTimeStr(timeBuffer);
-
-			std::cout << "fullpath: " << fullPath << std::endl;
 
 			// Include size and last modification date in the HTML output
 			std::stringstream htmlStream;

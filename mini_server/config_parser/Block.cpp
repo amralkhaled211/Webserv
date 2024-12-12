@@ -138,7 +138,7 @@ static bool		invalidMeasurementPostfix(std::string& directiveValue) {
 	if (postfixNotSet && !std::isdigit(directiveValue[len - 1]))
 		return true;
 	else if (postfixNotSet)
-		directiveValue += 'm';
+		directiveValue += 'm'; // redo this part
 
 	std::stringstream	ss(directiveValue.c_str());
 
@@ -154,11 +154,10 @@ static bool		invalidMeasurementPostfix(std::string& directiveValue) {
 	if (!ss.eof() || word.size() != 1)
 		return true;
 
-	int maxSizeGiga = 4;
+	double maxSizeByte = 250.000;
 
-	if ((word == "g" && size > maxSizeGiga) ||
-		(word == "m" && size > maxSizeGiga * 1000) ||
-		(word == "k" && size > maxSizeGiga * 1000000)) {
+	if ((word == "m" && size * 1024 * 1024 > maxSizeByte * 1000) ||
+		(word == "k" && size > maxSizeByte * 1000000)) {
 			return true;
 		}
 

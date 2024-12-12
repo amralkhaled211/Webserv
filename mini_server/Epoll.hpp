@@ -19,6 +19,7 @@
 #include <vector>
 #include <csignal>
 #include <cstdlib>
+#include <netdb.h>
 // #include "RequestHandler.hpp"
 // #include "Client.hpp"
 #include "SendData.hpp"
