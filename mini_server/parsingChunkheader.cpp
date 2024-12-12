@@ -114,10 +114,12 @@ bool Client::handleContentLength(std::istringstream &headerStream)
     return false; // still expecting more data
 }
 
-bool Client::bodyValidate(std::string &Buffer) {
+bool Client::bodyValidate(std::string &Buffer)
+{
     std::istringstream headerStream(Buffer);
     std::string line;
-    if (request.body.empty() && !_newLineChecked) {
+    if (request.body.empty() && !_newLineChecked)
+    {
         std::getline(headerStream, line);
         std::cout << "skip the new line :" << std::endl;
         if (line == "\r") {
@@ -126,12 +128,20 @@ bool Client::bodyValidate(std::string &Buffer) {
         }
     }
 
-    if (request.headers.find("Transfer-Encoding") != request.headers.end()) {
+    if (request.headers.find("Transfer-Encoding") != request.headers.end())
+    {
         std::cout << "coming to the chunk encoding " << std::endl;
         return handleChunkedTransferEncoding(headerStream);
     }
 
-    if (request.headers.find("Content-Length") != request.headers.end()) {
+    if (request.headers.find("Content-Length") != request.headers.end())
+    {
+        // if (stringToSizeT (request.headers["Content-Length"]) > _MaxBodySize)
+        // {
+        //     std::cerr << "Error: Content-Length value is missing" << std::endl;
+        //     request.statusError = 413;
+        //     return true;
+        // }
         return handleContentLength(headerStream);
     }
 

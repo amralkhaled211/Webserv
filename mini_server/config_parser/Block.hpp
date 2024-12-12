@@ -39,14 +39,15 @@ class Block // parent // the purpose of this is just to not have class with the 
 		void		setReturn(std::vector<std::string>& ret);
 		void		setIndex(std::vector<std::string>& index);
 		void		setAutoindex(bool autoindex);
+		void		setClientMaxBodySize(std::string& client_max_body_size);
 
 		const std::string&								getBlockType() const;
 		const std::string&								getRoot() const;
 		const std::vector<std::vector<std::string> >&	getErrorPage() const;
 		const std::vector<std::string>&					getReturn() const;
-		const std::vector<std::string>&					getTryFiles() const;
 		const std::vector<std::string>&					getIndex() const;
 		const char&										getAutoindex() const;
+		std::string&								getClientMaxBodySize();
 
 		bool				_addCommonDirective(const std::string& directiveKey, std::string& directiveValue);
 

@@ -13,7 +13,6 @@ Client::Client()
 	_bytesRead = 0;
 }
 
-
 void Client::setBuffer(const std::string& buffer)
 {
     _buffer = buffer;
@@ -27,6 +26,91 @@ void Client::setResponseBuffer(std::string resBuffer)
 parser &Client::getRequest()
 {
 	return request;
+}
+
+ServerBlock &Client::findServerBlock() // uses the Host header field -> server_name:port -> Host: localhost:8081
+{
+	std::string host = request.headers["Host"];
+	size_t colon_pos = host.find(':');
+	std::string server_name = (colon_pos != std::string::npos) ? host.substr(0, colon_pos) : host;
+	std::string port = (colon_pos != std::string::npos) ? host.substr(colon_pos + 1) : "";
+
+	for (std::vector<ServerBlock>::iterator it = servers.begin(); it != servers.end(); ++it)
+	{
+		ServerBlock &server = *it;
+		if (findInVector(server.getListen(), stringToInt(port)) && findInVector(server.getServerName(), server_name)) // here port is prioritized over server_name
+			return server;
+	}
+	// this would be fixed later
+	// std::cout << "reques:::" << request.headers["Host"] << std::endl;
+	std::cout << "\033[1;31m" <<  "returning the first server?, This is a BUG " << "\033[0m" << std::endl;
+	throw std::exception();
+}
+
+LocationBlock Client::findLocationBlock(std::vector<LocationBlock> &locations)
+{
+	std::vector<std::string> possibleReqLoc = possibleRequestedLoc(request.path); // other name: possibleReqLoc
+	LocationBlock	location;
+	std::string		fullPath;
+
+	
+	for (int i = 0; i < possibleReqLoc.size(); ++i)
+	{
+		for (std::vector<LocationBlock>::iterator it = locations.begin(); it != locations.end(); ++it)
+		{
+			location = *it;
+			if (location.getPrefix() == possibleReqLoc[i]) // need to make sure the prefix is also cleaned from excess slashes
+				return location;
+		}
+	}
+	std::cout << BOLD_RED << "COULD NOT FIND LOCATION BLOCK" << RESET << std::endl;
+	throw std::exception(); // this is temporary, will create a error handling mechanism
+}
+
+
+size_t parseSize(const std::string& sizeStr)
+{
+    std::string numberPart = sizeStr.substr(0, sizeStr.size() - 1);
+    char suffix = sizeStr[sizeStr.size() - 1];
+
+    size_t multiplier = 1;
+    if (std::isdigit(suffix))
+        numberPart = sizeStr;
+    else
+    {
+        if (suffix == 'k' || suffix == 'K') 
+            multiplier = 1024;
+        else if (suffix == 'm' || suffix == 'M') 
+            multiplier = 1024 * 1024;
+        else if (suffix == 'g' || suffix == 'G') 
+            multiplier = 1024 * 1024 * 1024;
+    }
+
+    // Convert numeric part to size_t
+    size_t numericValue = 0;
+    numericValue = stringToSizeT(numberPart);
+
+    return numericValue * multiplier;
+}
+
+
+int Client::findMaxBodySize()
+{
+	try 
+	{
+		ServerBlock current_server = findServerBlock();
+		LocationBlock location = findLocationBlock(current_server.getLocationVec());
+		std::string max = location.getClientMaxBodySize();
+		std::cout << "max body size: " << max << std::endl;
+		_MaxBodySize = parseSize(max);
+	}
+	catch (std::exception &e)
+	{
+		std::cerr << "Error: could not find location block" << std::endl;
+		request.statusError = 404;
+		return 1;
+	}
+	return 0;
 }
 
 bool Client::parseHeadersAndBody()
@@ -48,6 +132,8 @@ bool Client::parseHeadersAndBody()
 				return true;
 			if (headersValidate(this->_buffer, request.method) || _newLineChecked) // if this true that means we have the headers and now we ganna do the same thing for the body
 			{
+				if (findMaxBodySize())
+					return true;
 				// std::cout << "i am inside the header vaildatio :: " << std::endl;
 				if (request.statusError == 0) // this mean we are expecting a body if we dont have on then its not valid and we send a message
 				{
@@ -77,6 +163,8 @@ bool Client::parseHeadersAndBody()
 			std::string body = this->_buffer.substr(headerEndPos + 4);
 			std::string headerSection = this->_buffer.substr(0, headerEndPos);
 			parseHeaders(headerSection);
+			if (findMaxBodySize())
+				return true;
 			if (handlingBody(body))
 			{
 				std::cout << "giving true means end of body" << std::endl;

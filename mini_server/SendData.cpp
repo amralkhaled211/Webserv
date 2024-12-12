@@ -95,24 +95,24 @@ void SendData::handleCGI(const std::string &root, parser &request, ServerBlock s
 	std::cout << "CGI Content length: " << _response.contentLength << RESET << std::endl; */
 }
 
-std::vector<std::string>	possibleRequestedLoc(std::string uri) {
-	std::vector<std::string>	possibleReqLoc;
-	size_t						lastSlash;
+// std::vector<std::string>	possibleRequestedLoc(std::string uri) {
+// 	std::vector<std::string>	possibleReqLoc;
+// 	size_t						lastSlash;
 
-	removeExcessSlashes(uri);
+// 	removeExcessSlashes(uri);
 
-	do
-	{
-		possibleReqLoc.push_back(uri);
-		lastSlash = uri.find_last_of('/');
-		uri = uri.substr(0, lastSlash);
-	} while (!uri.empty());
+// 	do
+// 	{
+// 		possibleReqLoc.push_back(uri);
+// 		lastSlash = uri.find_last_of('/');
+// 		uri = uri.substr(0, lastSlash);
+// 	} while (!uri.empty());
 
-	if (possibleReqLoc[possibleReqLoc.size() - 1] != "/")
-		possibleReqLoc.push_back("/");
+// 	if (possibleReqLoc[possibleReqLoc.size() - 1] != "/")
+// 		possibleReqLoc.push_back("/");
 
-	return possibleReqLoc;
-}
+// 	return possibleReqLoc;
+// }
 
 LocationBlock SendData::findLocationBlock(std::vector<LocationBlock> &locations, parser &request)
 {
@@ -312,7 +312,7 @@ Response &SendData::sendResponse(int clientSocket, std::vector<ServerBlock> &ser
 		}
 		else
 		{
-			saveBodyToFile("../website/upload/" + request.fileName, request);
+			// saveBodyToFile("../website/upload/" + request.fileName, request);
 			_response.body = "<!DOCTYPE html><html><head><title>200 OK</title></head>";
 			_response.body += "<body><h1>200 OK</h1><p>file saved</p></body></html>";
 			// this->createResponseHeader(200, _response.body.size());

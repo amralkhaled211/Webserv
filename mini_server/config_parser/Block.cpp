@@ -42,6 +42,8 @@ void	Block::setIndex(std::vector<std::string>& index) { this->_index = index; }
 
 void	Block::setAutoindex(bool autoindex) { this->_autoindex = autoindex; }
 
+void	Block::setClientMaxBodySize(std::string& client_max_body_size) { this->_client_max_body_size = client_max_body_size; }
+
 
 /*			GETTERS			*/
 
@@ -56,6 +58,8 @@ const std::vector<std::string>&	Block::getReturn() const { return this->_return;
 const std::vector<std::string>&	Block::getIndex() const { return this->_index; }
 
 const char&	Block::getAutoindex() const { return this->_autoindex; }
+
+std::string&	Block::getClientMaxBodySize()  { return this->_client_max_body_size; }
 
 bool	isInvalidPath(std::string root) {
 	size_t	pos1 = root.find("/../") != std::string::npos;
