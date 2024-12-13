@@ -49,6 +49,7 @@ size_t stringToSizeT(const std::string& str)
 }
 
 
+
 bool isDirectory(const std::string& path)
 {
 	struct stat path_stat;

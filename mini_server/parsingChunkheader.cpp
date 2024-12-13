@@ -84,6 +84,7 @@ bool Client::handleChunkedTransferEncoding(std::istringstream &headerStream)
                 return true;
             }
             request.body += chunk;
+            _bytesRead += chunk.size();
             _chunkLengthRecieved = false;
         }
     }
@@ -116,6 +117,16 @@ bool Client::handleContentLength(std::istringstream &headerStream)
 
 bool Client::bodyValidate(std::string &Buffer)
 {
+    if (request.headers.find("Content-Length") != request.headers.end())
+    {
+        if (stringToSizeT (request.headers["Content-Length"]) > _MaxBodySize)
+        {
+            std::cerr << "Error: Content-Length value is missing" << std::endl;
+            request.statusError = 413;
+            return true;
+        }
+    }
+
     std::istringstream headerStream(Buffer);
     std::string line;
     if (request.body.empty() && !_newLineChecked)
@@ -131,17 +142,23 @@ bool Client::bodyValidate(std::string &Buffer)
     if (request.headers.find("Transfer-Encoding") != request.headers.end())
     {
         std::cout << "coming to the chunk encoding " << std::endl;
-        return handleChunkedTransferEncoding(headerStream);
+        if (!handleChunkedTransferEncoding(headerStream))
+        {
+            std::cout << "_bytes read ::" <<  _bytesRead << std::endl;
+            if (_bytesRead > _MaxBodySize)
+            {
+                std::cerr << "Error: paload too large for the chunks" << std::endl;
+                request.statusError = 413;
+                return true;
+            }
+            return false;
+        }
+        else
+            return true;
     }
 
     if (request.headers.find("Content-Length") != request.headers.end())
     {
-        // if (stringToSizeT (request.headers["Content-Length"]) > _MaxBodySize)
-        // {
-        //     std::cerr << "Error: Content-Length value is missing" << std::endl;
-        //     request.statusError = 413;
-        //     return true;
-        // }
         return handleContentLength(headerStream);
     }
 
@@ -214,7 +231,7 @@ bool Client::validatePostHeaders(std::string &buffer)
 
 bool Client::headersValidate(std::string &buffer, std::string method)
 {
-    if (method == "GET")
+    if (method == "GET" || method == "DELETE")
     {
         return validateGetHeaders(buffer);
     }
@@ -244,4 +261,91 @@ int hexStringToInt(const std::string& hexStr)
     ss << std::hex << hexStr;
     ss >> intValue;
     return intValue;
+}
+
+
+ServerBlock &Client::findServerBlock() // uses the Host header field -> server_name:port -> Host: localhost:8081
+{
+	std::string host = request.headers["Host"];
+	size_t colon_pos = host.find(':');
+	std::string server_name = (colon_pos != std::string::npos) ? host.substr(0, colon_pos) : host;
+	std::string port = (colon_pos != std::string::npos) ? host.substr(colon_pos + 1) : "";
+
+	for (std::vector<ServerBlock>::iterator it = servers.begin(); it != servers.end(); ++it)
+	{
+		ServerBlock &server = *it;
+		if (findInVector(server.getListen(), stringToInt(port)) && findInVector(server.getServerName(), server_name)) // here port is prioritized over server_name
+			return server;
+	}
+	// this would be fixed later
+	// std::cout << "reques:::" << request.headers["Host"] << std::endl;
+	std::cout << "\033[1;31m" <<  "returning the first server?, This is a BUG " << "\033[0m" << std::endl;
+	throw std::exception();
+}
+
+LocationBlock Client::findLocationBlock(std::vector<LocationBlock> &locations)
+{
+	std::vector<std::string> possibleReqLoc = possibleRequestedLoc(request.path); // other name: possibleReqLoc
+	LocationBlock	location;
+	std::string		fullPath;
+
+	
+	for (int i = 0; i < possibleReqLoc.size(); ++i)
+	{
+		for (std::vector<LocationBlock>::iterator it = locations.begin(); it != locations.end(); ++it)
+		{
+			location = *it;
+			if (location.getPrefix() == possibleReqLoc[i]) // need to make sure the prefix is also cleaned from excess slashes
+				return location;
+		}
+	}
+	std::cout << BOLD_RED << "COULD NOT FIND LOCATION BLOCK" << RESET << std::endl;
+	throw std::exception(); // this is temporary, will create a error handling mechanism
+}
+
+
+long parseSize(const std::string& sizeStr)
+{
+    std::string numberPart = sizeStr.substr(0, sizeStr.size() - 1);
+    char suffix = sizeStr[sizeStr.size() - 1];
+
+    size_t multiplier = 1;
+    if (std::isdigit(suffix))
+        numberPart = sizeStr;
+    else
+    {
+        if (suffix == 'k' || suffix == 'K') 
+            multiplier = 1024;
+        else if (suffix == 'm' || suffix == 'M') 
+            multiplier = 1024 * 1024;
+        else if (suffix == 'g' || suffix == 'G') 
+            multiplier = 1024 * 1024 * 1024;
+    }
+
+    // Convert numeric part to size_t
+    size_t numericValue = 0;
+    numericValue = stringToSizeT(numberPart);
+
+    return numericValue * multiplier;
+}
+
+
+int Client::findMaxBodySize()
+{
+	try 
+	{
+		ServerBlock current_server = findServerBlock();
+		LocationBlock location = findLocationBlock(current_server.getLocationVec());
+		std::string max = location.getClientMaxBodySize();
+		_MaxBodySize = parseSize(max);
+		// std::cout << "this is the max body size " << _MaxBodySize << std::endl;
+
+	}
+	catch (std::exception &e)
+	{
+		std::cerr << "Error: could not find location block" << std::endl;
+		request.statusError = 404;
+		return 1;
+	}
+	return 0;
 }

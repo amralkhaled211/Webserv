@@ -125,7 +125,6 @@ class Client
 	size_t _MaxBodySize;
 };
 
-
 size_t stringToSizeT(const std::string& str);
 bool isHexadecimal(const std::string& str);
 int hexStringToInt(const std::string& hexStr);

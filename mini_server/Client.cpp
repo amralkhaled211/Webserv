@@ -28,90 +28,6 @@ parser &Client::getRequest()
 	return request;
 }
 
-ServerBlock &Client::findServerBlock() // uses the Host header field -> server_name:port -> Host: localhost:8081
-{
-	std::string host = request.headers["Host"];
-	size_t colon_pos = host.find(':');
-	std::string server_name = (colon_pos != std::string::npos) ? host.substr(0, colon_pos) : host;
-	std::string port = (colon_pos != std::string::npos) ? host.substr(colon_pos + 1) : "";
-
-	for (std::vector<ServerBlock>::iterator it = servers.begin(); it != servers.end(); ++it)
-	{
-		ServerBlock &server = *it;
-		if (findInVector(server.getListen(), stringToInt(port)) && findInVector(server.getServerName(), server_name)) // here port is prioritized over server_name
-			return server;
-	}
-	// this would be fixed later
-	// std::cout << "reques:::" << request.headers["Host"] << std::endl;
-	std::cout << "\033[1;31m" <<  "returning the first server?, This is a BUG " << "\033[0m" << std::endl;
-	throw std::exception();
-}
-
-LocationBlock Client::findLocationBlock(std::vector<LocationBlock> &locations)
-{
-	std::vector<std::string> possibleReqLoc = possibleRequestedLoc(request.path); // other name: possibleReqLoc
-	LocationBlock	location;
-	std::string		fullPath;
-
-	
-	for (int i = 0; i < possibleReqLoc.size(); ++i)
-	{
-		for (std::vector<LocationBlock>::iterator it = locations.begin(); it != locations.end(); ++it)
-		{
-			location = *it;
-			if (location.getPrefix() == possibleReqLoc[i]) // need to make sure the prefix is also cleaned from excess slashes
-				return location;
-		}
-	}
-	std::cout << BOLD_RED << "COULD NOT FIND LOCATION BLOCK" << RESET << std::endl;
-	throw std::exception(); // this is temporary, will create a error handling mechanism
-}
-
-
-size_t parseSize(const std::string& sizeStr)
-{
-    std::string numberPart = sizeStr.substr(0, sizeStr.size() - 1);
-    char suffix = sizeStr[sizeStr.size() - 1];
-
-    size_t multiplier = 1;
-    if (std::isdigit(suffix))
-        numberPart = sizeStr;
-    else
-    {
-        if (suffix == 'k' || suffix == 'K') 
-            multiplier = 1024;
-        else if (suffix == 'm' || suffix == 'M') 
-            multiplier = 1024 * 1024;
-        else if (suffix == 'g' || suffix == 'G') 
-            multiplier = 1024 * 1024 * 1024;
-    }
-
-    // Convert numeric part to size_t
-    size_t numericValue = 0;
-    numericValue = stringToSizeT(numberPart);
-
-    return numericValue * multiplier;
-}
-
-
-int Client::findMaxBodySize()
-{
-	try 
-	{
-		ServerBlock current_server = findServerBlock();
-		LocationBlock location = findLocationBlock(current_server.getLocationVec());
-		std::string max = location.getClientMaxBodySize();
-		std::cout << "max body size: " << max << std::endl;
-		_MaxBodySize = parseSize(max);
-	}
-	catch (std::exception &e)
-	{
-		std::cerr << "Error: could not find location block" << std::endl;
-		request.statusError = 404;
-		return 1;
-	}
-	return 0;
-}
 
 bool Client::parseHeadersAndBody()
 {
@@ -124,10 +40,10 @@ bool Client::parseHeadersAndBody()
 	else if (request.method == "POST")
 	{
 		size_t headerEndPos = this->_buffer.find("\r\n\r\n");
-		std::cout << BOLD_GREEN << "this buffer"<< this->_buffer << RESET << std::endl;
+		// std::cout << BOLD_GREEN << "this buffer"<< this->_buffer << RESET << std::endl;
 		if (headerEndPos == std::string::npos) // this would be an indcation that the headers would be on chunks 
 		{
-			std::cout << "headerEndPos not found" << std::endl;
+			// std::cout << "headerEndPos not found" << std::endl;
 			if (parseHeaders(this->_buffer))	
 				return true;
 			if (headersValidate(this->_buffer, request.method) || _newLineChecked) // if this true that means we have the headers and now we ganna do the same thing for the body
@@ -137,7 +53,7 @@ bool Client::parseHeadersAndBody()
 				// std::cout << "i am inside the header vaildatio :: " << std::endl;
 				if (request.statusError == 0) // this mean we are expecting a body if we dont have on then its not valid and we send a message
 				{
-					std::cout << "i am ready for the body : " << std::endl;
+					// std::cout << "i am ready for the body : " << std::endl;
 					if (bodyValidate(this->_buffer)) // i could use later here handling body function
 						return true;
 					else
@@ -152,14 +68,14 @@ bool Client::parseHeadersAndBody()
 			}
 			else
 			{
-				std::cout << "i am stuck hrer " << std::endl;
+				// std::cout << "i am stuck hrer " << std::endl;
 				_headersIsChunked = true;
 				return false;
 			}
 		}
 		else 
 		{
-			std::cout << "i am going to the else " << std::endl;
+			// std::cout << "i am going to the else " << std::endl;
 			std::string body = this->_buffer.substr(headerEndPos + 4);
 			std::string headerSection = this->_buffer.substr(0, headerEndPos);
 			parseHeaders(headerSection);
@@ -167,7 +83,7 @@ bool Client::parseHeadersAndBody()
 				return true;
 			if (handlingBody(body))
 			{
-				std::cout << "giving true means end of body" << std::endl;
+				// std::cout << "giving true means end of body" << std::endl;
 				return true;
 			}
 		}
@@ -182,7 +98,7 @@ bool Client::parseHeadersAndBody()
 		else 
 			_headersIsChunked = true;
 	}
-	std::cout << "we throwing this ::: " << std::endl;	
+	// std::cout << "we throwing this ::: " << std::endl;	
 	return false;
 }
 
@@ -229,7 +145,6 @@ bool Client::parse_first_line()
 	}
 	return true;
 }
-//////////////////////////////////////////////////////////////////////////
 
 bool Client::parseHeaders(std::string &Buffer)
 {
@@ -331,6 +246,14 @@ bool Client::HandlChunk()
 
 bool Client::handlingBody(std::string &body)
 {
+
+	if (stringToSizeT(request.headers["Content-Length"]) > _MaxBodySize)
+    {
+        std::cerr << "Error: Content-Length value is missing coming from handling body" << std::endl;
+        request.statusError = 413;
+        return true;
+    }
+
 	std::map<std::string, std::string>::iterator it = request.headers.find("Content-Type");
 	if (it != request.headers.end() && it->second.find("multipart/form-data") != std::string::npos)
 	{
@@ -382,16 +305,6 @@ void Client::saveBodyToFile()
 	else 
 		filePath = "../website/upload/data.txt";
 
-	//check if file already exists
-    // std::ifstream infile(filePath.c_str());
-    // if (infile.good())
-    // {
-	// 	//we might want to handle this differently like an error page or something
-    //     std::cout << "File already exists: " << filePath << std::endl;
-	// }
-	// infile.close();
-
-    // std::ofstream outFile(filePath.c_str());
 	std::ofstream outFile;
     outFile.open(filePath.c_str(), std::ios::app | std::ios::binary);
     if (outFile.is_open())
@@ -407,26 +320,12 @@ void Client::saveBodyToFile()
 	request.body.clear();
 }
 
-// void writeFile(const std::string& data)
-// {
-// 	std::string filePath;
-// 	filePath = "../website/upload/" + request.fileName;
-//     std::ofstream outFile;
-//     outFile.open(filePath.c_str(), std::ios::app | std::ios::binary);
-//     if (outFile.is_open()) {
-//         // std::cout << "this is the body " << data << std::endl;
-//         outFile.write(data.c_str(), data.size());
-//         outFile.close();
-//     } else {
-//         std::cerr << "Error opening file for writing: " << filePath << std::endl;
-//     }
-// }
 void Client::allRecieved()
 {
 
 	if (!_isChunked && !_headersIsChunked)
 	{
-		std::cout << "should only be here once" << std::endl;
+		// std::cout << "should only be here once" << std::endl;
 		if (!parse_first_line())
 		{
 			isAllRecieved = true;
@@ -447,18 +346,13 @@ void Client::allRecieved()
 		isAllRecieved = true;
 		if (request.body.size() > 0)
 		{
-			std::cout << "i am reading file " << std::endl;
 			saveBodyToFile();
-			// writeFile(request.body);
 		}
 		return;
 	}
-	std::cout << "i am not done yet" << std::endl;
 	isAllRecieved = false;
 	if (request.body.size() > 0)
 	{
-		std::cout << "i Am reading chuncked file " << std::endl;
 		saveBodyToFile();
-		// writeFile(request.body);
 	}
 }

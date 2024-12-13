@@ -363,7 +363,7 @@ void Epoll::handleConnection(int server_fd) // we add additionally to the server
 
 		std::string currentServerHost = getCurrentServerHost(server_fd);
 
-		std::cout << "current Server Host: " << currentServerHost << std::endl;
+		// std::cout << "current Server Host: " << currentServerHost << std::endl;
 
 		Client newClient;
 		newClient.setClientFD(client_fd); // creating new Client Object for the new client

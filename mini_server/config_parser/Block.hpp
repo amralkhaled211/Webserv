@@ -47,7 +47,7 @@ class Block // parent // the purpose of this is just to not have class with the 
 		const std::vector<std::string>&					getReturn() const;
 		const std::vector<std::string>&					getIndex() const;
 		const char&										getAutoindex() const;
-		std::string&								getClientMaxBodySize();
+		std::string										getClientMaxBodySize();
 
 		bool				_addCommonDirective(const std::string& directiveKey, std::string& directiveValue);
 
