@@ -412,7 +412,7 @@ Response &SendData::sendResponse(int clientSocket, std::vector<ServerBlock> &ser
 			std::cout << root << std::endl;
 			handleCGI(root, request, current_server, location);
 		}
-		else
+		/* else
 		{
 			std::string uploadPath = "../website/upload";
 			if (access(uploadPath.c_str(), W_OK) == 0)
@@ -434,7 +434,7 @@ Response &SendData::sendResponse(int clientSocket, std::vector<ServerBlock> &ser
 				std::cout << BOLD_RED << "You don't have permission to save this file" << RESET << std::endl;
 				prepErrorResponse(403, location);
 			}
-		}
+		} */
 	}
 	else if (request.method == "DELETE")
 	{
