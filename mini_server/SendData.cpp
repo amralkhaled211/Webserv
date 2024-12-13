@@ -403,7 +403,7 @@ Response &SendData::sendResponse(int clientSocket, std::vector<ServerBlock> &ser
 		std::string root = PATH_TO_WWW + location.getRoot() + request.path;
 		//std::cout << MAGENTA_COLOR << "Root: " << root << std::endl << "Request path:" <<  request.path << std::endl << "Request method: " << request.method << RESET << std::endl;
 
-		std::cout << CYAN_COLOR << "Request body: " << request.body << RESET << std::endl;
+		//std::cout << CYAN_COLOR << "Request body: " << request.body << RESET << std::endl;
 
 
 		if (isCGI(location)) // might need to rethink this, eg. if resource for video.py is in cgi-bin it wont output the video beacuse it thinks its not an acceptable extension

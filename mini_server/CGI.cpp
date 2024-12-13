@@ -3,7 +3,7 @@
 
 CGI::CGI() {}
 
-CGI::CGI(const std::string &scriptPath, const parser &request) : _scriptPath(scriptPath) , _request(request), _typeSet(false), _statusSet(false), _interpreter("")
+CGI::CGI(const std::string &scriptPath, const parser &request) : _scriptPath(scriptPath) , _interpreter(""), _request(request), _typeSet(false), _statusSet(false)
 {}
 
 CGI::~CGI() {}
@@ -74,6 +74,7 @@ std::string join(const std::vector<std::string>& vec, const std::string& delimit
 
 void CGI::setEnv(ServerBlock server)
 {
+	(void)server;
 	_env["REQUEST_METHOD"] = _request.method;
 	_env["QUERY_STRING"] = _request.queryString;
 	_env["SCRIPT_NAME"] = _scriptPath;

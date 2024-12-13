@@ -138,17 +138,19 @@ void Client::allRecieved()
 
 
 		isAllRecieved = true;
-		if (request.body.size() > 0)
+		if (request.body.size() > 0) // add cgi check here to preserve the body
 		{
-			saveBodyToFile();
+			if (!isCGIPost(request.path))
+				saveBodyToFile();
 		}
 		return;
 	}
 	isAllRecieved = false;
-	if (request.body.size() > 0)
+	if (request.body.size() > 0) // add cgi check here to preserve the body
 	{
 		std::cout << "i Am reading chuncked file " << std::endl;
-		saveBodyToFile();
+		if (!isCGIPost(request.path))
+			saveBodyToFile();
 	}
 }
 
@@ -356,5 +358,14 @@ bool Client::handlingBody(std::string &body)
 	else if (_bytesRead == _targetBytes) /// i dont think this is needed but i will keep it for now
 		return true;
 	
+	return false;
+}
+
+bool Client::isCGIPost(std::string path)
+{
+	size_t pos = path.find("cgi-bin");
+	std::string extension = get_file_extension(path);
+	if (pos != std::string::npos && (extension == "py" || extension == "php" || extension == "pl" || extension == "sh"))
+		return true;
 	return false;
 }
