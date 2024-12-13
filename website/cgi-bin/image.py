@@ -9,7 +9,7 @@ import cgitb
 cgitb.enable()
 
 # Set the image file path
-image_path = "/home/aszabo/Docs/Webserv/website/pics/image.jpg"
+image_path = "/home/aismaili/Webserv/website/pics/image.jpg"
 
 # Check if the image file exists
 if not os.path.isfile(image_path):

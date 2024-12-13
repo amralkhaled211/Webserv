@@ -1,4 +1,4 @@
-VIDEO_PATH="/home/aszabo/Docs/Webserv/website/pics/NPC.mp4"
+VIDEO_PATH="/home/aismaili/Webserv/website/pics/NPC.mp4"
 
 # Check if the video file exists
 if [ ! -f "$VIDEO_PATH" ]; then

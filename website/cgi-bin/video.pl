@@ -1,7 +1,7 @@
 use strict;
 use warnings;
 
-my $video_path = "/home/aszabo/Docs/Webserv/website/pics/NPC.mp4";
+my $video_path = "/home/aismaili/Webserv/website/pics/NPC.mp4";
 
 # Check if the video file exists
 unless (-e $video_path) {

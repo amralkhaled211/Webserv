@@ -105,44 +105,6 @@ bool Client::parseHeadersAndBody()
 }
 
 
-void Client::allRecieved()
-{
-	if (!_isChunked && !_headersIsChunked)
-	{
-		if (!parse_first_line())
-		{
-			isAllRecieved = true;
-			return;
-		}
-	}
-	parseQueryString();
-	if (parseHeadersAndBody())
-	{
-		// this would reset values
-		_isChunked = false;
-		_headersIsChunked = false;
-		_bytesRead = 0;
-		_targetBytes = 0;
-		_newLineChecked = false;
-
-
-		isAllRecieved = true;
-		if (request.body.size() > 0) // add cgi check here to preserve the body
-		{
-			if (!isCGIPost(request.path))
-				saveBodyToFile();
-		}
-		return;
-	}
-	isAllRecieved = false;
-	if (request.body.size() > 0) // add cgi check here to preserve the body
-	{
-		std::cout << "i Am reading chuncked file " << std::endl;
-		if (!isCGIPost(request.path))
-			saveBodyToFile();
-	}
-}
-
 
 void Client::saveBodyToFile()
 {
@@ -369,31 +331,6 @@ bool Client::handlingBody(std::string &body)
 	
 	std::cout << "i am going to return false " << std::endl;
 	return false;
-}
-void Client::saveBodyToFile()
-{
-	std::string filePath;
-	if (!request.fileName.empty())
-	{
-		filePath = "/home/amalkhal/Webserv/website/upload/" + request.fileName;
-		std::cout << "this is the file path " << filePath << std::endl;
-	}
-	else 
-		filePath = "../website/upload/data.txt";
-
-	std::ofstream outFile;
-    outFile.open(filePath.c_str(), std::ios::app | std::ios::binary);
-    if (outFile.is_open())
-	{
-        // std::cout << "this is the body " << data << std::endl;
-        outFile.write(request.body.c_str(), request.body.size());
-        outFile.close();
-    }
-	else
-	{
-        std::cerr << "Error opening file for writing: " << filePath << std::endl;
-    }
-	request.body.clear();
 }
 
 void Client::allRecieved()

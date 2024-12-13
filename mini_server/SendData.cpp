@@ -423,7 +423,7 @@ Response &SendData::sendResponse(int clientSocket, std::vector<ServerBlock> &ser
 			//std::cout << root << std::endl;
 			handleCGI(root, request, current_server, location);
 		}
-		/* else
+		else
 		{
 			// saveBodyToFile("../website/upload/" + request.fileName, request);
 			_response.body = "<!DOCTYPE html><html><head><title>200 OK</title></head>";
@@ -469,9 +469,9 @@ Response &SendData::sendResponse(int clientSocket, std::vector<ServerBlock> &ser
 			prepErrorResponse(403, location);
 		}
 	}
-	/* std::cout << MAGENTA_COLOR <<  _response.status << std::endl;
-	std::cout << _response.contentType << std::endl;
-	std::cout << _response.contentLength << RESET << std::endl; */
+	// std::cout << MAGENTA_COLOR <<  _response.status << std::endl;
+	// std::cout << _response.contentType << std::endl;
+	// std::cout << _response.contentLength << RESET << std::endl;
 	return _response;
 }
 
