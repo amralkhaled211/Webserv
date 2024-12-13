@@ -128,17 +128,29 @@ void	removeExcessSlashes(std::string& path) // this should be used when working 
 	path = result;
 }
 
+static bool		isInvalidSize(std::string sizeStr, int maxSizeByte) {
+	if (sizeStr.find_first_not_of("1234567890") != std::string::npos)
+		return true;
+	std::stringstream	ss(sizeStr.c_str());
+	int value;
+	ss >> value;
+	if (ss.fail() || value > maxSizeByte)
+		return true;
+	return false;
+}
+
 static bool		invalidMeasurementPostfix(std::string& directiveValue) {
 
 	size_t		len = directiveValue.size();
-	std::string	measurementUnitSet("kmg"); // kilo, mega and giga byte
+	std::string	measurementUnitSet("kmKM"); // kilo and mega byte
 
 	size_t		postfixNotSet = measurementUnitSet.find(directiveValue[len - 1]) == std::string::npos;
 
+	int maxSizeByte = 512 * 1048576;
 	if (postfixNotSet && !std::isdigit(directiveValue[len - 1]))
 		return true;
 	else if (postfixNotSet)
-		directiveValue += 'm'; // redo this part
+		return (isInvalidSize(directiveValue, maxSizeByte));
 
 	std::stringstream	ss(directiveValue.c_str());
 
@@ -154,10 +166,8 @@ static bool		invalidMeasurementPostfix(std::string& directiveValue) {
 	if (!ss.eof() || word.size() != 1)
 		return true;
 
-	double maxSizeByte = 250.000;
-
-	if ((word == "m" && size * 1024 * 1024 > maxSizeByte * 1000) ||
-		(word == "k" && size > maxSizeByte * 1000000)) {
+	if ((word == "m" && size * 1048576 > maxSizeByte) ||
+		(word == "k" && size * 1024 > maxSizeByte)) {
 			return true;
 		}
 

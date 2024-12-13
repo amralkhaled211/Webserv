@@ -86,8 +86,6 @@ class SendData
 			if (fileStatus == SD_OK) { // body gets init with right error_page content
 				contentType = mimeTypesMap_G[get_file_extension(errorPagePath)];
 
-				std::cout << "CONTENT TYPE: -->" << contentType << "<--" << std::endl;
-
 				if (contentType == "")
 					createDfltResponseBody(code, contentType, "txt");
 			}
