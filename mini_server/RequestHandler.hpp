@@ -49,7 +49,7 @@ class RequestHandler
 	
 	private:
 		std::string _buffer;
-		bool readytoSend;
+		// bool readytoSend;
 };
 
 

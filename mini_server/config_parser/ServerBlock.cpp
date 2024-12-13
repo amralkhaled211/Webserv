@@ -120,12 +120,12 @@ void				ServerBlock::setupDefaults() {
 		this->_listen.push_back(8000);
 
 	if (this->_server_name.empty())
-		this->_server_name.push_back("localhost"); // nginx
+		this->_server_name.push_back("localhost");
 
-	this->createNamePortComb(); // don't remember the point of this
+	this->createNamePortComb();
 
 	if (this->_root.empty())
-		this->_root = "."; // nginx, relative path
+		this->_root = "../www/";
 
 	if (this->_index.empty())
 		this->_index.push_back("index.html"); // note: only matters if a directory was requested

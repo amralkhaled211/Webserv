@@ -8,7 +8,7 @@ Server::Server(std::vector<ServerBlock>& _serverVec) : _servers(_serverVec)
 Server::~Server()
 {
     std::cout << "Server shutting down" << std::endl;
-	for (int i = 0; i < _serverSockets.size(); i++)
+	for (size_t i = 0; i < _serverSockets.size(); i++)
         close(_serverSockets[i]);
 }
 
@@ -121,7 +121,7 @@ void Server::bindNamesWithPorts(std::vector<std::string>& serverName, std::vecto
 void Server::createSocket()
 {
     //std::cout << "size of serverBlock :" << _servers.size() << std::endl;
-    for(int i = 0; i < _servers.size(); i++)
+    for(size_t i = 0; i < _servers.size(); i++)
     {
         bindNamesWithPorts(_servers[i].getServerName(), _servers[i].getListen(), _servers[i]);
     }

@@ -11,7 +11,7 @@ class Client;
 #define	SD_NO_READ_PERM		-1
 #define	SD_NO_FILE			-2
 
-#define	PATH_TO_WWW	""
+#define	PATH_TO_WWW	"/home/aismaili/Webserv/"
 // "/home/aismaili/Webserv/"
 
 typedef struct Redirection
@@ -42,7 +42,7 @@ class SendData
 	{
 	};
 	void notfound();
-	bool read_file(std::string const &path, parser &request);
+	bool read_file(std::string const &path);
 	LocationBlock findLocationBlock(std::vector<LocationBlock> &locations, parser &request);
 	template <typename T>
 	bool findInVector(const std::vector<T> &vec, const T &target)
@@ -50,15 +50,15 @@ class SendData
 		return std::find(vec.begin(), vec.end(), target) != vec.end();
 	}
 	ServerBlock findServerBlock(std::vector<ServerBlock> &servers, parser &request);
-	bool findIndexFile(const std::vector<std::string> &files, std::string &root, parser &request);
-	std::string findCGIIndex(const std::vector<std::string> &files, std::string &root, parser &request);
+	bool findIndexFile(const std::vector<std::string> &files, std::string &root);
+	std::string findCGIIndex(const std::vector<std::string> &files, std::string &root);
 	void handleCGI(const std::string &root, parser &request, ServerBlock server, LocationBlock location);
 	int	checkCGIFile(const std::string &path);
 	bool isCGI(LocationBlock location);
 	bool checkDeletePath(std::string path, LocationBlock location);
 	void redirect(LocationBlock& location, parser &request);
 	bool saveBodyToFile(const std::string &filename, parser &request);
-	Response &sendResponse(int clientSocket, std::vector<ServerBlock> &servers, parser &request, int epollFD);
+	Response &sendResponse(std::vector<ServerBlock> &servers, parser &request);
 	void displayDir(const std::string& path, const std::string& requestPath);
 	void createResponseHeader(int code, size_t bodySize, std::string contentTypes);
 	void createDfltResponseBody(int code, std::string&	contentType, std::string postFix = "html");

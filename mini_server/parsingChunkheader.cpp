@@ -88,7 +88,7 @@ bool Client::handleChunkedTransferEncoding(std::istringstream &headerStream)
 		else
 		{
             std::string chunk = line.erase(line.size() - 1);
-            if (chunk.size() != _chunkLengthValue)
+            if (chunk.size() != (size_t)_chunkLengthValue)
 			{
                 std::cout << "chunk length is not right, fix it" << std::endl;
                 request.statusError = 400;
@@ -177,7 +177,7 @@ bool Client::bodyValidate(std::string &Buffer)
 }
 
 
-bool Client::validateGetHeaders(std::string &buffer)
+bool Client::validateGetHeaders(void)
 {
     std::istringstream headerStream(this->_buffer);
     std::string line;
@@ -199,7 +199,7 @@ bool Client::validateGetHeaders(std::string &buffer)
     return false;
 }
 
-bool Client::validatePostHeaders(std::string &buffer)
+bool Client::validatePostHeaders()
 {
     std::istringstream headerStream(this->_buffer);
     std::string line;
@@ -240,20 +240,16 @@ bool Client::validatePostHeaders(std::string &buffer)
     return false;
 }
 
-bool Client::headersValidate(std::string &buffer, std::string method)
+bool Client::headersValidate(std::string method)
 {
     if (method == "GET" || method == "DELETE")
     {
-        return validateGetHeaders(buffer);
+        return validateGetHeaders();
     }
     else if (method == "POST")
     {
-        return validatePostHeaders(buffer);
+        return validatePostHeaders();
     }
-   /*  else if (method == "DELETE")
-    {
-        return validateGetHeaders(buffer);
-    } */
     return false;
 }
 
@@ -305,7 +301,7 @@ LocationBlock Client::findLocationBlock(std::vector<LocationBlock> &locations)
 	std::string		fullPath;
 
 	
-	for (int i = 0; i < possibleReqLoc.size(); ++i)
+	for (size_t i = 0; i < possibleReqLoc.size(); ++i)
 	{
 		for (std::vector<LocationBlock>::iterator it = locations.begin(); it != locations.end(); ++it)
 		{

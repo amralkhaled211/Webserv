@@ -46,7 +46,7 @@ bool Client::parseHeadersAndBody()
 			// std::cout << "headerEndPos not found" << std::endl;
 			if (parseHeaders(this->_buffer))	
 				return true;
-			if (headersValidate(this->_buffer, request.method) || _newLineChecked) // if this true that means we have the headers and now we ganna do the same thing for the body
+			if (headersValidate(request.method) || _newLineChecked) // if this true that means we have the headers and now we ganna do the same thing for the body
 			{
 				if (request.statusError == 400)
 					return true;
@@ -95,7 +95,7 @@ bool Client::parseHeadersAndBody()
 		//std::cout << "coming to the get validation " << std::endl;
 		if (parseHeaders(this->_buffer))
 			return true;
-		if (headersValidate(this->_buffer, request.method))
+		if (headersValidate(request.method))
 			return true; // this would mean the headers are not chunked 
 		else 
 			_headersIsChunked = true;

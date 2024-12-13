@@ -56,9 +56,9 @@ class Client
 		//~Client();
 		bool parse_first_line();
 		bool parseHeaders(std::string &Buffer);
-		bool headersValidate(std::string &Buffer, std::string method);
-		bool validatePostHeaders(std::string &buffer);
-		bool validateGetHeaders(std::string &buffer);
+		bool headersValidate(std::string method);
+		bool validatePostHeaders(void);
+		bool validateGetHeaders(void);
 		int validateContentLength();
 		int validateHost();
 		int validateTransferEncoding();
@@ -86,7 +86,7 @@ class Client
 		void setResponse(Response &response) { _response = response; }
 		Response &getResponse() { return _response; }
 		void setHostPort(std::string hostPort) { _hostPort = hostPort; }
-		std::string getHostPort(std::string hostPort) { return _hostPort; }
+		std::string getHostPort(void) { return _hostPort; }
 
 		int status;
 		bool getIsChunked() { return _isChunked; }

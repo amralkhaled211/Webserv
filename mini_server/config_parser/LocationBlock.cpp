@@ -35,13 +35,13 @@ std::vector<std::string>&		LocationBlock::getCgiPath() { return this->_cgi_path;
 std::vector<std::string>&		LocationBlock::getCgiExt() { return this->_cgi_ext; }
 
 
-static bool	isCgiExtNotAllowed(std::vector<std::string> enteredCgiExt) {
-	for (size_t i = 0; i < enteredCgiExt.size(); ++i) {
-		if (enteredCgiExt[i] != ".py" && enteredCgiExt[i] != ".php")
-			return true;
-	}
-	return false;
-}
+// static bool	isCgiExtNotAllowed(std::vector<std::string> enteredCgiExt) {
+// 	for (size_t i = 0; i < enteredCgiExt.size(); ++i) {
+// 		if (enteredCgiExt[i] != ".py" && enteredCgiExt[i] != ".php")
+// 			return true;
+// 	}
+// 	return false;
+// }
 
 void	LocationBlock::setDirective(const std::string& directiveKey, std::string& directiveValue) {
 

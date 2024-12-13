@@ -10,7 +10,7 @@ void SendData::notfound()
 	_response.body += "<body><h1>404 Not Found</h1><p>The page you are looking for does not exist.</p></body></html>";
 }
 
-bool SendData::read_file(std::string const &path, parser &request) // this already prepares the response
+bool SendData::read_file(std::string const &path) // this already prepares the response
 {
 	std::string file_extension = get_file_extension(path);
 
@@ -155,7 +155,7 @@ LocationBlock SendData::findLocationBlock(std::vector<LocationBlock> &locations,
 
 	_isDir = true;
 	
-	for (int i = 0; i < possibleReqLoc.size(); ++i)
+	for (size_t i = 0; i < possibleReqLoc.size(); ++i)
 	{
 		for (std::vector<LocationBlock>::iterator it = locations.begin(); it != locations.end(); ++it)
 		{
@@ -229,7 +229,7 @@ void SendData::redirect(LocationBlock& location, parser &request) // so far hand
 	}
 }
 
-bool SendData::findIndexFile(const std::vector<std::string> &files, std::string &root, parser &request) // if found will also prepare response, else return false
+bool SendData::findIndexFile(const std::vector<std::string> &files, std::string &root) // if found will also prepare response, else return false
 {
 	size_t i = 0;
 
@@ -239,14 +239,14 @@ bool SendData::findIndexFile(const std::vector<std::string> &files, std::string 
 		removeExcessSlashes(file);
 		//std::cout << BOLD_GREEN << "FILE from index: " << file << RESET << std::endl;
 		//std::cout << BOLD_GREEN << "FILE from index: " << file << RESET << std::endl;
-		if (read_file(file, request))
+		if (read_file(file))
 			return true;
 		i++;
 	}
 	return false;
 }
 
-std::string SendData::findCGIIndex(const std::vector<std::string> &files, std::string &root, parser &request) // if found will also prepare response, else return false
+std::string SendData::findCGIIndex(const std::vector<std::string> &files, std::string &root) // if found will also prepare response, else return false
 {
 	bool found = false;
 	size_t i = 0;
@@ -310,7 +310,7 @@ bool SendData::checkDeletePath(std::string path, LocationBlock location)
     return false;
 }
 
-Response &SendData::sendResponse(int clientSocket, std::vector<ServerBlock> &servers, parser &request, int epollFD)
+Response &SendData::sendResponse(std::vector<ServerBlock> &servers, parser &request)
 {
 
 	//here  i would serve the errpr pages if the request is not valid
@@ -357,7 +357,7 @@ Response &SendData::sendResponse(int clientSocket, std::vector<ServerBlock> &ser
 				{
 					if (isCGI(location)) //check if cgi location then if found the index file execute the cgi else execute the directory 
 					{
-						std::string file = findCGIIndex(location.getIndex(), root, request);
+						std::string file = findCGIIndex(location.getIndex(), root);
 						if (file != "")
 							handleCGI(file, request, current_server, location);
 						else if (file == "" && location.getAutoindex() == ON) {
@@ -368,7 +368,7 @@ Response &SendData::sendResponse(int clientSocket, std::vector<ServerBlock> &ser
 					}
 					else //checking again if there is an index file, else display the directory
 					{
-						bool foundFile = findIndexFile(location.getIndex(), root, request);
+						bool foundFile = findIndexFile(location.getIndex(), root);
 						if (!foundFile && location.getAutoindex() == ON) {
 							this->displayDir(root, request.path);
 						}
@@ -382,7 +382,7 @@ Response &SendData::sendResponse(int clientSocket, std::vector<ServerBlock> &ser
 				}
 				else
 				{
-					if (!this->read_file(root, request)) {
+					if (!this->read_file(root)) {
 						//DEBUG_R "sending 404 error!!" << RESET << std::endl;
 						prepErrorResponse<LocationBlock>(404, location);
 					}

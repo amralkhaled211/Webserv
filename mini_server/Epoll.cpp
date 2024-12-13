@@ -258,7 +258,7 @@ void Epoll::handleResponse(int clientToSend)
 	else
 		sendNow = currClient.getResponseBuffer();
 	
-	ssize_t s = send(clientToSend, sendNow.c_str(), sendNow.size(), 0);
+	send(clientToSend, sendNow.c_str(), sendNow.size(), 0); // protection for send()
 
 	if (isChunkedResponse && sendNow != "0\r\n\r\n") {
 		return ; // didn't send whole response, delay killing and closing
@@ -290,7 +290,7 @@ void Epoll::handleData(int client_fd)
 	if (clientB.getIsAllRecieved()) // we only go on here once we recieved the whole request
 	{
 		//std::cout <<YELLOW<< "BODY "<<clientB.getRequest().body << RESET <<std::endl;
-		clientB.setResponse(sendData.sendResponse(clientB.getClientFD(), _servers, clientB.getRequest(), _epollFD));
+		clientB.setResponse(sendData.sendResponse(_servers, clientB.getRequest()));
 
 		clientB.status = RECIEVED;
 
