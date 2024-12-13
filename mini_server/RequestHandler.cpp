@@ -45,3 +45,23 @@ Client &RequestHandler::findAllRecieved(std::vector<Client> clients)
 	it->setClientFD(-1);
 	return (*it);
 }
+
+std::vector<std::string>	possibleRequestedLoc(std::string uri)
+{
+	std::vector<std::string>	possibleReqLoc;
+	size_t						lastSlash;
+
+	removeExcessSlashes(uri);
+
+	do
+	{
+		possibleReqLoc.push_back(uri);
+		lastSlash = uri.find_last_of('/');
+		uri = uri.substr(0, lastSlash);
+	} while (!uri.empty());
+
+	if (possibleReqLoc[possibleReqLoc.size() - 1] != "/")
+		possibleReqLoc.push_back("/");
+
+	return possibleReqLoc;
+}

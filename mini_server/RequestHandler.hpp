@@ -65,6 +65,7 @@ bool isDirectory(const std::string &path);
 std::vector<std::string> split(const std::string &str, char delimiter);
 std::string sizeTToHexString(size_t value);
 std::string decodeURIComponent(const std::string& component, bool isQueryString = false);
+std::vector<std::string>	possibleRequestedLoc(std::string uri);
 
 // debugging functions
 void print_map(std::map<std::string, std::string> const &m);

@@ -104,6 +104,9 @@ void		LocationBlock::setupDefaults(Block& parentServer) {
 
 	if (this->_autoindex == NOT_SET)
 		this->_autoindex = parentServer.getAutoindex();
+	
+	if (this->_client_max_body_size.empty())
+		this->_client_max_body_size = parentServer.getClientMaxBodySize();
 
 	if (this->_allowed_methods.empty()) {
 		this->_allowed_methods.push_back("GET");

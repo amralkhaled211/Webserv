@@ -171,6 +171,13 @@ void StatusMsg::_fourHunderds()
 	msg.push_back("The request method is known by the server but has been disabled and cannot be used.");
 	_statusMsg[405] = msg;
 	msg.clear();
+	
+
+	// 413 Payload Too Large
+	msg.push_back("Payload Too Large");
+	msg.push_back("The request is larger than the server is willing or able to process.");
+	_statusMsg[413] = msg;
+	msg.clear();
 }
 
 void StatusMsg::_fiveHunderds()

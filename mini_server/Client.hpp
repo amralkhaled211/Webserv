@@ -67,6 +67,7 @@ class Client
 		bool handleContentLength(std::istringstream &headerStream);
 		bool handlingBody(std::string &body);
 		bool parse_body(std::string &body);
+		// void writeFile(const std::string& data);
 		bool HandlChunk();
 		bool parseHeadersAndBody();
 		void allRecieved();
@@ -92,6 +93,15 @@ class Client
 		std::time_t getClientTime(){return _timeOut;}
 		void saveBodyToFile();
 
+		void setServers(std::vector<ServerBlock> servers) { this->servers = servers; }
+		ServerBlock &findServerBlock();
+		LocationBlock findLocationBlock(std::vector<LocationBlock> &locations);
+		int findMaxBodySize();
+		template <typename T>
+		bool findInVector(const std::vector<T> &vec, const T &target)
+		{
+			return std::find(vec.begin(), vec.end(), target) != vec.end();
+		}
 	
 	private:
 	std::time_t _timeOut;
@@ -111,8 +121,9 @@ class Client
 	bool _sentHeader; // for response in chunks
 	Response _response;
 	std::string _hostPort;
+	std::vector<ServerBlock> servers;
+	size_t _MaxBodySize;
 };
-
 
 size_t stringToSizeT(const std::string& str);
 bool isHexadecimal(const std::string& str);

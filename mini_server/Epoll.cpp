@@ -364,12 +364,13 @@ void Epoll::handleConnection(int server_fd) // we add additionally to the server
 
 		std::string currentServerHost = getCurrentServerHost(server_fd);
 
-		std::cout << "current Server Host: " << currentServerHost << std::endl;
+		// std::cout << "current Server Host: " << currentServerHost << std::endl;
 
 		Client newClient;
 		newClient.setClientFD(client_fd); // creating new Client Object for the new client
 		newClient.setClientTime(std::time(NULL));
 		newClient.setHostPort(currentServerHost);
+		newClient.setServers(_servers);
 		newClient.status = NEW;
 		_clients.push_back(newClient);	  // and adding it to the _clients vector
 		if (E_DEBUG) DEBUG_G "ACCEPTED CLIENT FD " << client_fd << RESET << std::endl;
