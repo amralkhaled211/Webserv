@@ -216,7 +216,7 @@ void SendData::redirect(LocationBlock& location, parser &request) // so far hand
 	}
 	else
 	{
-		std::cout << "url: " << url << std::endl;
+		//std::cout << "url: " << url << std::endl;
 	    // Handle internal redirection
 	    _response.status = "HTTP/1.1 " + code + " " + _redir.CodeToMessage[code] + "\r\n";
 	    _response.location = "Location: http://" + request.headers["Host"] + url + "\r\n";
@@ -389,7 +389,7 @@ Response &SendData::sendResponse(int clientSocket, std::vector<ServerBlock> &ser
 			_response.status.clear();
 			_response.contentType.clear();
 			_response.contentLength.clear();
-			std::cout << YELLOW << "Sending 404" << RESET << std::endl;
+			//std::cout << YELLOW << "Sending 404" << RESET << std::endl;
 			prepErrorResponse<ServerBlock>(404, current_server);
 		}
 	}
@@ -409,7 +409,7 @@ Response &SendData::sendResponse(int clientSocket, std::vector<ServerBlock> &ser
 		if (isCGI(location)) // might need to rethink this, eg. if resource for video.py is in cgi-bin it wont output the video beacuse it thinks its not an acceptable extension
 		{
 			//std::cout << RED_COLOR << "In CGI POST" << RESET << std::endl;
-			std::cout << root << std::endl;
+			//std::cout << root << std::endl;
 			handleCGI(root, request, current_server, location);
 		}
 		/* else
@@ -472,7 +472,7 @@ Response &SendData::sendResponse(int clientSocket, std::vector<ServerBlock> &ser
 		}
 		else
 		{
-			std::cout << std::endl << BOLD_RED << "You have no right to delete peasant" << RESET << std::endl;
+			std::cout << std::endl << BOLD_RED << "You have no right to delete" << RESET << std::endl;
 			prepErrorResponse(403, location);
 		}
 	}

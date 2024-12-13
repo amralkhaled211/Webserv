@@ -215,8 +215,6 @@ int CGI::executeScript()
 	{
 		close(inPipe[0]);
 		close(outPipe[1]);
-
-		//std::cout << _request.method << " " << _request.path << " " << _request.body << std::endl;
 		
 		if (_request.method == "POST" && !_request.body.empty()){
 			write (inPipe[1], _request.body.c_str(), _request.body.size());
@@ -225,7 +223,7 @@ int CGI::executeScript()
 
 		fd_set readfds;
         struct timeval timeout;
-        timeout.tv_sec = 5; // Set timeout to 5 seconds
+        timeout.tv_sec = 5;
         timeout.tv_usec = 0;
 
         FD_ZERO(&readfds);
@@ -237,12 +235,12 @@ int CGI::executeScript()
             close(outPipe[0]);
             throw std::runtime_error("select() failed");
         }
-        else if (selectResult == 0) // timeout occured
+        else if (selectResult == 0)
         {
 
-            kill(pid, SIGTERM); // Send SIGTERM to the child process
-            sleep(1); // Give the child process some time to terminate
-            kill(pid, SIGKILL); // Send SIGKILL if the child process is still running
+            kill(pid, SIGTERM);
+            sleep(1);
+            kill(pid, SIGKILL);
             close(outPipe[0]);
             return 508;
         }
@@ -261,7 +259,7 @@ int CGI::executeScript()
 			if (bufferStr.find(ERROR_MARKER) != std::string::npos)
 			{
 				errStr = bufferStr.substr(bufferStr.find(ERROR_MARKER) + strlen(ERROR_MARKER) + 2);
-				//std::cout << RED << "ERROR_MARKER found: " << errStr << RESET << std::endl;
+				std::cout << RED << errStr << RESET << std::endl;
 				/* kill(pid, SIGTERM);
 				sleep(1); */
 				kill(pid, SIGKILL);
@@ -292,7 +290,7 @@ int CGI::executeScript()
 		{
 			if (WEXITSTATUS(status) != 0 || WIFSIGNALED(status))
 			{
-				std::cerr << "Child process exited with status " << WEXITSTATUS(status) << std::endl;
+				std::cerr << RED <<"Child process exited with status " << WEXITSTATUS(status) << RESET <<std::endl;
 				return 500;
 			}
 		}
