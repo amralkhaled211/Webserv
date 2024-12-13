@@ -48,6 +48,8 @@ bool Client::parseHeadersAndBody()
 				return true;
 			if (headersValidate(this->_buffer, request.method) || _newLineChecked) // if this true that means we have the headers and now we ganna do the same thing for the body
 			{
+				if (request.statusError == 400)
+					return true;
 				if (findMaxBodySize())
 					return true;
 				// std::cout << "i am inside the header vaildatio :: " << std::endl;
@@ -165,6 +167,7 @@ bool Client::parseHeaders(std::string &Buffer)
 				return true;
 			}
             std::string headerValue = line.substr(delimiterPos + 1);
+			headerValue.erase(headerValue.find_last_not_of(" \n\r\t") + 1);
             request.headers[headerName] = deleteSpaces(headerValue);
         }
     }

@@ -3,13 +3,17 @@
 int Client::validateContentLength()
 {
 	std::map<std::string, std::string>::iterator it = request.headers.find("Content-Length");
-	if (it != request.headers.end() && it->second.empty())
+	
+	if ((it != request.headers.end() && it->second.empty()))
 	{
 		std::cerr << "Error: Content-Length value is missing" << std::endl;
 		return 400;
 	}
+
+	//std::cout << "validateConLEnt: " << it->second.size() << std::endl;
+	//std::cout << "value of lenght <" << it->second << ">" << std::endl;
+	//std::cout << "ascii of lenght <" << (int)it->second[0] << ">" << std::endl;
 	std::string value = deleteSpaces(it->second);
-	value.erase(value.find_last_not_of(" \n\r\t") + 1);
 	if (it != request.headers.end() && value.find_first_not_of("0123456789") != std::string::npos)
 	{
 		std::cerr << "Error: Content-Length value is not a number" << std::endl;
@@ -22,11 +26,19 @@ int Client::validateContentLength()
 int Client::validateHost()
 {
 	std::map<std::string, std::string>::iterator it = request.headers.find("Host");
+	if ((it != request.headers.end() && it->second.empty()))
+	{
+		std::cerr << "Error: host value is missing" << std::endl;
+		return 400;
+	}
 	if (it == request.headers.end())
 	{
 		std::cerr << "HOST is missing" << std::endl;
 		return 400;
 	}
+	std::cout << "validateConLEnt: " << it->second.size() << std::endl;
+	std::cout << "value of lenght <" << it->second << ">" << std::endl;
+	std::cout << "ascii of lenght <" << (int)it->second[0] << ">" << std::endl;
 	return 0;
 }
 
@@ -39,7 +51,6 @@ int Client::validateTransferEncoding()
 		return 400;
 	}
 	std::string chunk = deleteSpaces(it->second);
-	chunk.erase(chunk.size() - 1);
 	if (chunk != "chunked")
 	{
 		std::cerr << "HTTP/1.1 501 Not Implemented" << std::endl;
@@ -59,14 +70,14 @@ bool Client::handleChunkedTransferEncoding(std::istringstream &headerStream)
             std::cout << "reading the number " << std::endl;
             std::cout << BOLD_RED << "NUMBER : " << line << RESET << std::endl;
             line.erase(line.size() - 1); // this is to remove the \r
-            if (!isHexadecimal(line))
+            if (!isHexadecimal(line) || line.empty())
 			{
                 std::cerr << "Error: not a hexadecimal" << std::endl;
                 request.statusError = 400;
                 return true;
             }
             _chunkLengthValue = hexStringToInt(deleteSpaces(line)); // convert hex to int
-            if (_chunkLengthValue == 0)
+            if (_chunkLengthValue == 0 && _bytesRead > 0)
 			{
                 std::cout << "end of chunk" << std::endl;
                 request.statusError = 0;
@@ -119,9 +130,9 @@ bool Client::bodyValidate(std::string &Buffer)
 {
     if (request.headers.find("Content-Length") != request.headers.end())
     {
-        if (stringToSizeT (request.headers["Content-Length"]) > _MaxBodySize)
+        if (stringToSizeT(request.headers["Content-Length"]) > _MaxBodySize)
         {
-            std::cerr << "Error: Content-Length value is missing" << std::endl;
+           //std::cerr << "Error: Content-Length value is missing" << std::endl;
             request.statusError = 413;
             return true;
         }
@@ -256,7 +267,7 @@ bool isHexadecimal(const std::string& str)
 
 int hexStringToInt(const std::string& hexStr)
 {
-    int intValue;
+    int intValue = 0;
     std::stringstream ss;
     ss << std::hex << hexStr;
     ss >> intValue;

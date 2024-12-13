@@ -10,7 +10,7 @@ fi
 # Run the server based on the argument
 if [ "$1" == "valgrind" ]; then
     echo "Running server with Valgrind..."
-    valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes ./Server conf_files/ali.conf
+    valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes --track-fds=yes ./Server conf_files/ali.conf
 elif [ "$1" == "normal" ]; then
     echo "Running server normally..."
     ./Server conf_files/ali.conf
