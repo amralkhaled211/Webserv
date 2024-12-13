@@ -18,3 +18,4 @@ else
     echo "Invalid argument. Usage: $0 [normal|valgrind]"
     exit 1
 fi
+

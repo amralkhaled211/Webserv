@@ -54,9 +54,10 @@ class SendData
 	std::string findCGIIndex(const std::vector<std::string> &files, std::string &root, parser &request);
 	void handleCGI(const std::string &root, parser &request, ServerBlock server, LocationBlock location);
 	int	checkCGIFile(const std::string &path);
-	bool isCGI(const parser &request, LocationBlock location);
+	bool isCGI(LocationBlock location);
+	bool checkDeletePath(std::string path, LocationBlock location);
 	void redirect(LocationBlock& location, parser &request);
-	void saveBodyToFile(const std::string &filename, parser &request);
+	bool saveBodyToFile(const std::string &filename, parser &request);
 	Response &sendResponse(int clientSocket, std::vector<ServerBlock> &servers, parser &request, int epollFD);
 	void displayDir(const std::string& path, const std::string& requestPath);
 	void createResponseHeader(int code, size_t bodySize, std::string contentTypes);
@@ -74,7 +75,7 @@ class SendData
 		std::string		contentType;
 		int				fileStatus;
 
-		std::cout << "IN PREP ERROR RESPONSE\n";
+		//std::cout << "IN PREP ERROR RESPONSE\n";
 
 		if (!errorPagePath.empty())
 		{

@@ -3,7 +3,7 @@
 
 CGI::CGI() {}
 
-CGI::CGI(const std::string &scriptPath, const parser &request) : _scriptPath(scriptPath) , _request(request), _typeSet(false), _statusSet(false), _interpreter("")
+CGI::CGI(const std::string &scriptPath, const parser &request) : _scriptPath(scriptPath) , _interpreter(""), _request(request), _typeSet(false), _statusSet(false)
 {}
 
 CGI::~CGI() {}
@@ -74,6 +74,7 @@ std::string join(const std::vector<std::string>& vec, const std::string& delimit
 
 void CGI::setEnv(ServerBlock server)
 {
+	(void)server;
 	_env["REQUEST_METHOD"] = _request.method;
 	_env["QUERY_STRING"] = _request.queryString;
 	_env["SCRIPT_NAME"] = _scriptPath;
@@ -139,6 +140,8 @@ bool CGI::setInterpreters(LocationBlock location)
 				_interpreters[".php"] = path;
 			else if (path.find("perl") != std::string::npos)
 				_interpreters[".pl"] = path;
+			else if (path.find("bash") != std::string::npos)
+				_interpreters[".sh"] = path;
 		}
 	}
 	std::string fileExt = '.' + get_file_extension(_scriptPath);
@@ -183,6 +186,8 @@ int CGI::executeScript()
 	if (pipe(inPipe) == -1 || pipe(outPipe) == -1)
 		throw std::runtime_error("Failed to create pipes in CGI");
 
+	//std::cout << "Executing script: " << _interpreter << " " << _scriptPath << std::endl;
+
 	pid_t pid = fork();
 	if (pid == -1)
 		throw std::runtime_error("Failed to fork in CGI");
@@ -218,7 +223,7 @@ int CGI::executeScript()
 
 		fd_set readfds;
         struct timeval timeout;
-        timeout.tv_sec = 5; // Set timeout to 5 seconds
+        timeout.tv_sec = 5;
         timeout.tv_usec = 0;
 
         FD_ZERO(&readfds);
@@ -230,12 +235,12 @@ int CGI::executeScript()
             close(outPipe[0]);
             throw std::runtime_error("select() failed");
         }
-        else if (selectResult == 0) // timeout occured
+        else if (selectResult == 0)
         {
 
-            kill(pid, SIGTERM); // Send SIGTERM to the child process
-            sleep(1); // Give the child process some time to terminate
-            kill(pid, SIGKILL); // Send SIGKILL if the child process is still running
+            kill(pid, SIGTERM);
+            sleep(1);
+            kill(pid, SIGKILL);
             close(outPipe[0]);
             return 508;
         }
@@ -254,7 +259,7 @@ int CGI::executeScript()
 			if (bufferStr.find(ERROR_MARKER) != std::string::npos)
 			{
 				errStr = bufferStr.substr(bufferStr.find(ERROR_MARKER) + strlen(ERROR_MARKER) + 2);
-				//std::cout << RED << "ERROR_MARKER found: " << errStr << RESET << std::endl;
+				std::cout << RED << errStr << RESET << std::endl;
 				/* kill(pid, SIGTERM);
 				sleep(1); */
 				kill(pid, SIGKILL);
@@ -285,7 +290,7 @@ int CGI::executeScript()
 		{
 			if (WEXITSTATUS(status) != 0 || WIFSIGNALED(status))
 			{
-				std::cerr << "Child process exited with status " << WEXITSTATUS(status) << std::endl;
+				std::cerr << RED <<"Child process exited with status " << WEXITSTATUS(status) << RESET <<std::endl;
 				return 500;
 			}
 		}
@@ -323,11 +328,9 @@ void CGI::generateResponse()
 			_contentType = line.substr(line.find("Content-Type:"));
 			continue;
 		}
-		/* if (line.find("Content-Length:") !=  std::string::npos){
-			_lengthSet = true;
-			_contentLength = line.substr(line.find("Content-Length:"));
+		if (line.find("Content-Length:") !=  std::string::npos){
 			continue;
-		} */
+		}
 		if (line.find("Status:") !=  std::string::npos){
 			_statusSet = true;
 			_responseStatus = "HTTP/1.1" + line.substr(line.find("Status:") + 7);
@@ -339,15 +342,3 @@ void CGI::generateResponse()
 	}
 	_responseBody = body.str();
 }
-
-/* void CGI::createhtml()
-{
-	std::ofstream html("cgi_output.html");
-	if (!html.is_open())
-	{
-		std::cerr << "Failed to open html file" << std::endl;
-		exit(1);
-	}
-	html << _responseBody;
-	html.close();
-} */

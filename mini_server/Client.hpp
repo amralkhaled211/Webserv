@@ -62,6 +62,7 @@ class Client
 		int validateContentLength();
 		int validateHost();
 		int validateTransferEncoding();
+		bool isCGIPost(std::string path);
 		bool bodyValidate(std::string &Buffer);
 		bool handleChunkedTransferEncoding(std::istringstream &headerStream);
 		bool handleContentLength(std::istringstream &headerStream);

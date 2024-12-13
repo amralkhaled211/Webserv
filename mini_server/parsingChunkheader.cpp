@@ -212,7 +212,7 @@ bool Client::validatePostHeaders(std::string &buffer)
             if (request.headers.find("Content-Length") != request.headers.end() &&
                 request.headers.find("Transfer-Encoding") == request.headers.end())
             {
-                std::cout << "doing the Content-length " << std::endl;
+                //std::cout << "doing the Content-length " << std::endl;
                 request.statusError = validateContentLength();
                 return true;
             }
@@ -250,6 +250,10 @@ bool Client::headersValidate(std::string &buffer, std::string method)
     {
         return validatePostHeaders(buffer);
     }
+   /*  else if (method == "DELETE")
+    {
+        return validateGetHeaders(buffer);
+    } */
     return false;
 }
 

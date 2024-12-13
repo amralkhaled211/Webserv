@@ -90,7 +90,7 @@ bool Client::parseHeadersAndBody()
 			}
 		}
 	}
-	else /// this will be for the GET request
+	else
 	{
 		//std::cout << "coming to the get validation " << std::endl;
 		if (parseHeaders(this->_buffer))
@@ -100,8 +100,81 @@ bool Client::parseHeadersAndBody()
 		else 
 			_headersIsChunked = true;
 	}
-	// std::cout << "we throwing this ::: " << std::endl;	
+	// std::cout << "we throwing this ::: " << std::endl;
 	return false;
+}
+
+
+void Client::allRecieved()
+{
+	if (!_isChunked && !_headersIsChunked)
+	{
+		if (!parse_first_line())
+		{
+			isAllRecieved = true;
+			return;
+		}
+	}
+	parseQueryString();
+	if (parseHeadersAndBody())
+	{
+		// this would reset values
+		_isChunked = false;
+		_headersIsChunked = false;
+		_bytesRead = 0;
+		_targetBytes = 0;
+		_newLineChecked = false;
+
+
+		isAllRecieved = true;
+		if (request.body.size() > 0) // add cgi check here to preserve the body
+		{
+			if (!isCGIPost(request.path))
+				saveBodyToFile();
+		}
+		return;
+	}
+	isAllRecieved = false;
+	if (request.body.size() > 0) // add cgi check here to preserve the body
+	{
+		std::cout << "i Am reading chuncked file " << std::endl;
+		if (!isCGIPost(request.path))
+			saveBodyToFile();
+	}
+}
+
+
+void Client::saveBodyToFile()
+{
+	std::string filePath;
+	if (!request.fileName.empty())
+	{
+		filePath = "../website/upload/" + request.fileName;
+	}
+	else 
+		filePath = "../website/upload/data.txt";
+
+	//check if file already exists
+    std::ifstream infile(filePath.c_str());
+    if (infile.good())
+    {
+		//we might want to handle this differently like an error page or something
+        //std::cout << "File already exists: " << filePath << std::endl;
+	}
+	infile.close();
+
+    std::ofstream outFile(filePath.c_str(), std::ios::binary | std::ios::app);
+    if (outFile.is_open())
+    {
+        outFile.write(request.body.c_str(), request.body.size());
+        outFile.close();
+    }
+    else
+    {
+        // Handle error opening file
+        std::cerr << "Error opening file for writing: " << filePath << std::endl;
+    }
+	request.body.clear();
 }
 
 
@@ -123,7 +196,7 @@ bool Client::parse_first_line()
 	request.method = deleteSpaces(this->_buffer.substr(start, end - start));
 	if (request.method != "GET" && request.method != "POST" && request.method != "DELETE")
 	{
-	    std::cerr << "Error: bad request method" << std::endl;
+	    //std::cerr << "Error: bad request method" << std::endl;
 	    request.statusError = 400;
 	    return false;
 	}
@@ -349,13 +422,24 @@ void Client::allRecieved()
 		isAllRecieved = true;
 		if (request.body.size() > 0)
 		{
-			saveBodyToFile();
+			if (!isCGIPost(request.path))
+				saveBodyToFile();
 		}
 		return;
 	}
 	isAllRecieved = false;
 	if (request.body.size() > 0)
 	{
-		saveBodyToFile();
+		if (!isCGIPost(request.path))
+			saveBodyToFile();
 	}
+}
+
+bool Client::isCGIPost(std::string path)
+{
+	size_t pos = path.find("cgi-bin");
+	std::string extension = get_file_extension(path);
+	if (pos != std::string::npos && (extension == "py" || extension == "php" || extension == "pl" || extension == "sh"))
+		return true;
+	return false;
 }

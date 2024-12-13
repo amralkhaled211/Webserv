@@ -89,6 +89,7 @@ void SendData::handleCGI(const std::string &root, parser &request, ServerBlock s
 	}
 
 	code = cgi.executeScript();
+	//std::cout << RED << "Done with CGI execution" << RESET << std::endl;
 	if (code != 0)
 	{
 		prepErrorResponse(code, location);
@@ -96,6 +97,7 @@ void SendData::handleCGI(const std::string &root, parser &request, ServerBlock s
 	}
 
 	cgi.generateResponse();
+	//std::cout << RED << "Done with CGI response" << RESET << std::endl;
 
 	_response.body = cgi.getResponse();
 
@@ -115,8 +117,14 @@ void SendData::handleCGI(const std::string &root, parser &request, ServerBlock s
 	else
 		_response.contentType = "Content-Type: text/html;\r\n";
 		
-	unsigned int content_len = _response.body.size();
-		_response.contentLength = "Content-Length: " + intToString(content_len) + "\r\n";
+	if (_response.body.size() > SEND_CHUNK_SIZE) {
+		_response.transferEncoding = "Transfer-Encoding: chunked\r\n";
+		_response.contentLength = "";
+	}
+	else {
+		_response.contentLength = "Content-Length: " + intToString(_response.body.size()) + "\r\n";
+		_response.transferEncoding = "";
+	}
 }
 
 // std::vector<std::string>	possibleRequestedLoc(std::string uri) {
@@ -186,7 +194,7 @@ ServerBlock SendData::findServerBlock(std::vector<ServerBlock> &servers, parser 
 	}
 	// this would be fixed later
 	// std::cout << "reques:::" << request.headers["Host"] << std::endl;
-	std::cout << "\033[1;31m" <<  "returning the first server?, This is a BUG " << "\033[0m" << std::endl;
+	//std::cout << "\033[1;31m" <<  "returning the first server?, This is a BUG " << "\033[0m" << std::endl;
 	return servers[0]; // return default
 }
 
@@ -211,7 +219,7 @@ void SendData::redirect(LocationBlock& location, parser &request) // so far hand
 	}
 	else
 	{
-		std::cout << "url: " << url << std::endl;
+		//std::cout << "url: " << url << std::endl;
 	    // Handle internal redirection
 	    _response.status = "HTTP/1.1 " + code + " " + _redir.CodeToMessage[code] + "\r\n";
 	    _response.location = "Location: http://" + request.headers["Host"] + url + "\r\n";
@@ -249,7 +257,7 @@ std::string SendData::findCGIIndex(const std::vector<std::string> &files, std::s
 		file = root + '/' + files[i];
 		removeExcessSlashes(file);
 		struct stat		buffer;
-		std::cout << "FILE: " << file << std::endl;
+		//std::cout << "FILE: " << file << std::endl;
 
 		if (stat(file.c_str(), &buffer) == 0 && access(file.c_str(), R_OK) == 0 && access(file.c_str(), X_OK) == 0)
 		{
@@ -266,7 +274,7 @@ std::string SendData::findCGIIndex(const std::vector<std::string> &files, std::s
 	return "";
 }
 
-bool SendData::isCGI(const parser &request, LocationBlock location)
+bool SendData::isCGI(LocationBlock location)
 {
 	if (location.getCgiPath().empty() || location.getCgiExt().empty())
 		return false;
@@ -282,6 +290,24 @@ bool	SendData::isNotAllowedMethod(LocationBlock& location, std::vector<std::stri
 		return true;
 	}
 	return false;
+}
+
+bool SendData::checkDeletePath(std::string path, LocationBlock location)
+{
+    size_t lastSlashPos = path.find_last_of('/');
+    if (lastSlashPos == std::string::npos) {
+        return false;
+    }
+
+    std::string directory = path.substr(0, lastSlashPos);
+
+    if (directory.size() >= 7 && directory.substr(directory.size() - 7) == "/upload") {
+        std::string root = PATH_TO_WWW + location.getRoot() + directory;
+        if (access(root.c_str(), W_OK) == 0) {
+            return true;
+        }
+    }
+    return false;
 }
 
 Response &SendData::sendResponse(int clientSocket, std::vector<ServerBlock> &servers, parser &request, int epollFD)
@@ -329,7 +355,7 @@ Response &SendData::sendResponse(int clientSocket, std::vector<ServerBlock> &ser
 			{
 				if (_isDir == true) // here we handle the directory
 				{
-					if (isCGI(request, location)) //check if cgi location then if found the index file execute the cgi else execute the directory 
+					if (isCGI(location)) //check if cgi location then if found the index file execute the cgi else execute the directory 
 					{
 						std::string file = findCGIIndex(location.getIndex(), root, request);
 						if (file != "")
@@ -350,15 +376,14 @@ Response &SendData::sendResponse(int clientSocket, std::vector<ServerBlock> &ser
 							prepErrorResponse(404, location);
 					}
 				}
-				else if (isCGI(request, location)) // add a check here that also checks if the extensions exist and match to avoid going into cgi if unnecessary
+				else if (isCGI(location))
 				{
-					//std::cout << RED_COLOR << "In CGI GET" << RESET << std::endl;
 					handleCGI(root, request, current_server, location);
 				}
 				else
 				{
 					if (!this->read_file(root, request)) {
-						DEBUG_R "sending 404 error!!" << RESET << std::endl;
+						//DEBUG_R "sending 404 error!!" << RESET << std::endl;
 						prepErrorResponse<LocationBlock>(404, location);
 					}
 				}
@@ -371,19 +396,12 @@ Response &SendData::sendResponse(int clientSocket, std::vector<ServerBlock> &ser
 		}
 		catch (const std::exception &e) // what kind of error do we expect here?
 		{
-			std::string error = e.what(); // here we need to check what the error is and send notfound or error page accordingly
-			std::cout << RED_COLOR << "Error: " << error << RESET << std::endl;
-			/* std::cout << BOLD_YELLOW << "Response Status: " <<  _response.status << std::endl;
-			std::cout << "Content Type: "  << _response.contentType << std::endl;
-			std::cout << "Content Length: " << _response.contentLength << RESET << std::endl; */
-			// i should here send the right error for invalid locatio
 			_response.body.clear();
 			_response.status.clear();
 			_response.contentType.clear();
 			_response.contentLength.clear();
-			std::cout << YELLOW << "Sending 404" << RESET << std::endl;
+			//std::cout << YELLOW << "Sending 404" << RESET << std::endl;
 			prepErrorResponse<ServerBlock>(404, current_server);
-			// notfound();
 		}
 	}
 	if (request.method == "POST")
@@ -396,12 +414,16 @@ Response &SendData::sendResponse(int clientSocket, std::vector<ServerBlock> &ser
 		std::string root = PATH_TO_WWW + location.getRoot() + request.path;
 		//std::cout << MAGENTA_COLOR << "Root: " << root << std::endl << "Request path:" <<  request.path << std::endl << "Request method: " << request.method << RESET << std::endl;
 
-		if (isCGI(request, location)) // might need to rethink this, eg. if resource for video.py is in cgi-bin it wont output the video beacuse it thinks its not an acceptable extension
+		//std::cout << CYAN_COLOR << "Request body: " << request.body << RESET << std::endl;
+
+
+		if (isCGI(location)) // might need to rethink this, eg. if resource for video.py is in cgi-bin it wont output the video beacuse it thinks its not an acceptable extension
 		{
 			//std::cout << RED_COLOR << "In CGI POST" << RESET << std::endl;
+			//std::cout << root << std::endl;
 			handleCGI(root, request, current_server, location);
 		}
-		else
+		/* else
 		{
 			// saveBodyToFile("../website/upload/" + request.fileName, request);
 			_response.body = "<!DOCTYPE html><html><head><title>200 OK</title></head>";
@@ -415,27 +437,62 @@ Response &SendData::sendResponse(int clientSocket, std::vector<ServerBlock> &ser
 				return _response;
 		std::string root = PATH_TO_WWW + location.getRoot() + request.path; // maybe a more suitable name: pathToFileToServe
 
-		// Delete implementation
+		//std::cout << BOLD_RED << "IN DELETE METHOD" << RESET << std::endl;
 
+		//std::cout << MAGENTA_COLOR << "Path: " << request.path << std::endl;
+
+		if (checkDeletePath(request.path, location))
+		{
+			struct stat buffer;
+			if (stat(root.c_str(), &buffer) == 0) 
+			{
+				if (remove(root.c_str()) == 0) 
+				{
+					_response.body = "<!DOCTYPE html><html><head><title>200 OK</title></head>";
+					_response.body += "<body><h1>200 OK</h1><p>File deleted successfully</p></body></html>";
+					_response.status = "HTTP/1.1 200 OK\r\n";
+					_response.contentType = "Content-Type: text/html;\r\n";
+					_response.contentLength = "Content-Length: " + intToString(_response.body.size()) + "\r\n";
+				}
+				else
+				{
+					std::cout << BOLD_RED << "Error deleting file" << RESET << std::endl;
+					prepErrorResponse(500, location);
+				}
+			}
+			else
+				prepErrorResponse(404, location);
+		}
+		else
+		{
+			std::cout << std::endl << BOLD_RED << "You have no right to delete" << RESET << std::endl;
+			prepErrorResponse(403, location);
+		}
 	}
+	/* std::cout << MAGENTA_COLOR <<  _response.status << std::endl;
+	std::cout << _response.contentType << std::endl;
+	std::cout << _response.contentLength << RESET << std::endl; */
 	return _response;
 }
 
 
-void SendData::saveBodyToFile(const std::string &filename, parser &request)
+bool SendData::saveBodyToFile(const std::string &filename, parser &request)
 {
     std::ofstream outFile(filename.c_str(), std::ios::binary);//| std::ios::app
     if (outFile.is_open())
     {
         outFile.write(request.body.c_str(), request.body.size());
         outFile.close();
+		request.body.clear();
+		return true;
     }
     else
     {
         // Handle error opening file
         std::cerr << "Error opening file for writing: " << filename << std::endl;
+		request.body.clear();
+		return false;
     }
-	request.body.clear();
 }
 
 // Percent-encode a filename for use in a URI
@@ -547,14 +604,14 @@ void		SendData::displayDir(const std::string& path, const std::string& requestUR
 
 			// Include size and last modification date in the HTML output
 			std::stringstream htmlStream;
-			htmlStream << "<tr><td><a href=\"" << encodeURI(escapeHtml(fullPath)) << "\">" << escapeHtml(displayName) << "</a></td>"
+			htmlStream << "<tr><td><a href=\"" << escapeHtml(fullPath) << "\">" << escapeHtml(displayName) << "</a></td>"
 					<< "<td>" << fileSize << "</td>"
 					<< "<td>" << modTimeStr << "</td></tr>";
 			html << htmlStream.str();
 		} else {
 			std::cout << "ERRNO: " << errno << std::endl;
 			std::stringstream htmlStream;
-			htmlStream << "<tr><td><a href=\"" << encodeURI(escapeHtml(fullPath)) << "\">" << escapeHtml(displayName) << "</a></td>"
+			htmlStream << "<tr><td><a href=\"" << escapeHtml(fullPath) << "\">" << escapeHtml(displayName) << "</a></td>"
 					<< "<td colspan=\"2\">(unable to retrieve file information)</td></tr>";
 			html << htmlStream.str();
 		}

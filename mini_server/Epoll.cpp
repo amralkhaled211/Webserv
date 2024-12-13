@@ -252,7 +252,7 @@ void Epoll::handleResponse(int clientToSend)
 	}
 	else if (isChunkedResponse && !remainingResBuffer.size())
 	{
-		std::cout << "SENDING LAST CHUNK\n";
+		//std::cout << "SENDING LAST CHUNK\n";
 		sendNow = "0\r\n\r\n";
 	}
 	else
@@ -263,7 +263,7 @@ void Epoll::handleResponse(int clientToSend)
 	if (isChunkedResponse && sendNow != "0\r\n\r\n") {
 		return ; // didn't send whole response, delay killing and closing
 	}
-	std::cout << "killing and closing the client fd " << clientToSend << "\n";
+	//std::cout << "killing and closing the client fd " << clientToSend << "\n";
 	killClient(clientToSend);
 	close(clientToSend);
 }
@@ -289,25 +289,12 @@ void Epoll::handleData(int client_fd)
 
 	if (clientB.getIsAllRecieved()) // we only go on here once we recieved the whole request
 	{
+		//std::cout <<YELLOW<< "BODY "<<clientB.getRequest().body << RESET <<std::endl;
 		clientB.setResponse(sendData.sendResponse(clientB.getClientFD(), _servers, clientB.getRequest(), _epollFD));
 
 		clientB.status = RECIEVED;
 
 		modClientFDToSend(client_fd, _epollFD);
-		// struct epoll_event client_event;
-		// client_event.data.fd = clientB.getClientFD();
-		// client_event.events = EPOLLOUT;
-		// if (epoll_ctl(_epollFD, EPOLL_CTL_MOD, clientB.getClientFD(), &client_event) == -1)
-		// {
-		// 	close(clientB.getClientFD());
-		// 	std::cout << BOLD_GREEN << "client.getClientFD() Change mod : " << clientB.getClientFD() << RESET << std::endl;
-		// 	std::cout << "epoll_ctl failed" << std::endl;
-		// 	throw std::runtime_error("in sendResponse(): epoll_ctl while MODIFYING client FD " + intToString(clientB.getClientFD()));
-		// }
-		// if (E_DEBUG || E_DEBUG2) {
-		// 	DEBUG_G "AFTER EPOLL_CTL IN HANDLE DATA, so have the response ready\n" << RESET;
-		// 	printClientInfo(client_fd, client_event.events, _clients);
-		// }
 		clientB.status = SENDING;
 
 		std::string responseBuffer;

@@ -4,7 +4,7 @@ import os
 import sys
 
 # Set the path to the GIF image
-gif_image = "/home/aismaili/Webserv/website/pics/captain.gif"
+gif_image = "/home/aszabo/Docs/Webserv/website/pics/captain.gif"
 
 try:
     # Open the GIF image file in binary mode

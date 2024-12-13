@@ -9,7 +9,7 @@ void		prepErrorResponse(int code, T& location)
 	std::string		contentType;
 	int				fileStatus;
 
-	std::cout << "IN PREP ERROR RESPONSE\n";
+	//std::cout << "IN PREP ERROR RESPONSE\n";
 
 	if (!errorPagePath.empty())
 	{
