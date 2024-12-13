@@ -8,8 +8,13 @@ if [ ! -f "$VIDEO_PATH" ]; then
     exit 1
 fi
 
-# Send the video file
+# Get the size of the video file
+VIDEO_SIZE=$(stat -c%s "$VIDEO_PATH")
+
+# Output the HTTP headers
 echo "Content-Type: video/mp4"
-echo "Content-Length: $(stat -c%s "$VIDEO_PATH")"
+echo "Content-Length: $VIDEO_SIZE"
 echo ""
+
+# Send the video file
 cat "$VIDEO_PATH"

@@ -260,7 +260,7 @@ int CGI::executeScript()
 			if (bufferStr.find(ERROR_MARKER) != std::string::npos)
 			{
 				errStr = bufferStr.substr(bufferStr.find(ERROR_MARKER) + strlen(ERROR_MARKER) + 2);
-				std::cout << RED << "ERROR_MARKER found: " << errStr << RESET << std::endl;
+				//std::cout << RED << "ERROR_MARKER found: " << errStr << RESET << std::endl;
 				/* kill(pid, SIGTERM);
 				sleep(1); */
 				kill(pid, SIGKILL);
@@ -343,15 +343,3 @@ void CGI::generateResponse()
 	}
 	_responseBody = body.str();
 }
-
-/* void CGI::createhtml()
-{
-	std::ofstream html("cgi_output.html");
-	if (!html.is_open())
-	{
-		std::cerr << "Failed to open html file" << std::endl;
-		exit(1);
-	}
-	html << _responseBody;
-	html.close();
-} */

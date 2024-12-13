@@ -365,15 +365,14 @@ Response &SendData::sendResponse(int clientSocket, std::vector<ServerBlock> &ser
 							prepErrorResponse(404, location);
 					}
 				}
-				else if (isCGI(location)) // add a check here that also checks if the extensions exist and match to avoid going into cgi if unnecessary
+				else if (isCGI(location))
 				{
-					//std::cout << RED_COLOR << "In CGI GET" << RESET << std::endl;
 					handleCGI(root, request, current_server, location);
 				}
 				else
 				{
 					if (!this->read_file(root, request)) {
-						DEBUG_R "sending 404 error!!" << RESET << std::endl;
+						//DEBUG_R "sending 404 error!!" << RESET << std::endl;
 						prepErrorResponse<LocationBlock>(404, location);
 					}
 				}
@@ -386,15 +385,12 @@ Response &SendData::sendResponse(int clientSocket, std::vector<ServerBlock> &ser
 		}
 		catch (const std::exception &e) // what kind of error do we expect here?
 		{
-			std::string error = e.what(); // here we need to check what the error is and send notfound or error page accordingly
-			std::cout << RED_COLOR << "Error: " << error << RESET << std::endl;
 			_response.body.clear();
 			_response.status.clear();
 			_response.contentType.clear();
 			_response.contentLength.clear();
 			std::cout << YELLOW << "Sending 404" << RESET << std::endl;
 			prepErrorResponse<ServerBlock>(404, current_server);
-			// notfound();
 		}
 	}
 	if (request.method == "POST")
