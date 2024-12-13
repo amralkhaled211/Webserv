@@ -9,7 +9,7 @@ import cgitb
 cgitb.enable()
 
 # Set the image file path
-image_path = "/home/aszabo/Docs/Webserv/website/pics/aszabo.jpg"
+image_path = "/home/aszabo/Docs/Webserv/website/pics/image.jpg"
 
 # Check if the image file exists
 if not os.path.isfile(image_path):
@@ -37,7 +37,7 @@ print(f"""
     <h1>Image Information</h1>
     <p>File: aszabo.jpg</p>
     <p>Dimensions: {image_width}x{image_height}</p>
-    <img src="/website/pics/aszabo.jpg" alt="aszabo.jpg">
+    <img src="/website/pics/image.jpg" alt="image.jpg">
 </body>
 </html>
 """)
