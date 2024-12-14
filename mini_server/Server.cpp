@@ -61,6 +61,38 @@ int Server::create_and_configure_socket()
     return serverSocket;
 }
 
+std::string resolveFromHostsFile(const std::string& hostname) {
+    std::ifstream hostsFile("/etc/hosts");
+    if (!hostsFile) {
+        std::cerr << "Error opening /etc/hosts file." << std::endl;
+        return "";
+    }
+
+    std::string line;
+    while (std::getline(hostsFile, line)) {
+
+        if (line.empty() || line[0] == '#') {
+            continue;
+        }
+
+        std::istringstream iss(line);
+        std::string ip;
+        std::string entry;
+
+        if (!(iss >> ip)) {
+            continue;
+        }
+
+        while (iss >> entry) {
+            if (entry == hostname) {
+                return ip;
+            }
+        }
+    }
+
+    return "";
+}
+
 void Server::bindNamesWithPorts(std::vector<std::string>& serverName, std::vector<int> serverPort, ServerBlock &currServer)
 {
     if (serverName.size() == 0)
@@ -78,20 +110,22 @@ void Server::bindNamesWithPorts(std::vector<std::string>& serverName, std::vecto
 
             if (!isValidIPAddress(name))
             {
-                struct addrinfo hints, *res;
-                memset(&hints, 0, sizeof(hints));
-                hints.ai_family = AF_INET;
-                hints.ai_socktype = SOCK_STREAM;
+                // struct addrinfo hints, *res;
+                // memset(&hints, 0, sizeof(hints));
+                // hints.ai_family = AF_INET;
+                // hints.ai_socktype = SOCK_STREAM;
 
-                int status = getaddrinfo(name.c_str(), NULL, &hints, &res);
-                if (status != 0)
+                // int status = getaddrinfo(name.c_str(), NULL, &hints, &res);
+                std::string ip = resolveFromHostsFile(name);
+                if (ip == "")
                 {
                     serverAddress.sin_addr.s_addr = INADDR_ANY;
                 }
                 else
                 {
-                    serverAddress.sin_addr = ((struct sockaddr_in*)res->ai_addr)->sin_addr;
-                    freeaddrinfo(res);
+                    serverAddress.sin_addr.s_addr = inet_addr(ip.c_str());
+                    // serverAddress.sin_addr = ((struct sockaddr_in*)res->ai_addr)->sin_addr;
+                    // freeaddrinfo(res);
                 }
             }
             else
@@ -103,7 +137,9 @@ void Server::bindNamesWithPorts(std::vector<std::string>& serverName, std::vecto
 
             int bindRC = bind(serverSocket, (struct sockaddr*)&serverAddress, sizeof(serverAddress));
 	        if (bindRC < 0)
+            {
 	        	throw std::runtime_error(std::string("Binding failed: ") + strerror(errno));
+            }
 
 	        if (listen(serverSocket, 5) < 0)
 	        	throw std::runtime_error("Listening failed");

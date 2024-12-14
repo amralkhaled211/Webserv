@@ -3,7 +3,7 @@
 # Check if an argument is provided
 if [ -z "$1" ]; then
     echo "No argument provided. Running server normally..."
-    ./Server conf_files/amr.conf
+    ./Server conf_files/ali.conf
     exit 0
 fi
 
