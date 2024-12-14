@@ -1,28 +1,35 @@
 NAME	= Server
 
-SRC	= main.cpp Server.cpp parser_utils.cpp types.cpp  RequestHandler.cpp 
+SRC_DIR = .
+CONFIG_PARSER_DIR = config_parser
+
+SRC = $(wildcard $(SRC_DIR)/*.cpp) $(wildcard $(CONFIG_PARSER_DIR)/*.cpp)
+HEADERS = $(wildcard $(SRC_DIR)/*.hpp) $(wildcard $(CONFIG_PARSER_DIR)/*.hpp)
 
 OBJ_DIR = obj
 OBJ	= $(SRC:%.cpp=$(OBJ_DIR)/%.o)
 
-CC	= c++
+CC	= c++ -std=c++98
 
-CFLAGS	= -Wall -Wextra -Werror -std=c++98 -g
+CFLAGS	= -Wall -Wextra -Werror -g
 
 all: $(NAME)
 
-$(NAME): $(OBJ) 
-	$(CC) $(CFLAGS) $(OBJ) -o $(NAME)
+$(NAME): $(OBJ)  $(HEADERS)
+	@$(CC) $(CFLAGS) $(OBJ) -o $(NAME)
 
-$(OBJ_DIR)/%.o: %.cpp
-	@mkdir -p $(OBJ_DIR)
-	$(CC) $(CFLAGS) -c $< -o $@
+$(OBJ_DIR)/%.o: %.cpp  $(HEADERS)
+	@mkdir -p $(dir $@)
+	@$(CC) $(CFLAGS) -c $< -o $@
 
 clean:
-	rm -f $(OBJ_DIR)/*.o
+	@if [ -d $(OBJ_DIR) ]; then \
+		find $(OBJ_DIR) -type f -name '*.o' -delete; \
+		find $(OBJ_DIR) -type d -empty -delete; \
+	fi
 
 fclean: clean
-	rm -f $(NAME)
+	@rm -f $(NAME)
 
 re: fclean all
 

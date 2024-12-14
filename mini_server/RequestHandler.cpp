@@ -1,118 +1,67 @@
 #include "RequestHandler.hpp"
 
-// this is handling the request part
-void RequestHandler::receiveData(int clientSocket)
+RequestHandler::RequestHandler()
 {
-    char buffer[1024] = {0};
-    int bytesReceived = recv(clientSocket, buffer, sizeof(buffer), 0);
-    if (bytesReceived < 0)
-    {
-        close(clientSocket);
-        throw std::runtime_error("Receiving failed");
-    }
-// 	this->buffer = buffer; this would copy the whole buffer this might cause storing carbege data if the buffer is not full
-    this->buffer.assign(buffer, bytesReceived); // this would copy only the data that was received
 }
-
-void RequestHandler::parse_first_line()
+// i need here to check for the right client to send the buffer to
+void RequestHandler::findClient(int clientSocket, std::vector<Client> &Clients) // better name: setBufferForCorrectClient()
 {
-	size_t start = 0;
-	size_t end = this->buffer.find(' ', start);
-	request.method = this->buffer.substr(start, end - start);
-	start = end + 1;
-	end = this->buffer.find(' ', start);
-	request.path = this->buffer.substr(start, end - start);
-	start = end + 1;
-	end = this->buffer.find("\r\n", start);
-	request.version = this->buffer.substr(start, end - start);
-}
-
-void RequestHandler::parseHeaders()
-{
-	std::string line;
-	std::istringstream stream(this->buffer);
-	std::getline(stream, line);
-	while (std::getline(stream, line))
+	for (std::vector<Client>::iterator it = Clients.begin(); it != Clients.end(); ++it)
 	{
-		size_t dilm = line.find(":");
-		std::string key = deleteSpaces(line.substr(0, dilm));
-		std::string value = deleteSpaces(line.substr(dilm + 1, line.length()));
-		request.headers[key] = value;
-	}
-	if (request.method == "POST") // TODO : i would need to parse the body in more advanced way
-	{
-		std::getline(stream, line);
-		request.body = line;
-		//std::cout << "the body :" << request.body << std::endl;
-	}
-	// std::cout << "this buffer" << this->buffer << std::endl;
-}
-void RequestHandler::parseRequest()
-{
-	parse_first_line();
-	parseHeaders();
-}
-
-
-
-
-
-////// this is response part
-
-void RequestHandler::notfound()
-{
-	response.status = "HTTP/1.1 404 Not Found\r\n";
-	response.contentType = "Content-Type: text/html;\r\n";
-	response.contentLength = "Content-Length: 155\r\n";
-	response.body += "<!DOCTYPE html><html><head><title>404 Not Found</title></head>";
-	response.body += "<body><h1>404 Not Found</h1><p>The page you are looking for does not exist.</p></body></html>";
-}
-
-void RequestHandler::read_file(std::string const &path)
-{
-	std::string file_extension = get_file_extension(request.path);
-	std::ifstream file(path.c_str());
-	if (file.is_open())
-	{
-		response.body.clear();
-		std::string line;
-		while (std::getline(file, line))
+		if (it->getClientFD() == clientSocket)
 		{
-			response.body += line + "\n";
+			it->setBuffer(this->_buffer);
+			it->allRecieved();
+			if (it->getIsChunked())
+				it->status = R_CHUNKS;
+			else
+				it->status = RECIEVING;
+			break;
 		}
-		response.status = "HTTP/1.1 200 OK\r\n";
-		response.contentType = "Content-Type: " + mimeTypesMap_G[file_extension] + ";" + "\r\n";
-		unsigned int content_len = response.body.size();
-		response.contentLength = "Content-Length: " + intToString(content_len) + "\r\n";
-		file.close();
-	}
-	else
-	{
-		notfound();
 	}
 }
 
-void RequestHandler::sendResponse(int clientSocket)
+void RequestHandler::receiveData(int clientSocket, std::vector<Client> &clients)
 {
-	std::string root = "/home/amalkhal/Webserv/website";// this would be changed 
+	char Buffer[READ_CHUNK_SIZE] = {0};
+	int bytesReceived = recv(clientSocket, Buffer, sizeof(Buffer), 0);
+	if (bytesReceived < 0)
+		throw std::runtime_error("Receiving failed");
+	this->_buffer.assign(Buffer, bytesReceived); // this buffer should go to the right client
+	this->findClient(clientSocket, clients); // must rename
+}
 
-	if (request.method == "GET")
+Client &RequestHandler::findAllRecieved(std::vector<Client> clients)
+{
+	for (std::vector<Client>::iterator it = clients.begin(); it != clients.end(); ++it)
 	{
-		if (request.path == "/")// this if the whole path is not given, so i would give a default path file 
-			request.path = "/index.html";
-		this->read_file(root + request.path);
+		if (it->getIsAllRecieved() == true)
+		{
+			return (*it);
+		}
 	}
-	if (request.method == "POST") // this is not an important step, just checking if the Post wrok
+	//std::cout << BOLD_RED << "didnt find the right client " << RESET << std::endl;
+	std::vector<Client>::iterator it = --clients.end();
+	it->setClientFD(-1);
+	return (*it);
+}
+
+std::vector<std::string>	possibleRequestedLoc(std::string uri)
+{
+	std::vector<std::string>	possibleReqLoc;
+	size_t						lastSlash;
+
+	removeExcessSlashes(uri);
+
+	do
 	{
-		std::cout << "the body :" << request.body << std::endl;
-		response.status = "HTTP/1.1 200 OK\r\n";
-		response.contentType = "Content-Type: text/html;\r\n";
-		response.contentLength = "Content-Length: 122\r\n";
-		response.body = "<!DOCTYPE html><html><head><title>200 OK</title></head>";
-		response.body += "<body><h1>200 OK</h1><p>Thank You for login info.</p></body></html>";
-	}
-	std::string resp =  response.status + response.contentType + response.contentLength + "\r\n" + response.body;
-	const char* resp_cstr = resp.c_str();
-    size_t resp_length = resp.size();
-    send(clientSocket, resp_cstr, resp_length, 0);
+		possibleReqLoc.push_back(uri);
+		lastSlash = uri.find_last_of('/');
+		uri = uri.substr(0, lastSlash);
+	} while (!uri.empty());
+
+	if (possibleReqLoc[possibleReqLoc.size() - 1] != "/")
+		possibleReqLoc.push_back("/");
+
+	return possibleReqLoc;
 }

@@ -1,184 +1,138 @@
 #include "Server.hpp"
 
-Server::Server()
+Server::Server(std::vector<ServerBlock>& _serverVec) : _servers(_serverVec)
 {
-	serverSocket = 0;
-    //serverSocket2 = 1;
-	clientSocket = 0;
+    //printServerVec(_servers);
 }
 
 Server::~Server()
 {
     std::cout << "Server shutting down" << std::endl;
-	if (serverSocket != -1)
-    {
-        // std::cout << "Closing server socket" << std::endl;
-        close(serverSocket);
-    }
-
-    if (clientSocket != -1)
-    {
-        // std::cout << "Closing client socket" << std::endl;
-        close(clientSocket);
-    }
-
-	if (epoll_fd != -1)
-	{
-        // std::cout << "Closing epoll file descriptor" << std::endl;
-		close(epoll_fd);
-	}
-    // if (serverSocket2 != -1)
-    // {
-    //     // std::cout << "Closing server socket" << std::endl;
-    //     close(serverSocket2);
-    // }
+	for (size_t i = 0; i < _serverSockets.size(); i++)
+        close(_serverSockets[i]);
 }
 
-void Server::createSocket()
+bool isValidIPAddress(const std::string& ipAddress) // we use c functions here!
 {
-	serverSocket = socket(AF_INET, SOCK_STREAM, 0);
-	if (serverSocket < 0)
-	{
-		throw std::runtime_error("Socket creation failed");
-	}
-	make_socket_non_blocking(serverSocket);
+    int num, dots = 0;
+    char *ptr;
+    char ipCopy[16];
+    std::strncpy(ipCopy, ipAddress.c_str(), 16);
+    ipCopy[15] = '\0';
+
+    if (ipAddress.empty())
+        return false;
+
+    ptr = std::strtok(ipCopy, ".");
+    if (ptr == NULL)
+        return false;
+
+    while (ptr)
+    {
+        if (!std::isdigit(*ptr))
+            return false;
+        num = std::atoi(ptr);
+        if (num >= 0 && num <= 255)
+        {
+            ptr = std::strtok(NULL, ".");
+            if (ptr != NULL)
+                dots++;
+        }
+        else
+            return false;
+    }
+
+    return dots == 3;
 }
 
-void Server::bindSocket()
+
+int Server::create_and_configure_socket()
 {
-    //this function would prevent the "Address already in use" && "binding failed" error
-    int opt = 1;
+    int serverSocket = socket(AF_INET, SOCK_STREAM, 0);
+    if (serverSocket < 0)
+        throw std::runtime_error("Socket creation failed");
+
+    make_socket_non_blocking(serverSocket);
+
+    int opt = 1; // 1024 * 1024;
     if (setsockopt(serverSocket, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) < 0)
-    {
         throw std::runtime_error("setsockopt(SO_REUSEADDR) failed");
-    }
 
-
-	sockaddr_in serverAddress;
-	serverAddress.sin_family = AF_INET;
-	serverAddress.sin_port = htons(8080);
-	serverAddress.sin_addr.s_addr = INADDR_ANY;
-	if (bind(serverSocket, (struct sockaddr*)&serverAddress, sizeof(serverAddress)) < 0)
-	{
-		throw std::runtime_error("Binding failed");
-	}
+    return serverSocket;
 }
 
-void Server::listenSocket()
+void Server::bindNamesWithPorts(std::vector<std::string>& serverName, std::vector<int> serverPort, ServerBlock &currServer)
 {
-	if (listen(serverSocket, 5) < 0)
-	{
-		throw std::runtime_error("Listening failed");
-	}
-}
+    if (serverName.size() == 0)
+        serverName.push_back("localhost");
 
-void Server::acceptConnection()
-{
-    epoll_fd = epoll_create1(0);
-    if (epoll_fd == -1)
+    for (std::vector<std::string>::iterator it_name = serverName.begin(); it_name != serverName.end(); ++it_name)
     {
-        throw std::runtime_error("epoll_create1");
-    }
-
-    std::vector<int> serverSockets;
-    serverSockets.push_back(serverSocket);
-    //serverSockets.push_back(serverSocket2);
-
-    for (std::vector<int>::iterator it = serverSockets.begin(); it != serverSockets.end(); ++it)
-    {
-        int sock = *it;
-        struct epoll_event event;
-        event.data.fd = sock;
-        event.events = EPOLLIN | EPOLLET;
-
-        if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, sock, &event) == -1)
+        std::string name = *it_name;
+        for (std::vector<int>::iterator it_port = serverPort.begin(); it_port != serverPort.end(); ++it_port)
         {
-            close(epoll_fd);
-            throw std::runtime_error("epoll_ctl");
-        }
-    }
+            int port = *it_port;
+            sockaddr_in serverAddress; // configuration for the socket
+	        serverAddress.sin_family = AF_INET;
+	        serverAddress.sin_port = htons(port);
 
+            if (!isValidIPAddress(name))
+            {
+                struct addrinfo hints, *res;
+                memset(&hints, 0, sizeof(hints));
+                hints.ai_family = AF_INET;
+                hints.ai_socktype = SOCK_STREAM;
 
-    std::vector<struct epoll_event> events(MAX_EVENTS);
-
-    while (serverRunning)
-    {
-        int n = epoll_wait(epoll_fd, events.data(), MAX_EVENTS, -1);
-        if (n == -1)
-        {
-            if (errno == EINTR)
-            {
-                continue;
-            }
-            close(epoll_fd);
-            throw std::runtime_error("epoll_wait");
-        }
-        for (int i = 0; i < n; ++i)
-        {
-            if (events[i].events & (EPOLLERR | EPOLLHUP | EPOLLRDHUP))
-            {
-                close(events[i].data.fd);
-                std::cout << "Connection closed" << std::endl;
-                continue;
-            }
-            if (std::find(serverSockets.begin(), serverSockets.end(), events[i].data.fd) != serverSockets.end())
-            {
-                while (true)
+                int status = getaddrinfo(name.c_str(), NULL, &hints, &res);
+                if (status != 0)
                 {
-                    int client_fd = accept(events[i].data.fd, NULL, NULL);
-                    if (client_fd == -1)
-                    {
-                        if ((errno == EAGAIN) || (errno == EWOULDBLOCK))
-                        {
-                            break;
-                        }
-                        else
-                        {
-                            perror("accept");
-                            break;
-                        }
-                    }
-                    make_socket_non_blocking(client_fd);
-
-                    struct epoll_event client_event;
-                    client_event.data.fd = client_fd;
-                    client_event.events = EPOLLIN | EPOLLET;
-                    if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, client_fd, &client_event) == -1)
-                    {
-                        close(client_fd);
-                        throw std::runtime_error("epoll_ctl");
-                    }
-                    std::cout << "Connection accepted" << std::endl;
+                    serverAddress.sin_addr.s_addr = INADDR_ANY;
+                }
+                else
+                {
+                    serverAddress.sin_addr = ((struct sockaddr_in*)res->ai_addr)->sin_addr;
+                    freeaddrinfo(res);
                 }
             }
             else
             {
-                std::cout << "Data received" << std::endl;
-                clientSocket = events[i].data.fd;
-                requestHandle.receiveData(clientSocket);
-                requestHandle.parseRequest();
-                requestHandle.sendResponse(clientSocket);
+                serverAddress.sin_addr.s_addr = inet_addr(name.c_str());
             }
+
+            int serverSocket = create_and_configure_socket();
+
+            int bindRC = bind(serverSocket, (struct sockaddr*)&serverAddress, sizeof(serverAddress));
+	        if (bindRC < 0)
+	        	throw std::runtime_error(std::string("Binding failed: ") + strerror(errno));
+
+	        if (listen(serverSocket, 5) < 0)
+	        	throw std::runtime_error("Listening failed");
+            
+            currServer.setHostInMap(serverSocket, name + ":" + intToString(port));
+
+            _serverSockets.push_back(serverSocket);
+
+            std::cout << "Port: http://" << name + ":" + intToString(port) << std::endl;
         }
     }
 }
 
 
-int make_socket_non_blocking(int sockfd)
+void Server::createSocket()
 {
-    int flags = fcntl(sockfd, F_GETFL, 0);
-    if (flags == -1) {
-        perror("fcntl");
-        return -1;
+    //std::cout << "size of serverBlock :" << _servers.size() << std::endl;
+    for(size_t i = 0; i < _servers.size(); i++)
+    {
+        bindNamesWithPorts(_servers[i].getServerName(), _servers[i].getListen(), _servers[i]);
     }
-
-    flags |= O_NONBLOCK;
-    if (fcntl(sockfd, F_SETFL, flags) == -1) {
-        perror("fcntl");
-        return -1;
-    }
-    return 0;
+    //std::cout << BOLD_GREEN << "ALL THE CREATED SOCKETS: ";
+    //for (size_t i = 0; i < this->_serverSockets.size(); ++i) {
+    //    std::cout << _serverSockets[i] << ", ";
+    //}
+    std::cout << std::endl;
+    Epoll epoll(_serverSockets, _servers); // maybe we should start "everything" in run(), not in createSocket()
 }
+
 
 void Server::run()
 {
@@ -187,56 +141,9 @@ void Server::run()
     try
     {
         createSocket();
-        bindSocket();
-        listenSocket();
-        //createSocket2();
-        //bindSocket2();
-        //listenSocket2();
-        acceptConnection();
     }
     catch (std::exception &e)
     {
         std::cerr << "Exception: " << e.what() << std::endl;
     }
 }
-
-// creating another socket for testing purposes
-
-// void Server::createSocket2()
-// {
-// 	serverSocket2 = socket(AF_INET, SOCK_STREAM, 0);
-// 	if (serverSocket2 < 0)
-// 	{
-// 		throw std::runtime_error("Socket creation failed"); 
-// 	}
-//     make_socket_non_blocking(serverSocket2);
-// }
-
-// void Server::bindSocket2()
-// {
-//     //this function would prevent the "Address already in use" && "binding failed" error
-//     int opt = 1;
-//     if (setsockopt(serverSocket2, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) < 0)
-//     {
-//         throw std::runtime_error("setsockopt(SO_REUSEADDR) failed");
-//     }
-
-
-// 	sockaddr_in serverAddress;
-// 	serverAddress.sin_family = AF_INET;
-// 	serverAddress.sin_port = htons(8081);
-// 	serverAddress.sin_addr.s_addr = INADDR_ANY;
-// 	if (bind(serverSocket2, (struct sockaddr*)&serverAddress, sizeof(serverAddress)) < 0)
-// 	{
-// 		throw std::runtime_error("Binding failed");
-// 	}
-// }
-
-
-// void Server::listenSocket2()
-// {
-// 	if (listen(serverSocket2, 5) < 0)
-// 	{
-// 		throw std::runtime_error("Listening failed");
-// 	}
-// }
