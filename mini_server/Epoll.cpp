@@ -123,34 +123,31 @@ void Epoll::handleEpollEvents(const std::vector<int> &serverSockets)
 	// std::cout << "Waiting for events" << std::endl;
 	
 	// std::cout << "FDs in the epoll instance right now: \n";
-	// for (size_t i = 0; i < _clFDs.size(); ++i) {
-	// 	std::cout << _clFDs[i] << ", ";
-	// }
-	// std::cout << std::endl;
+	for (size_t i = 0; i < _clFDs.size(); ++i) {
+		std::cout << _clFDs[i] << ", ";
+	}
+	std::cout << std::endl;
 
-	//this the time out logic
-	//if (n == 0)//here is the logic of the ime out 
-	//{
-	//	std::time_t now = std::time(NULL);
-	//	//std::cout << "now : " << now << std::endl;
-	//	//std::cout << "is timing out !!!!!!!" << std::endl;
-	//	//std::cout << "the size of clintes: " << _clients.size() << std::endl;
-	//	for (std::vector<Client>::iterator it = _clients.begin(); it != _clients.end();)
-	//	{
-	//		//std::cout << "ClientFD : " << it->getClientFD() << " and the time stamp of it : " << it->getClientTime() << std::endl;
-	//		int clientTimeOut = now - it->getClientTime();
-	//		//std::cout << "clientTimeOut : " << clientTimeOut << std::endl;
-//
-	//		if (clientTimeOut > CLIENT_TIMEOUT / 1000)
-	//		{
-	//			std::cout << "client : " << it->getClientFD() << " timed out " << std::endl;
-	//			killClient(it->getClientFD());
-	//			close(it->getClientFD());
-	//		}
-	//		else
-	//			++it;
-	//	}
-	//}
+	// this the time out logic
+	if (n == 0)//here is the logic of the ime out 
+	{
+		std::time_t now = std::time(NULL);
+		//std::cout << "now : " << now << std::endl;
+		//std::cout << "is timing out !!!!!!!" << std::endl;
+		//std::cout << "the size of clintes: " << _clients.size() << std::endl;
+		for (std::vector<Client>::iterator it = _clients.begin(); it != _clients.end();)
+		{
+			int clientTimeOut = now - it->getClientTime();
+			if (clientTimeOut > CLIENT_TIMEOUT / 1000)
+			{
+				std::cout << "client : " << it->getClientFD() << " timed out " << std::endl;
+				killClient(it->getClientFD());
+				close(it->getClientFD());
+			}
+			else
+				++it;
+		}
+	}
 	
 	for (int i = 0; i < n; ++i)
 	{

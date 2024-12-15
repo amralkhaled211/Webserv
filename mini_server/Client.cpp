@@ -31,6 +31,7 @@ parser &Client::getRequest()
 
 bool Client::parseHeadersAndBody()
 {
+	//std::cerr << BOLD_GREEN << "this buffer"<< this->_buffer << RESET << std::endl;
 	if (_isChunked)
 	{
 		// std::cout << "i am inside the chunked " << std::endl;
@@ -40,7 +41,6 @@ bool Client::parseHeadersAndBody()
 	else if (request.method == "POST")
 	{
 		size_t headerEndPos = this->_buffer.find("\r\n\r\n");
-		// std::cout << BOLD_GREEN << "this buffer"<< this->_buffer << RESET << std::endl;
 		if (headerEndPos == std::string::npos) // this would be an indcation that the headers would be on chunks 
 		{
 			// std::cout << "headerEndPos not found" << std::endl;
@@ -111,19 +111,10 @@ void Client::saveBodyToFile()
 	std::string filePath;
 	if (!request.fileName.empty())
 	{
-		filePath = "../website/upload/" + request.fileName;
+		filePath = "/home/amalkhal/Webserv/www/website/upload/" + request.fileName;
 	}
 	else 
-		filePath = "../website/upload/data.txt";
-
-	//check if file already exists
-    std::ifstream infile(filePath.c_str());
-    if (infile.good())
-    {
-		//we might want to handle this differently like an error page or something
-        //std::cout << "File already exists: " << filePath << std::endl;
-	}
-	infile.close();
+		filePath = "/home/amalkhal/Webserv/www/website/upload/data.txt";
 
     std::ofstream outFile(filePath.c_str(), std::ios::binary | std::ios::app);
     if (outFile.is_open())
@@ -221,7 +212,9 @@ bool Client::parse_body(std::string& body)
 	std::getline(stream, line); // this ganna be the third Content-Type:
 
 	std::string endBoundary = _boundary;
-	endBoundary = endBoundary.substr(0, endBoundary.size() - 1) + "--\r";
+	endBoundary.erase(endBoundary.find_last_not_of(" \n\r\t") + 1);
+	endBoundary = endBoundary.substr(0, endBoundary.size()) + "--\r";
+	std::cout << BOLD_RED << "end boundary ::" << endBoundary << RESET <<  std::endl;
 	size_t BodyheaderEndPos = body.find("\r\n\r\n");
 	request.body = body.substr(BodyheaderEndPos + 4);
 	// std::cout << BOLD_YELLOW << "this is the body " << request.body << RESET << std::endl;
@@ -242,18 +235,22 @@ bool Client::HandlChunk()
 {
 	if (_bytesRead == 0 && !_boundary.empty()) //this is if the begining of boundry_body is in another chunk
 	{
+		std::cout << "it came to if one " << std::endl;
 		_bytesRead += this->_buffer.size(); 
 		if (parse_body(this->_buffer))
 			return true;
 	}
 	else if (_bytesRead != 0 &&!_boundary.empty()) // this if middle of boundry_body is in another chunk
 	{
+		std::cout << "it came to if two " << std::endl;
 		std::istringstream stream(this->_buffer);
 		std::string line;
 		_bytesRead += this->_buffer.size();
 		std::string endBoundary = _boundary;
-		endBoundary = endBoundary.substr(0, endBoundary.size() - 1) + "--\r"; // i have to tirm the /r first
+		endBoundary.erase(endBoundary.find_last_not_of(" \n\r\t") + 1);
+		endBoundary = endBoundary.substr(0, endBoundary.size()) + "--\r";
 		request.body += this->_buffer;
+		std::cerr << BOLD_RED << "end boundary :::::::" << endBoundary << RESET <<  std::endl;
 		if (this->request.body.find(endBoundary) != std::string::npos)
 		{
 			std::size_t pos = request.body.rfind(endBoundary);
@@ -261,12 +258,13 @@ bool Client::HandlChunk()
         	    request.body.resize(pos);
 			if (!request.body.empty() && request.body[request.body.size() - 1] == '\n')
                 request.body.erase(request.body.size() - 2);
-			//std::cout << "end of body  dont read anymore " << std::endl;
+			std::cout << "end of body  dont read anymore " << std::endl;
 			return true;
 		}
 	}
 	else // this would be for chunks that has no boundry 
 	{
+		std::cout << "it came to if three " << std::endl;
 		request.body += this->_buffer;
 		_bytesRead += this->_buffer.size(); 
 		if (_bytesRead == _targetBytes)
@@ -278,7 +276,7 @@ bool Client::HandlChunk()
 			return true;
 		}
 	}
-	// std::cout << "i am going to return false " << std::endl;
+	std::cout << "i am going to return falssxssssse " << std::endl;
 	return false;
 }
 
@@ -305,7 +303,7 @@ bool Client::handlingBody(std::string &body)
 		{
 			if (parse_body(body)) // this would parse the body if the header and the body were in one chunk
 			{
-				// std::cout << "i am done with the body and it was all in one chunk" << std::endl;
+				//std::cout << "i am done with the body and it was all in one chunk" << std::endl;
 				return true;
 			}
 		}
@@ -357,6 +355,7 @@ void Client::allRecieved()
 
 
 		isAllRecieved = true;
+		std::cout << BOLD_GREEN << "set the is all recieved to true" << RESET << std::endl;
 		if (request.body.size() > 0)
 		{
 			if (!isCGIPost(request.path))
@@ -365,6 +364,7 @@ void Client::allRecieved()
 		return;
 	}
 	isAllRecieved = false;
+	std::cout << BOLD_RED << "set the is all recieved to false" << RESET << std::endl;
 	if (request.body.size() > 0)
 	{
 		if (!isCGIPost(request.path))

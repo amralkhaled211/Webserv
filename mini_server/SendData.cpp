@@ -298,7 +298,6 @@ bool SendData::checkDeletePath(std::string path, LocationBlock location)
     if (lastSlashPos == std::string::npos) {
         return false;
     }
-
 	(void)location;
     std::string directory = path.substr(0, lastSlashPos);
 
@@ -437,8 +436,7 @@ Response &SendData::sendResponse(std::vector<ServerBlock> &servers, parser &requ
 	{
 		if (isNotAllowedMethod(location, location.getAllowedMethods(), "DELETE"))
 				return _response;
-		std::string root = PATH_TO_WWW + request.path; // maybe a more suitable name: pathToFileToServe
-
+		std::string root = PATH_TO_WWW +  request.path; // maybe a more suitable name: pathToFileToServe
 		removeExcessSlashes(root);
 		//std::cout << BOLD_RED << "IN DELETE METHOD" << RESET << std::endl;
 
@@ -703,9 +701,6 @@ void	SendData::codeErrorResponse(int code)
 }
 
 void	SendData::createDfltResponseBody(int code, std::string&	contentType, std::string postFix) {
-	std::cout << "IN CREATE DEFAULT RESPONSE BODY\n";
-	std::cout << "CODE: " << code << std::endl;
-	std::cout << "POSTFIX: " << postFix << std::endl;	
 	_response.body = "<!DOCTYPE html><html><head><title>" + intToString(code) + " " + _status._statusMsg[code][0]/*  + " Not Found" */ + "</title></head>";
 	_response.body += "<body><h1>" + intToString(code) + " " + _status._statusMsg[code][0] + "</h1><p>" + _status._statusMsg[code][1] + "</p></body></html>";
 	contentType = mimeTypesMap_G[postFix];
