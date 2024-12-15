@@ -99,7 +99,7 @@ void printClientInfo(int clientFD, uint32_t events, std::vector<Client> clients)
 void Epoll::removeFD(int fd) {
     if (epoll_ctl(_epollFD, EPOLL_CTL_DEL, fd, NULL) == -1) {
         perror("epoll_ctl: remove");
-        throw std::runtime_error("epoll_ctl: remove");
+        // throw std::runtime_error("epoll_ctl: remove");
     }
     _clFDs.erase(std::remove(_clFDs.begin(), _clFDs.end(), fd), _clFDs.end()); // Remove from the list
 }
@@ -123,10 +123,10 @@ void Epoll::handleEpollEvents(const std::vector<int> &serverSockets)
 	// std::cout << "Waiting for events" << std::endl;
 	
 	// std::cout << "FDs in the epoll instance right now: \n";
-	for (size_t i = 0; i < _clFDs.size(); ++i) {
-		std::cout << _clFDs[i] << ", ";
-	}
-	std::cout << std::endl;
+	// for (size_t i = 0; i < _clFDs.size(); ++i) {
+	// 	std::cout << _clFDs[i] << ", ";
+	// }
+	// std::cout << std::endl;
 
 	// this the time out logic
 	if (n == 0)//here is the logic of the ime out 
@@ -140,7 +140,7 @@ void Epoll::handleEpollEvents(const std::vector<int> &serverSockets)
 			int clientTimeOut = now - it->getClientTime();
 			if (clientTimeOut > CLIENT_TIMEOUT / 1000)
 			{
-				std::cout << "client : " << it->getClientFD() << " timed out " << std::endl;
+				// std::cout << "client : " << it->getClientFD() << " timed out " << std::endl;
 				killClient(it->getClientFD());
 				close(it->getClientFD());
 			}
@@ -372,6 +372,10 @@ Epoll::~Epoll()
 {
 	if (_epollFD != -1)
 		close(_epollFD);
+	for (size_t i = 0; i < _clients.size(); i++)
+	{
+		close(_clients[i].getClientFD());
+	}
 }
 
 int make_socket_non_blocking(int sockfd)

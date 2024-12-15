@@ -9,7 +9,7 @@ import cgitb
 cgitb.enable()
 
 # Set the video file path
-video_path = "/home/aismaili/Webserv/website/pics/NPC.mp4"
+video_path = "/home/aismaili/Webserv/www/website/pics/NPC.mp4"
 
 # Check if the video file exists
 if not os.path.isfile(video_path):

@@ -274,7 +274,6 @@ int CGI::executeScript()
 		if (eof)
 		{
 			_responseBody.clear();
-			std::cout << errStr;
 			if (errStr == "Permission denied")
 				return 403;
 			else if (errStr.find("No such file or directory") != std::string::npos)

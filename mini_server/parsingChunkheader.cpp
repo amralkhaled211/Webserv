@@ -7,7 +7,7 @@ int Client::validateContentLength()
 	if ((it != request.headers.end() && it->second.empty()))
 	{
 		std::cerr << "Error: Content-Length value is missing" << std::endl;
-		return 400;
+		return 411;
 	}
 
 	//std::cout << "validateConLEnt: " << it->second.size() << std::endl;

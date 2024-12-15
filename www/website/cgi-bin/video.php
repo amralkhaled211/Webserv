@@ -1,5 +1,5 @@
 <?php
-$video_path = "/home/aismaili/Webserv/website/pics/NPC.mp4";
+$video_path = "/home/aismaili/Webserv/www/website/pics/NPC.mp4";
 
 // Check if the video file exists
 if (!file_exists($video_path)) {
@@ -12,7 +12,7 @@ if (!file_exists($video_path)) {
 $video_size = filesize($video_path);
 
 // Output the HTTP headers
-header("Content-Type: video/mp4");
+echo("Content-Type: video/mp4\n");
 header("Content-Length: " . $video_size);
 
 // Send the video file

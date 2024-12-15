@@ -11,7 +11,7 @@ class Client;
 #define	SD_NO_READ_PERM		-1
 #define	SD_NO_FILE			-2
 
-#define	PATH_TO_WWW	"/home/amalkhal/Webserv/"
+#define	PATH_TO_WWW	"/home/aismaili/Webserv/"
 // "/home/aismaili/Webserv/"
 
 typedef struct Redirection
@@ -71,7 +71,8 @@ class SendData
 	template<typename T>
 	void		prepErrorResponse(int code, T& location)
 	{
-		std::string		errorPagePath = PATH_TO_WWW + getErrorPagePath(code, location.getErrorPage());
+		std::string		errorPagePath = getErrorPagePath(code, location.getErrorPage());
+		std::string		fullErrorPagePath = PATH_TO_WWW + errorPagePath;
 		std::string		contentType;
 		int				fileStatus;
 
@@ -79,13 +80,13 @@ class SendData
 
 		if (!errorPagePath.empty())
 		{
-			removeExcessSlashes(errorPagePath);
+			removeExcessSlashes(fullErrorPagePath);
 
-			std::cout << "ERROR PAGE PATH: " << errorPagePath << std::endl;
+			std::cout << "ERROR PAGE PATH: " << fullErrorPagePath << std::endl;
 
-			fileStatus = readFromErrorPage(errorPagePath, _response.body); // this already writes into the body (passed by reference)
+			fileStatus = readFromErrorPage(fullErrorPagePath, _response.body); // this already writes into the body (passed by reference)
 			if (fileStatus == SD_OK) { // body gets init with right error_page content
-				contentType = mimeTypesMap_G[get_file_extension(errorPagePath)];
+				contentType = mimeTypesMap_G[get_file_extension(fullErrorPagePath)];
 
 				if (contentType == "")
 					createDfltResponseBody(code, contentType, "txt");

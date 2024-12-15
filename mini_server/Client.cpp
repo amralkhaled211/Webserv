@@ -111,10 +111,10 @@ void Client::saveBodyToFile()
 	std::string filePath;
 	if (!request.fileName.empty())
 	{
-		filePath = "/home/amalkhal/Webserv/www/website/upload/" + request.fileName;
+		filePath = "../www/website/upload/" + request.fileName;
 	}
 	else 
-		filePath = "/home/amalkhal/Webserv/www/website/upload/data.txt";
+		filePath = "../www/website/upload/data.txt";
 
     std::ofstream outFile(filePath.c_str(), std::ios::binary | std::ios::app);
     if (outFile.is_open())
@@ -126,6 +126,7 @@ void Client::saveBodyToFile()
     {
         // Handle error opening file
         std::cerr << "Error opening file for writing: " << filePath << std::endl;
+		request.statusError = 503;
     }
 	request.body.clear();
 }
@@ -214,7 +215,7 @@ bool Client::parse_body(std::string& body)
 	std::string endBoundary = _boundary;
 	endBoundary.erase(endBoundary.find_last_not_of(" \n\r\t") + 1);
 	endBoundary = endBoundary.substr(0, endBoundary.size()) + "--\r";
-	std::cout << BOLD_RED << "end boundary ::" << endBoundary << RESET <<  std::endl;
+	// std::cout << BOLD_RED << "end boundary ::" << endBoundary << RESET <<  std::endl;
 	size_t BodyheaderEndPos = body.find("\r\n\r\n");
 	request.body = body.substr(BodyheaderEndPos + 4);
 	// std::cout << BOLD_YELLOW << "this is the body " << request.body << RESET << std::endl;
@@ -235,14 +236,14 @@ bool Client::HandlChunk()
 {
 	if (_bytesRead == 0 && !_boundary.empty()) //this is if the begining of boundry_body is in another chunk
 	{
-		std::cout << "it came to if one " << std::endl;
+		// std::cout << "it came to if one " << std::endl;
 		_bytesRead += this->_buffer.size(); 
 		if (parse_body(this->_buffer))
 			return true;
 	}
 	else if (_bytesRead != 0 &&!_boundary.empty()) // this if middle of boundry_body is in another chunk
 	{
-		std::cout << "it came to if two " << std::endl;
+		// std::cout << "it came to if two " << std::endl;
 		std::istringstream stream(this->_buffer);
 		std::string line;
 		_bytesRead += this->_buffer.size();
@@ -250,7 +251,7 @@ bool Client::HandlChunk()
 		endBoundary.erase(endBoundary.find_last_not_of(" \n\r\t") + 1);
 		endBoundary = endBoundary.substr(0, endBoundary.size()) + "--\r";
 		request.body += this->_buffer;
-		std::cerr << BOLD_RED << "end boundary :::::::" << endBoundary << RESET <<  std::endl;
+		// std::cerr << BOLD_RED << "end boundary :::::::" << endBoundary << RESET <<  std::endl;
 		if (this->request.body.find(endBoundary) != std::string::npos)
 		{
 			std::size_t pos = request.body.rfind(endBoundary);
@@ -258,13 +259,13 @@ bool Client::HandlChunk()
         	    request.body.resize(pos);
 			if (!request.body.empty() && request.body[request.body.size() - 1] == '\n')
                 request.body.erase(request.body.size() - 2);
-			std::cout << "end of body  dont read anymore " << std::endl;
+			// std::cout << "end of body  dont read anymore " << std::endl;
 			return true;
 		}
 	}
 	else // this would be for chunks that has no boundry 
 	{
-		std::cout << "it came to if three " << std::endl;
+		// std::cout << "it came to if three " << std::endl;
 		request.body += this->_buffer;
 		_bytesRead += this->_buffer.size(); 
 		if (_bytesRead == _targetBytes)
@@ -276,7 +277,7 @@ bool Client::HandlChunk()
 			return true;
 		}
 	}
-	std::cout << "i am going to return falssxssssse " << std::endl;
+	// std::cout << "i am going to return falssxssssse " << std::endl;
 	return false;
 }
 

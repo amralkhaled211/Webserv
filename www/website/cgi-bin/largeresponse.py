@@ -16,7 +16,7 @@ print("<body>")
 print("<h1>This is a very large response</h1>")
 
 # Repeat a simple pattern to generate a large response
-for i in range(500000):  # Adjust the range to increase or decrease the size
+for i in range(100000):  # Adjust the range to increase or decrease the size
     print(f"<p>Line {i}: This is a test line to generate a large response.</p>")
 
 print("</body>")

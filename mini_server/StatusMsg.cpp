@@ -172,6 +172,11 @@ void StatusMsg::_fourHunderds()
 	_statusMsg[405] = msg;
 	msg.clear();
 	
+	// 411 Length Required
+	msg.push_back("Length Required");
+	msg.push_back("The request did not specify the length of its content, which is required by the requested resource.");
+	_statusMsg[411] = msg;
+	msg.clear();
 
 	// 413 Payload Too Large
 	msg.push_back("Payload Too Large");
