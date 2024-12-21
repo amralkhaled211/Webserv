@@ -2,6 +2,7 @@
 *.o
 out
 Server
+webserv
 a.out
 test.cpp
 10min.mp4

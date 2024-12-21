@@ -1,4 +1,4 @@
-NAME	= Server
+NAME	= webserv
 
 SRC_DIR = .
 CONFIG_PARSER_DIR = config_parser

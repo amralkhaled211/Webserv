@@ -38,11 +38,16 @@ static bool	httpCheck(std::string& line) {
 	std::stringstream	ss(line);
 	std::string			token;
 
-	std::getline(ss, token, '{'); // '{' is set as delimeter
+	std::getline(ss, token, '#');
+	ss.clear();
+	ss.str("");
+	ss << token;
+	std::getline(ss, token, '{');
 	ss.clear();
 	ss.str("");
 	ss << token;
 	ss >> token;
+	std::cout << "Token: " << token << std::endl;
 	if (!token.compare("http") && !(ss >> token))
 		return true;
 
@@ -60,11 +65,13 @@ int		Parser::_generalErrors(std::string fileName) {
 
 	try {
 		std::string	line;
+		bool		commentsAtTheBeginning;
 		if (!std::getline(file, line))
 			throw std::runtime_error("Config File is Empty");
 
 		do {
-			if (line.empty() || line.find_first_not_of(WHITESPACE) == std::string::npos)
+			commentsAtTheBeginning = (line.find_first_of('#') < line.find_first_not_of(std::string(WHITESPACE) + "#"));
+			if (line.empty() || line.find_first_not_of(WHITESPACE) == std::string::npos || commentsAtTheBeginning)
 				continue;
 
 			if (!httpCheck(line))
