@@ -33,7 +33,7 @@ std::string intToString(int value)
 int stringToInt(const std::string& str) // issue: value gets not initialized, if str is an empty string
 {
 	std::stringstream ss(str);
-	int value;
+	int value = 0;
 	// std::cout << BOLD_RED << "str to int: " << str.size() << RESET << std::endl;
 	ss >> value;
 	return value;

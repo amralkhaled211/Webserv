@@ -286,7 +286,12 @@ ServerBlock &Client::findServerBlock() // uses the Host header field -> server_n
 	{
 		ServerBlock &server = *it;
 		if (findInVector(server.getListen(), stringToInt(port)) && findInVector(server.getServerName(), server_name)) // here port is prioritized over server_name
+        {
+            std::cout << "found the server block " << std::endl;
+            std::cout << "server name : " << server_name << std::endl;
+            std::cout << "port : " << port << std::endl;
 			return server;
+        }
 	}
 	// this would be fixed later
 	// std::cout << "reques:::" << request.headers["Host"] << std::endl;

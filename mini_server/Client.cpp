@@ -360,7 +360,10 @@ void Client::allRecieved()
 		if (request.body.size() > 0)
 		{
 			if (!isCGIPost(request.path))
+			{
 				saveBodyToFile();
+				request.statusError = 201;
+			}
 		}
 		return;
 	}

@@ -153,13 +153,18 @@ LocationBlock SendData::findLocationBlock(std::vector<LocationBlock> &locations,
 	LocationBlock	location;
 	std::string		fullPath;
 
+	std::cout << "NUM of Locations: " << locations.size() << std::endl;
+
 	_isDir = true;
 	
 	for (size_t i = 0; i < possibleReqLoc.size(); ++i)
 	{
+		std::cout << "POSSIBLE REQ LOC: " << possibleReqLoc[i] << std::endl;
 		for (std::vector<LocationBlock>::iterator it = locations.begin(); it != locations.end(); ++it)
 		{
 			location = *it;
+			std::cout << "LOCATION BLOCK: " << std::endl;
+			location.printLocationBlock();
 
 			if (location.getPrefix() == possibleReqLoc[i]) // need to make sure the prefix is also cleaned from excess slashes
 			{
@@ -174,6 +179,7 @@ LocationBlock SendData::findLocationBlock(std::vector<LocationBlock> &locations,
 		}
 	}
 	// serve default page in this case
+
 	throw LocationNotFoundException();
 	std::cout << BOLD_RED << "COULD NOT FIND LOCATION BLOCK" << RESET << std::endl;
 	// throw std::exception(); // this is temporary, will create a error handling mechanism
@@ -195,7 +201,10 @@ ServerBlock SendData::findServerBlock(std::vector<ServerBlock> &servers, parser 
 	// this would be fixed later
 	// std::cout << "reques:::" << request.headers["Host"] << std::endl;
 	//std::cout << "\033[1;31m" <<  "returning the first server?, This is a BUG " << "\033[0m" << std::endl;
-	return servers[0]; // return default
+	// return servers[0]; // return default
+	std::cout << "\033[1;31m" <<  "returning the first server?, This is a BUG " << "\033[0m" << std::endl;
+
+	throw std::exception();
 }
 
 void SendData::redirect(LocationBlock& location, parser &request) // so far handling url redirection, relative will be handled soon
@@ -323,9 +332,21 @@ Response &SendData::sendResponse(std::vector<ServerBlock> &servers, parser &requ
 
 	request.path = decodeURIComponent(request.path);
 	request.queryString = decodeURIComponent(request.queryString, true);
+	ServerBlock current_server;
 	
 	_isReturn = false;
-	ServerBlock current_server = findServerBlock(servers, request);
+	try 
+	{
+
+		current_server = findServerBlock(servers, request);
+	}
+	catch (const std::exception& e)
+	{
+		std::string contentType;
+		createDfltResponseBody(404, contentType);
+		createResponseHeader(404, _response.body.size(), contentType);
+		return _response;
+	}
 
 	LocationBlock location;
 	try
