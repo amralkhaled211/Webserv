@@ -151,8 +151,6 @@ void Epoll::handleEpollEvents(const std::vector<int> &serverSockets)
 	
 	for (int i = 0; i < n; ++i)
 	{
-		// std::cout << "######################################################\n";
-
 		// info about the new client
 		if (E_DEBUG) {
 			try {
@@ -162,12 +160,10 @@ void Epoll::handleEpollEvents(const std::vector<int> &serverSockets)
 			}
 		}
 		
-		
 		if (std::find(_clFDs.begin(), _clFDs.end(), _events[i].data.fd) == _clFDs.end())
 			_clFDs.push_back(_events[i].data.fd);
-		if (_events[i].events & (EPOLLERR | EPOLLHUP | EPOLLRDHUP)) // what do these errors/flags mean?
+		if (_events[i].events & (EPOLLERR | EPOLLHUP | EPOLLRDHUP))
 		{
-			//std::cout << "---------------------------------------------------\n";
 			std::cerr << "Error on fd " << _events[i].data.fd << ": \n";
 			if (_events[i].events & EPOLLERR)
 				std::cerr << YELLOW_COLOR << "EPOLLERR\n" << RESET_COLOR;
@@ -179,10 +175,6 @@ void Epoll::handleEpollEvents(const std::vector<int> &serverSockets)
 
 			killClient(_events[i].data.fd);
 			close(_events[i].data.fd);
-			// std::cout << "Connection closed" << std::endl;
-			// continue;
-			// std::cout << "---------------------------------------------------\n";
-			// return ; // why return here? if we keep serving for the others, wouldn't continue be better?
 			continue;
 		}
 		if (std::find(serverSockets.begin(), serverSockets.end(), _events[i].data.fd) != serverSockets.end())
@@ -203,12 +195,11 @@ void Epoll::handleEpollEvents(const std::vector<int> &serverSockets)
 					printClientInfo(_clients[j].getClientFD(),_events[i].events, _clients);
 					std::cout << "\n" << RESET;
 				}
-				//std::cout << "---------------------------------------------------\n";
 			}
 		}
-		// std::cout << "######################################################\n";
 	}
 }
+
 
 void Epoll::handleResponse(int clientToSend)
 {

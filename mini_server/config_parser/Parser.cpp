@@ -212,14 +212,11 @@ void		Parser::_fillBlocks() {
 		}
 
 		if (pos != -1 && pos == static_cast<int>(_content.size()) -1 && _content[pos] == '}') // this is the end of the http block
-			return; // goto end;
+			return;
 
 		// this->_printServerVec();
 	}
 	throw std::runtime_error("Missing Closing Brace");
-
-	// end:
-	// 	;
 }
 
 /*			SERVER BLOCK HANDLING			*/
@@ -276,7 +273,7 @@ void		Parser::_handleServerDirective(std::stringstream& ss, const std::string& d
 			std::cerr << std::setw(20) << "S Dir Value: " << directiveValue << std::endl;
 		}
 
-		_serverVec.back().setDirective(directiveKey, directiveValue); // potential errors must be dedected there
+		_serverVec.back().setDirective(directiveKey, directiveValue); // errors must be dedected there
 	}
 	else {
 		std::cerr << "error S Directive Key in S: " << directiveKey << std::endl;
@@ -287,7 +284,7 @@ void		Parser::_handleServerDirective(std::stringstream& ss, const std::string& d
 
 /*			LOCATION BLOCK HANDLING			*/
 
-void		Parser::_locationBlock(std::stringstream& ss) { // this is gonna be recurcive --> possibility of nested location
+void		Parser::_locationBlock(std::stringstream& ss) {
 	std::string				token;
 	std::string				deliSet(DELIMETERS);
 	char					ch;
@@ -297,10 +294,6 @@ void		Parser::_locationBlock(std::stringstream& ss) { // this is gonna be recurc
 	_serverVec.back().addLocationBlock();
 
 	while (ss.get(ch)) {
-		// if (token == "location") {
-		// 	_locationBlock(ss); // this should return/finish only when ss is finished with this specific location
-		// 	continue;
-		// }
 
 		if (deliSet.find(ch) != std::string::npos) {
 			if (ch == ' ')
@@ -316,7 +309,7 @@ void		Parser::_locationBlock(std::stringstream& ss) { // this is gonna be recurc
 					_serverVec.back().getLocationVecBack().setPrefix(token);
 				}
 			}
-			else if (ch == '{'/*  && !_serverVec.back().getLocationVec().back().getPrefix().empty() */) { // redundant
+			else if (ch == '{') {
 				throw std::runtime_error("Unexpected Opening Brace");
 			}
 			else if (ch == '}') {
@@ -397,7 +390,7 @@ void		Parser::_identServer() {
 	for (size_t i = 0; i < _serverVec.size(); ++i) {
 		for (size_t j = i + 1; j < _serverVec.size(); ++j) {
 			if (foundIdentServers(_serverVec[i], _serverVec[j]))
-				throw std::runtime_error("Error: Found Ident Server Blocks!");
+				std::cout << YELLOW << "Warning: Found Ident Server Blocks!" << RESET << std::endl;
 		}
 	}
 }

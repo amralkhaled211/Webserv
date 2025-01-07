@@ -140,7 +140,11 @@ void Server::bindNamesWithPorts(std::vector<std::string>& serverName, std::vecto
             int bindRC = bind(serverSocket, (struct sockaddr*)&serverAddress, sizeof(serverAddress));
 	        if (bindRC < 0)
             {
-	        	throw std::runtime_error(std::string("Binding failed: ") + strerror(errno));
+                close(serverSocket);
+                std::cerr << "Binding failed: " << strerror(errno) << std::endl;
+                std::cout << "First / Default virtual-server will be used for launch" << std::endl;
+                continue;
+	        	// throw std::runtime_error(std::string("Binding failed: ") + strerror(errno));
             }
 
 	        if (listen(serverSocket, 5) < 0)
@@ -150,7 +154,7 @@ void Server::bindNamesWithPorts(std::vector<std::string>& serverName, std::vecto
 
             _serverSockets.push_back(serverSocket);
 
-            std::cout << "Port: http://" << name + ":" + intToString(port) << std::endl;
+            std::cout << "visit site on http://" << name + ":" + intToString(port) << " (fd: " << serverSocket << ")"<< std::endl;
         }
     }
 }
