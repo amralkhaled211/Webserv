@@ -127,48 +127,24 @@ void SendData::handleCGI(const std::string &root, parser &request, ServerBlock s
 	}
 }
 
-// std::vector<std::string>	possibleRequestedLoc(std::string uri) {
-// 	std::vector<std::string>	possibleReqLoc;
-// 	size_t						lastSlash;
-
-// 	removeExcessSlashes(uri);
-
-// 	do
-// 	{
-// 		possibleReqLoc.push_back(uri);
-// 		lastSlash = uri.find_last_of('/');
-// 		uri = uri.substr(0, lastSlash);
-// 	} while (!uri.empty());
-
-// 	if (possibleReqLoc[possibleReqLoc.size() - 1] != "/")
-// 		possibleReqLoc.push_back("/");
-
-// 	return possibleReqLoc;
-// }
-
 
 LocationBlock SendData::findLocationBlock(std::vector<LocationBlock> &locations, parser &request)
 {
-	std::vector<std::string> possibleReqLoc = possibleRequestedLoc(request.path); // other name: possibleReqLoc
+	std::vector<std::string> possibleReqLoc = possibleRequestedLoc(request.path);
 	LocationBlock	location;
 	std::string		fullPath;
-
-	std::cout << "NUM of Locations: " << locations.size() << std::endl;
 
 	_isDir = true;
 	
 	for (size_t i = 0; i < possibleReqLoc.size(); ++i)
 	{
-		std::cout << "POSSIBLE REQ LOC: " << possibleReqLoc[i] << std::endl;
 		for (std::vector<LocationBlock>::iterator it = locations.begin(); it != locations.end(); ++it)
 		{
 			location = *it;
-			std::cout << "LOCATION BLOCK: " << std::endl;
-			location.printLocationBlock();
 
-			if (location.getPrefix() == possibleReqLoc[i]) // need to make sure the prefix is also cleaned from excess slashes
+			if (location.getPrefix() == possibleReqLoc[i])
 			{
-				fullPath = PATH_TO_WWW + location.getRoot() + '/' + possibleReqLoc[0]; // for defining whether request is a directory or a file
+				fullPath = PATH_TO_WWW + location.getRoot() + '/' + possibleReqLoc[0];
 				if (isDirectory(fullPath))
 					_isDir = true;
 				else
@@ -178,11 +154,8 @@ LocationBlock SendData::findLocationBlock(std::vector<LocationBlock> &locations,
 			}
 		}
 	}
-	// serve default page in this case
 
 	throw LocationNotFoundException();
-	std::cout << BOLD_RED << "COULD NOT FIND LOCATION BLOCK" << RESET << std::endl;
-	// throw std::exception(); // this is temporary, will create a error handling mechanism
 }
 
 ServerBlock SendData::findServerBlock(std::vector<ServerBlock> &servers, parser &request) // uses the Host header field -> server_name:port -> Host: localhost:8081
@@ -198,11 +171,8 @@ ServerBlock SendData::findServerBlock(std::vector<ServerBlock> &servers, parser 
 		if (findInVector(server.getListen(), stringToInt(port)) && findInVector(server.getServerName(), server_name)) // here port is prioritized over server_name
 			return server;
 	}
-	// this would be fixed later
-	// std::cout << "reques:::" << request.headers["Host"] << std::endl;
-	//std::cout << "\033[1;31m" <<  "returning the first server?, This is a BUG " << "\033[0m" << std::endl;
-	// return servers[0]; // return default
-	std::cout << "\033[1;31m" <<  "returning the first server?, This is a BUG " << "\033[0m" << std::endl;
+
+	std::cout << YELLOW <<  "Warning: No location defined in *.config, serving default page!" << RESET << std::endl;
 
 	throw std::exception();
 }
@@ -246,8 +216,6 @@ bool SendData::findIndexFile(const std::vector<std::string> &files, std::string 
 	{
 		std::string file = root + '/' + files[i];
 		removeExcessSlashes(file);
-		//std::cout << BOLD_GREEN << "FILE from index: " << file << RESET << std::endl;
-		//std::cout << BOLD_GREEN << "FILE from index: " << file << RESET << std::endl;
 		if (read_file(file))
 			return true;
 		i++;
@@ -266,7 +234,6 @@ std::string SendData::findCGIIndex(const std::vector<std::string> &files, std::s
 		file = root + '/' + files[i];
 		removeExcessSlashes(file);
 		struct stat		buffer;
-		//std::cout << "FILE: " << file << std::endl;
 
 		if (stat(file.c_str(), &buffer) == 0 && access(file.c_str(), R_OK) == 0 && access(file.c_str(), X_OK) == 0)
 		{
@@ -323,7 +290,7 @@ bool SendData::checkDeletePath(std::string path, LocationBlock location)
 Response &SendData::sendResponse(std::vector<ServerBlock> &servers, parser &request)
 {
 
-	//here  i would serve the errpr pages if the request is not valid
+	// handle request-parsing errors
 	if (request.statusError != 0)
 	{
 		codeErrorResponse(request.statusError);
@@ -332,12 +299,12 @@ Response &SendData::sendResponse(std::vector<ServerBlock> &servers, parser &requ
 
 	request.path = decodeURIComponent(request.path);
 	request.queryString = decodeURIComponent(request.queryString, true);
-	ServerBlock current_server;
 	
 	_isReturn = false;
+
+	ServerBlock current_server;
 	try 
 	{
-
 		current_server = findServerBlock(servers, request);
 	}
 	catch (const std::exception& e)
@@ -368,7 +335,7 @@ Response &SendData::sendResponse(std::vector<ServerBlock> &servers, parser &requ
 			if (isNotAllowedMethod(location, location.getAllowedMethods(), "GET"))
 				return _response;
 
-			std::string root = PATH_TO_WWW + location.getRoot() + request.path; // maybe a more suitable name: pathToFileToServe
+			std::string root = PATH_TO_WWW + location.getRoot() + request.path; // pathToFileToServe
 			
 			// std::cout << MAGENTA_COLOR << "Root: " << root << std::endl << "Request path:" <<  request.path << RESET << std::endl;
 			/* location.printLocationBlock(); */

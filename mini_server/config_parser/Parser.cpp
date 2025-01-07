@@ -47,7 +47,6 @@ static bool	httpCheck(std::string& line) {
 	ss.str("");
 	ss << token;
 	ss >> token;
-	std::cout << "Token: " << token << std::endl;
 	if (!token.compare("http") && !(ss >> token))
 		return true;
 
@@ -133,7 +132,7 @@ void		Parser::_configToContent() {
 			while (line.find('\t') != std::string::npos)
 				line.replace(line.find('\t'), 1, " ");
 
-			beginOfComment = line.find_first_of('#'); // need to also check whether inside of quote
+			beginOfComment = line.find_first_of('#');
 
 			if (beginOfComment != std::string::npos)
 				_content.append(line.substr(amountBegSpaces(line), beginOfComment - amountBegSpaces(line)));
@@ -213,14 +212,14 @@ void		Parser::_fillBlocks() {
 		}
 
 		if (pos != -1 && pos == static_cast<int>(_content.size()) -1 && _content[pos] == '}') // this is the end of the http block
-			goto end;
+			return; // goto end;
 
 		// this->_printServerVec();
 	}
 	throw std::runtime_error("Missing Closing Brace");
 
-	end:
-		;
+	// end:
+	// 	;
 }
 
 /*			SERVER BLOCK HANDLING			*/

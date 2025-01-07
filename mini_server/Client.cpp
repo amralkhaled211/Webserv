@@ -359,7 +359,7 @@ void Client::allRecieved()
 		std::cout << BOLD_GREEN << "set the is all recieved to true" << RESET << std::endl;
 		if (request.body.size() > 0)
 		{
-			if (!isCGIPost(request.path))
+			if (!isCGIPost(request.path)) // !! this not correct way of checking cgi
 			{
 				saveBodyToFile();
 				request.statusError = 201;
