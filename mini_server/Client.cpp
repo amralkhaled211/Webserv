@@ -309,15 +309,15 @@ bool Client::handlingBody(std::string &body)
 		}
 		else
 		{
-			std::cout << "i  upload a nomral data" << std::endl;
+			//std::cout << "i  upload a nomral data" << std::endl;
 			request.body = body;
 		}
 	}
 
 	_bytesRead = body.size();
-	std::cout << "this is the body size " << _bytesRead << std::endl;
+	//std::cout << "this is the body size " << _bytesRead << std::endl;
 	_targetBytes = stringToSizeT(request.headers["Content-Length"]);
-	std::cout << "this is the target bytes " << _targetBytes << std::endl;
+	//std::cout << "this is the target bytes " << _targetBytes << std::endl;
 	if (_bytesRead < _targetBytes)
 	{
 		_isChunked = true;
@@ -355,7 +355,7 @@ void Client::allRecieved()
 
 
 		isAllRecieved = true;
-		std::cout << BOLD_GREEN << "set the is all recieved to true" << RESET << std::endl;
+		//std::cout << BOLD_GREEN << "set the is all recieved to true" << RESET << std::endl;
 		if (request.body.size() > 0)
 		{
 			if (!isCGIPost(request.path))
@@ -364,7 +364,7 @@ void Client::allRecieved()
 		return;
 	}
 	isAllRecieved = false;
-	std::cout << BOLD_RED << "set the is all recieved to false" << RESET << std::endl;
+	//std::cout << BOLD_RED << "set the is all recieved to false" << RESET << std::endl;
 	if (request.body.size() > 0)
 	{
 		if (!isCGIPost(request.path))

@@ -41,6 +41,7 @@ int SendData::checkCGIFile(const std::string &path)
 {
 	struct stat buffer;
 
+	//std::cout << YELLOW << path << RESET <<std::endl;
 	if (stat(path.c_str(), &buffer) == 0)
 	{
 		if (access(path.c_str(), R_OK) != 0 || access(path.c_str(), X_OK) != 0)
