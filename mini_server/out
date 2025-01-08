@@ -1,15 +1,0 @@
-Port: http://localhost:8081
-
-[1;92mset the is all recieved to true[0m
-[1;92mset the is all recieved to true[0m
-[1;92mset the is all recieved to true[0m
-ERROR PAGE PATH: /home/amalkhal/Webserv/www/website/404.html
-this is the body size 0
-this is the target bytes 2563
-set the is chunk to true 
-[1;91mset the is all recieved to false[0m
-it came to if one 
-[1;91mend boundary ::------WebKitFormBoundaryTEA7Yb3lEMvCmZ9--[0m
-i am going to return falssxssssse 
-[1;91mset the is all recieved to false[0m
-Server shutting down
