@@ -35,13 +35,15 @@ std::vector<std::string>&		LocationBlock::getCgiPath() { return this->_cgi_path;
 std::vector<std::string>&		LocationBlock::getCgiExt() { return this->_cgi_ext; }
 
 
-// static bool	isCgiExtNotAllowed(std::vector<std::string> enteredCgiExt) {
-// 	for (size_t i = 0; i < enteredCgiExt.size(); ++i) {
-// 		if (enteredCgiExt[i] != ".py" && enteredCgiExt[i] != ".php")
-// 			return true;
-// 	}
-// 	return false;
-// }
+static bool	isCgiExtNotAllowed(std::vector<std::string> enteredCgiExt) {
+	for (size_t i = 0; i < enteredCgiExt.size(); ++i) {
+		if (enteredCgiExt[i] != ".py" && enteredCgiExt[i] != ".php" 
+			&& enteredCgiExt[i] != ".sh" && enteredCgiExt[i] != ".pl") {
+				return true;
+			}
+	}
+	return false;
+}
 
 void	LocationBlock::setDirective(const std::string& directiveKey, std::string& directiveValue) {
 
@@ -64,13 +66,17 @@ void	LocationBlock::setDirective(const std::string& directiveKey, std::string& d
 	}
 	else if (directiveKey == "cgi_path") { // will see if we will use it, not using so far
 		// check specifically from a range of allowed ones
+		if (!_cgi_path.empty())
+			throw std::runtime_error("Duplicate cgi_path Directive");
 		for (size_t i = 0; i < amountArgs; i++)
 			this->_cgi_path.push_back(valueArgs[i]);
 	}
 	else if (directiveKey == "cgi_ext") {
 		// check specifically from a range of allowed ones
-		// if (isCgiExtNotAllowed(valueArgs))
-		// 	throw std::runtime_error("CGI extension not Supported");
+		if (isCgiExtNotAllowed(valueArgs))
+			throw std::runtime_error("CGI extension not Supported");
+		if (!_cgi_ext.empty())
+			throw std::runtime_error("Duplicate cgi_ext Directive");
 		for (size_t i = 0; i < amountArgs; i++)
 			this->_cgi_ext.push_back(valueArgs[i]);
 	}
@@ -88,8 +94,16 @@ void		LocationBlock::setupDefaults(Block& parentServer) {
 	if (this->_root.empty())
 		this->_root = parentServer.getRoot();
 
-	if (this->_index.empty())
+	if (this->_index.empty() && this->_cgi_ext.empty())
+	{
+		std::cout << "Setting index NO CGI" << std::endl;
 		this->_index = parentServer.getIndex(); // note: only matters if a directory was requested
+	}
+	else if (this->_index.empty() && !this->_cgi_ext.empty())
+	{
+		std::cout << "Setting index CGI" << std::endl;
+		this->_index.push_back("index.py");
+	}
 
 	if (this->_autoindex == NOT_SET)
 		this->_autoindex = parentServer.getAutoindex();

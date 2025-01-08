@@ -142,7 +142,7 @@ void Server::bindNamesWithPorts(std::vector<std::string>& serverName, std::vecto
             {
                 close(serverSocket);
                 std::cerr << "Binding failed: " << strerror(errno) << std::endl;
-                std::cout << "First / Default virtual-server will be used for launch" << std::endl;
+                std::cout << "First / Default virtual-server will be used for " << name << ":" << port << std::endl;
                 continue;
 	        	// throw std::runtime_error(std::string("Binding failed: ") + strerror(errno));
             }
@@ -168,12 +168,16 @@ void Server::createSocket()
     {
         bindNamesWithPorts(_servers[i].getServerName(), _servers[i].getListen(), _servers[i]);
     }
+
+    if (_serverSockets.empty())
+        throw std::runtime_error("No server sockets created");
+    
     //std::cout << BOLD_GREEN << "ALL THE CREATED SOCKETS: ";
     //for (size_t i = 0; i < this->_serverSockets.size(); ++i) {
     //    std::cout << _serverSockets[i] << ", ";
     //}
-    std::cout << std::endl;
-    Epoll epoll(_serverSockets, _servers); // maybe we should start "everything" in run(), not in createSocket()
+    // std::cout << std::endl;
+    // Epoll epoll(_serverSockets, _servers); // maybe we should start "everything" in run(), not in createSocket()
 }
 
 
@@ -185,6 +189,7 @@ void Server::run()
     try
     {
         createSocket();
+        Epoll epoll(_serverSockets, _servers);
     }
     catch (std::exception &e)
     {

@@ -11,8 +11,7 @@ class Client;
 #define	SD_NO_READ_PERM		-1
 #define	SD_NO_FILE			-2
 
-#define	PATH_TO_WWW	"/home/aismaili/Webserv/"
-// "/home/aismaili/Webserv/"
+#define	PATH_TO_WWW	"../"
 
 typedef struct Redirection
 {
@@ -76,13 +75,9 @@ class SendData
 		std::string		contentType;
 		int				fileStatus;
 
-		//std::cout << "IN PREP ERROR RESPONSE\n";
-
 		if (!errorPagePath.empty())
 		{
 			removeExcessSlashes(fullErrorPagePath);
-
-			std::cout << "ERROR PAGE PATH: " << fullErrorPagePath << std::endl;
 
 			fileStatus = readFromErrorPage(fullErrorPagePath, _response.body); // this already writes into the body (passed by reference)
 			if (fileStatus == SD_OK) { // body gets init with right error_page content
@@ -114,6 +109,3 @@ class SendData
 		createResponseHeader(code, _response.body.size(), contentType);
 	}
 };
-
-
-// #include "ErrorTemplate.tpp"

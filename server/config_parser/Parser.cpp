@@ -390,7 +390,7 @@ void		Parser::_identServer() {
 	for (size_t i = 0; i < _serverVec.size(); ++i) {
 		for (size_t j = i + 1; j < _serverVec.size(); ++j) {
 			if (foundIdentServers(_serverVec[i], _serverVec[j]))
-				std::cout << YELLOW << "Warning: Found Ident Server Blocks!" << RESET << std::endl;
+				std::cout << YELLOW << "Warning: Found Server Blocks with Ident host:port!" << RESET << std::endl;
 		}
 	}
 }

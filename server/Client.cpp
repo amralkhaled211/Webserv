@@ -356,7 +356,7 @@ void Client::allRecieved()
 
 
 		isAllRecieved = true;
-		std::cout << BOLD_GREEN << "set the is all recieved to true" << RESET << std::endl;
+		std::cout << BOLD_GREEN << "isAllRecieved = true" << RESET << std::endl;
 		if (request.body.size() > 0)
 		{
 			if (!isCGIPost(request.path)) // !! this not correct way of checking cgi
@@ -368,7 +368,7 @@ void Client::allRecieved()
 		return;
 	}
 	isAllRecieved = false;
-	std::cout << BOLD_RED << "set the is all recieved to false" << RESET << std::endl;
+	std::cout << BOLD_RED << "isAllRecieved = false" << RESET << std::endl;
 	if (request.body.size() > 0)
 	{
 		if (!isCGIPost(request.path))

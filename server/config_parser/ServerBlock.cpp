@@ -163,20 +163,26 @@ void				ServerBlock::contextError() { // checkDupLocation()
 			if (tmpPrefix == _locationVec[j].getPrefix())
 				throw std::runtime_error("Duplicate location Defintion");
 		}
-		// if (!_locationVec[i].getCgiExt().empty()) { // is cgi
-		// 	std::vector<std::string> cgiExt = _locationVec[i].getCgiExt();
-		// 	std::vector<std::string> cgiIndex = _locationVec[i].getIndex();
-		// 	for (size_t k = 0; k < cgiIndex.size(); ++k) {
-		// 		std::string	currCgiIndexExt = getExtentions(cgiIndex[k]);
-		// 		bool		isCorrectExt = false;
-		// 		for (size_t l = 0; l < cgiExt.size(); ++l) {
-		// 			if (currCgiIndexExt == cgiExt[l])
-		// 				isCorrectExt = true;
-		// 		}
-		// 		if (!isCorrectExt)
-		// 			throw std::runtime_error("Index File Extension doesn't match CGI Extension");
-		// 	}
-		// }
+		if (!_locationVec[i].getCgiExt().empty()) { // is cgi
+			
+			std::vector<std::string> cgiExt = _locationVec[i].getCgiExt();
+			std::vector<std::string> cgiIndex = _locationVec[i].getIndex();
+
+			for (size_t k = 0; k < cgiIndex.size(); ++k) {
+				std::string	currCgiIndexExt = getExtentions(cgiIndex[k]);
+				bool		isCorrectExt = false;
+
+				for (size_t l = 0; l < cgiExt.size(); ++l) {
+					if (currCgiIndexExt == cgiExt[l])
+						isCorrectExt = true;
+				}
+				
+				if (!isCorrectExt)
+				{
+					throw std::runtime_error("Index File Extension doesn't match CGI Extension");
+				}
+			}
+		}
 	}
 
 	// more checks to follow
